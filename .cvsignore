@@ -33,3 +33,9 @@ build-stamp
 *.vim
 test_list*
 Makefile.handwritten
+src/*.o
+src/*.lo
+src/*.la
+*.o
+*.lo
+*.la
