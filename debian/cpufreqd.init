@@ -40,7 +40,6 @@ check_for_pm_support() {
   fi
 }
 
-
 set -e
 
 case "$1" in
@@ -48,19 +47,19 @@ case "$1" in
       check_for_cpufreq_support
       check_for_pm_support
       echo -n "Starting $DESC: $NAME"
-      start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+      start-stop-daemon --start --oknodo --exec $DAEMON -- -f $CPUFREQD_CONFFILE
       echo "."
       ;;
   stop)
       echo -n "Stopping $DESC: $NAME"
-      start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+      start-stop-daemon --stop --oknodo --exec $DAEMON
       echo "."
       ;;
   reload|force-reload)
       check_for_cpufreq_support
       check_for_pm_support
       echo -n "Reloading $DESC configuration..."
-      start-stop-daemon --stop --oknodo --signal 1 --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+      start-stop-daemon --stop --oknodo --signal 1 --exec $DAEMON -- -f $CPUFREQD_CONFFILE
       echo "done."
       ;;
   restart)
@@ -69,7 +68,7 @@ case "$1" in
       check_for_cpufreq_support
       check_for_pm_support
       sleep 1
-      start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+      start-stop-daemon --start --oknodo --exec $DAEMON -- -f $CPUFREQD_CONFFILE
       echo "."
       ;;
   *)

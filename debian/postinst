@@ -45,19 +45,18 @@ case "$1" in
             # setup a very simple default configuration file
             sed -i -e "s/^\(pm_type=\)acpi\(.*\)/\1$CPUFREQD_PM\2/" /etc/cpufreqd.conf
 
-            update-rc.d cpufreqd defaults > /dev/null
-
-            if [ -x /usr/sbin/invoke-rc.d ] ; then
-                  invoke-rc.d cpufreqd start
-            else
-                /etc/init.d/cpufreqd start
-            fi
-
           fi
 
         fi
 
-        # warn the user about not finding cpufreq kernel interface
+        # setup startup links, they'll warn the user of anything not being setup properly
+        update-rc.d cpufreqd defaults > /dev/null
+        if [ -x /usr/sbin/invoke-rc.d ] ; then
+              invoke-rc.d cpufreqd start
+        else
+            /etc/init.d/cpufreqd start
+        fi
+
 
     ;;
 
