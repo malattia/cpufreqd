@@ -1,0 +1,16 @@
+stamp-h1
+cpufreqd_programs.lo
+cpufreqd_programs.la
+cpufreqd_cpu.lo
+cpufreqd_cpu.la
+cpufreqd_acpi_temperature.lo
+cpufreqd_acpi_temperature.la
+cpufreqd_acpi_battery.lo
+cpufreqd_acpi_battery.la
+cpufreqd_acpi_ac.lo
+cpufreqd_acpi_ac.la
+cpufreqd
+config.h
+Makefile
+.libs
+.deps

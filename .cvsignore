@@ -10,17 +10,7 @@ aclocal.m4
 config.h
 Makefile
 config_parser.o
-string_list.o
-libsys_apm.o
-libsys_acpi.o
 main.o
-libsys.lo
-libsys_apm.lo
-libsys_acpi.lo
-libsys_apm.la
-libsys_acpi.la
-libsys_pmu.lo
-libsys_pmu.la
 stamp-h.in
 .libs
 .deps
