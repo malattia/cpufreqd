@@ -1,7 +1,7 @@
 Source: cpufreqd
 Section: admin
 Priority: optional
-Maintainer: Mattia Dongili (ma.d.) <dongili@supereva.it>
+Maintainer: Mattia Dongili <malattia@debian.org>
 Build-Depends: debhelper (>= 4.1.16), debconf (>= 1.2.9)
 Standards-Version: 3.6.1
 
