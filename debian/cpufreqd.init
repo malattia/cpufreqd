@@ -1,0 +1,88 @@
+#! /bin/sh
+# 
+# Startup script for the cpufreqd daemon. It's been made using the
+# skeleton	example file to build /etc/init.d/ scripts.
+#		This file should be used to construct scripts for /etc/init.d.
+#
+#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+#		Modified for Debian GNU/Linux
+#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+#
+# Version:	@(#)skeleton  1.9.1  08-Apr-2002  miquels@cistron.nl
+#
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/cpufreqd
+CPUFREQD_CONFFILE=/etc/cpufreqd.conf
+NAME=cpufreqd
+DESC="CPU Frequency daemon"
+
+# abort if no executable exists
+test -x $DAEMON || exit 0
+
+#abort if no conffile exists
+test -r $CPUFREQD_CONFFILE || exit 0
+
+check_for_cpufreq_support() {
+  # forget it if we're trying to start and no cpufreq found in kernel
+  if !([ -d /sys/devices/system/cpu/cpu0/cpufreq ] || [ -f /proc/cpufreq ]) ; then
+	  echo "$DESC: no cpufreq interface found. "
+	  exit 0
+  fi
+}
+
+check_for_pm_support() {
+  # forget it if we're trying to start and no power management support is
+  # included in kernel
+  if !([ -d /proc/pmu ] || [ -f /proc/apm ] || [ -d /proc/acpi ]) ; then
+	  echo "$DESC: no supported power management interface found. "
+	  exit 0
+  fi
+}
+
+
+set -e
+
+case "$1" in
+  start)
+  check_for_cpufreq_support
+  check_for_pm_support
+	echo -n "Starting $DESC: $NAME"
+	start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+	echo "."
+	;;
+  stop)
+	echo -n "Stopping $DESC: $NAME"
+	start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+	echo "."
+	;;
+  reload|force-reload)
+  check_for_cpufreq_support
+  check_for_pm_support
+	echo -n "Reloading $DESC configuration..."
+	start-stop-daemon --stop --oknodo --signal 1 --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+	echo "done."
+  ;;
+  restart)
+	#
+	#	If the "reload" option is implemented, move the "force-reload"
+	#	option to the "reload" entry above. If not, "force-reload" is
+	#	just the same as "restart".
+	#
+	echo -n "Restarting $DESC: $NAME"
+	start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+  check_for_cpufreq_support
+  check_for_pm_support
+	sleep 1
+	start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+	echo "."
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	echo "Usage: $N {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
