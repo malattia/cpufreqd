@@ -1,0 +1,24 @@
+Source: cpufreqd
+Section: admin
+Priority: optional
+Maintainer: Mattia Dongili (ma.d.) <dongili@supereva.it>
+Build-Depends: debhelper (>= 4.1.16), debconf (>= 1.2.9)
+Standards-Version: 3.6.1
+
+Package: cpufreqd
+Architecture: any
+Depends: debconf, ${shlibs:Depends}
+Conflicts: cpudyn, powernowd
+Description: A speedstep applet clone
+ cpufreqd is meant to be a replacement of the speedstep applet you
+ can find on some other OS, it monitors CPU usage, battery level, AC 
+ state and running programs and adjusts the frequency governor according
+ to a set of rules specified in the config file.
+ .
+ You need a CPUFreq driver and either APM, ACPI (a recent version) or PMU
+ enabled in your kernel in order for this daemon to work.
+ You can find a functional ACPI in 2.4.22-pre1 or later or as patches at
+ http://sf.net/projects/acpi while CPUFreq is available in 2.6 kernels or as
+ patch at ftp://ftp.poupinou.org/cpufreq/.
+ .
+ Homepage: http://sourceforge.net/projects/cpufreqd

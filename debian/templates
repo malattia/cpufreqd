@@ -1,0 +1,15 @@
+Template: cpufreqd/no_pm
+Type: note
+Default: 
+_Description: Unable to find a Power Management interface in your kernel.
+  Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel and
+  1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or
+  2. edit /etc/cpufreqd.conf by hands and run dpkg-reconfigure cpufreqd.
+
+Template: cpufreqd/no_procfs_sysfs
+Type: note
+Default: 
+_Description: Unable to find a CpuFreq interface in your kernel.
+  Cpufreqd won't be started, please enable a CpuFreq driver in your kernel and
+  1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or
+  2. edit /etc/cpufreqd.conf by hands and run dpkg-reconfigure cpufreqd.

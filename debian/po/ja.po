@@ -1,0 +1,67 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: cpufreqd 1.1.2-2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-03-31 18:48+0200\n"
+"PO-Revision-Date: 2004-07-04 21:24+0900\n"
+"Last-Translator: Hideki Yamane <henrich@samba.gr.jp>\n"
+"Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=EUC-JP\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: note
+#. Description
+#: ../templates:4
+msgid "Unable to find a Power Management interface in your kernel."
+msgstr "カーネルにパワーマネジメントのインターフェイスが見つかりません。"
+
+#. Type: note
+#. Description
+#: ../templates:4
+msgid ""
+" Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
+"and\n"
+" 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
+" 2. edit /etc/cpufreqd.conf by hands and run dpkg-reconfigure cpufreqd."
+msgstr ""
+"cpufreqd は起動しません。カーネルで ACPI か APM か PMU を有効にして、以下を"
+"行ってください\n"
+" 1. 簡単な自動設定を行うために dpkg-reconfigure cpufreqd を実行する\n"
+" 2. または /etc/cpufreqd.conf を手で編集し、dpkg-reconfigure cpufreqd を実行"
+"する"
+
+#. Type: note
+#. Description
+#: ../templates:12
+msgid "Unable to find a CpuFreq interface in your kernel."
+msgstr "カーネルに CpuFreq インターフェイスが見つかりません"
+
+#. Type: note
+#. Description
+#: ../templates:12
+msgid ""
+" Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
+"and\n"
+" 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
+" 2. edit /etc/cpufreqd.conf by hands and run dpkg-reconfigure cpufreqd."
+msgstr ""
+"cpufreqd は起動しません。カーネルで CpuFreq ドライバを有効にして、以下を行っ"
+"てください\n"
+" 1. 簡単な自動設定を行うために dpkg-reconfigure cpufreqd を実行する\n"
+" 2. または /etc/cpufreqd.conf を手で編集し、dpkg-reconfigure cpufreqd を実行"
+"する"

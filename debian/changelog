@@ -1,0 +1,105 @@
+cpufreqd (1.2.2-2) unstable; urgency=low
+
+    * Renamed debian/po/cz.po into debian/po/cs.po (closes: #285570)
+    * Now conflicts with cpudyn and powernowd (closes: #281065)
+
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Sat, 18 Dec 2004 19:17:37 +0100
+ 
+cpufreqd (1.2.2-1) unstable; urgency=low
+
+  * New upstream
+  * Added Czech debconf translation (closes: #275504)
+  * Added Italian debconf translation (finally...)
+
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Sun, 24 Oct 2004 12:29:47 +0200
+
+cpufreqd (1.2.0-1) unstable; urgency=low
+  
+  * New Upstream (closes: #268020)
+  * Added support for extended /proc/stat in 2.6 kernels (closes: #264126)
+  * Added translation from percentage to absolute values for 2.6 kernels
+    (closes: #254418)
+  * Implemented checks for empty configurations and supplied defaults values
+    for the general section (closes: #243649)
+  * Removed frequencies translation in postinst as now percentages are
+    supported for both 2.4 and 2.6 kernels.
+
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Mon, 23 Aug 2004 15:42:11 +0200
+
+cpufreqd (1.1.2-3) unstable; urgency=low
+  
+  * Added Japanese debconf translation (closes: #258767)
+  * Fixed a race condition due to unwise sed usage (closes: #255855)
+
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Mon, 26 Jul 2004 21:08:37 +0200
+
+cpufreqd (1.1.2-2) unstable; urgency=low
+
+  * Added German debconf templates translation (closes: #251632)
+  * Fixed check for /proc/pmu check in scripts (closes: #250892)
+  * Added missing --oknodo for cpufreqd restart in init script (closes: #245937)
+  * Fixed bug in autoconfiguration where the script sets values of "maxfreq"
+    that are lesser then "minfreq" (closes: #246867)
+
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Mon, 31 May 2004 18:55:07 +0200
+
+cpufreqd (1.1.2-1) unstable; urgency=low
+  
+  * New Upstream
+  * Fixed spelling mistakes in debconf english template (closes: #240783)
+  * Added Dutch debconf templates translation (closes: #241433)
+  * Added French debconf templates translation (closes: #234956)
+  * Added Danish debconf templates translation (closes: #234956)
+  * Added missing fclose in libsys_pmu (closes: #236474)
+  * added check for conffile existence and readability and used as
+    argument for start-stop-daemon (closes: #235833)
+  
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Tue, 31 Mar 2004 18:40:00 +0100
+
+cpufreqd (1.1.1-1) unstable; urgency=low
+  
+  * New Upstream
+  * Now ships with the correct configuration template (closes: #230927)
+  * Updated to use po-debconf
+  
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Sat, 07 Feb 2004 18:58:13 +0100
+
+cpufreqd (1.1.0-1) unstable; urgency=low
+  
+  * New Upstream
+  * Fixed segfault when some options left empty (closes: #220939)
+  * Fixed error in postinst (closes: #223395)
+  * Added checks in init file to see if cpufreq and acpi/apm/pmu are
+    supported
+  * It now creates a better configuration with 4 Profiles and a bunch 
+    of Rules
+  
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Sun, 04 Jan 2004 20:52:54 +0100
+
+cpufreqd (1.1-rc1-1) unstable; urgency=low
+
+  * New Upstream
+  * Added a simple autoconfiguration script
+  * Added debconf dependency because of a debconf warning needed during
+    install if cpufreqd is unable to start
+  * Added README.Debian
+  * Added two sample configurations (one for 2.6 kernel and one for 2.4)
+  * Added an ACPI workaround to avoid /proc/acpi/battery/*/info reading
+    (closes: #207150)
+  * Abort execution when MIN and MAX frequencies are not correct wrt to the
+    kernel version (2.4 as percentage or Hz and 2.6 Hz only) (closes: #205732)
+  * Removed empty NEWS file (closes: #217249)
+
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Thu, 26 Oct 2003 20:30:00 +0200
+
+cpufreqd (1.0.1-2) unstable; urgency=low
+
+  * Fixed lintian warning about missing #DEBHELPER#
+
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Thu, 30 Jul 2003 15:30:00 +0200
+
+cpufreqd (1.0.1-1) unstable; urgency=low
+
+  * Initial Release (closes: #199404).
+
+ -- Mattia Dongili (ma.d.) <dongili@supereva.it>  Thu, 24 Jul 2003 17:00:00 +0200

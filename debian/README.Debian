@@ -1,0 +1,9 @@
+              README for Debian package of Cpufreqd
+              =====================================
+
+Configuration for cpufreqd is done automatically during install however the
+configuration file created is very trivial and most of the time meaningless for
+anybody's needs. Thus it's strongly suggested to modify the configuration and
+restart cpufreqd after install.
+
+Two examples are provided in /usr/share/doc/cpufreqd/examples.
