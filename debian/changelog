@@ -2,7 +2,8 @@ cpufreqd (1.2.2-3) unstable; urgency=low
 
     * Changed Maintainer address to the new shining @d.o
     * Creates startup links even if it cannot start and 
-      give better error messages in that case (closes: #295834)
+      give better error messages in that case during startup.
+      (closes: #295834)
 
  -- Mattia Dongili <malattia@debian.org>  Wed, 09 Mar 2005 22:15:24 +0100
  

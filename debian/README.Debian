@@ -6,4 +6,8 @@ configuration file created is very trivial and most of the time meaningless for
 anybody's needs. Thus it's strongly suggested to modify the configuration and
 restart cpufreqd after install.
 
-Two examples are provided in /usr/share/doc/cpufreqd/examples.
+If the install process fails to detect proper cpufreq support it will warn
+through debconf with a low priority. Startup links are created and the startup
+script will try to give useful warnings.
+
+Two sample configuration files are provided in /usr/share/doc/cpufreqd/examples.
