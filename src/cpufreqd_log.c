@@ -1,0 +1,57 @@
+#include <stdarg.h>
+#include <syslog.h>
+#include <stdio.h>
+
+#include "config_parser.h"
+#include "cpufreqd.h"
+#include "cpufreqd_log.h"
+
+extern struct cpufreqd_conf configuration; /* defined in cpufreqd.h and declared in main.c */
+
+static unsigned int log_opened; /* syslog already opened */
+
+/* 
+ * Logger infrastructure. It reuses the same priorities as 
+ * sys/syslog.h because it's easier to manage.
+ *
+ *	LOG_EMERG	  0	
+ *  LOG_ALERT	  1
+ *  LOG_CRIT	  2
+ *  LOG_ERR		  3
+ *  LOG_WARNING	4
+ *  LOG_NOTICE	5
+ *  LOG_INFO	  6
+ *  LOG_DEBUG	  7
+ *
+ */
+void cpufreqd_log(int prio, const char *fmt, ...) {
+  va_list argp;
+  
+  /* do we need to write? */
+  if (configuration.log_level < prio)
+    return;
+  
+  va_start(argp, fmt);
+
+  if (configuration.no_daemon) {
+    if (configuration.log_level <= LOG_ERR) {
+      vfprintf(stderr, fmt, argp);
+      /* fflush(stderr); */
+    } else {
+      vfprintf(stdout, fmt, argp);
+      /* fflush(stdout); */
+    }
+  } else {
+    if (!log_opened) {
+      /* open syslog */
+      openlog("cpufreqd", LOG_CONS, LOG_DAEMON);
+      log_opened = 1;
+    }
+    vsyslog(prio, fmt, argp);
+    if (configuration.log_level <= LOG_ERR) {
+      vfprintf(stderr, fmt, argp);
+      /* fflush(stderr); */
+    }
+  }
+  va_end(argp);
+}

@@ -1,0 +1,41 @@
+
+INIZIALIZZAZIONE:
+
+- config_file:
+    load plugin1
+    load plugin2
+    load plugin3
+
+- 3 tipi di plugin:
+    1. plugin REGOLA
+    2. plugin SISTEMA
+    3. plugin POLICY
+
+  REGOLA:
+  * al caricamento il plugin comunica una struct cpufreqd_rule_plugin
+    contenente:
+      - lista di keyword gestite
+          per ogni keyword:
+            * puntatore a funzione per il parsing
+            * puntatore a funzione per la valutazione
+            * puntatore a void per la struttura che conterra' i dati
+              generati dal parsing e utili alla valutazione
+              
+  SISTEMA (si deve basare sul fatto che una regola sia in grado di
+           verificare i dati da esso letti altrimenti il dato
+           e' inutile):
+  * funzione di lettura del sistema (??? organizzare un sottosistema
+    comune, cosa puo' essere monitorato del sistema??? un plugin per ogni
+    monitor o piu' plugin per ogni monitor??)
+
+  POLICY:
+  * applica un policy
+
+
+- il core conserva le liste di plugin separate per tipo (3 liste)
+
+CICLO:
+
+- lettura del sistema (valutazione di tutti i plugin SYSTEM)
+- valutazione regole
+- applicazione policy

@@ -1,0 +1,68 @@
+version 2.0.0
+-------------
+* fully refactored to support a better plugin infraatructure. Now plugins are
+more atomic wrt features and one can select single resources to monitor.
+
+version 1.2.0
+-------------
+* fixed APM battery presence detection (Mark Stier).
+* prefer sysfs interface over proc (Dennis Nienhüser).
+* support for extended /proc/stat information provided by 2.6 kernels (Holger
+  Ruckdeschel).
+* fixes possible divide by 0 while getting cpu usage (thanks to Holger
+  Ruckdeschel).
+* report better logs when scanning acpi dirs (libsys_init in libsys_acpi.c).
+* add checks for empty config file.
+* provide useful defaults for the general section.
+* migrated to autotools 1.8.
+* added multiple processors support (all processors updated with the same
+  values).
+* fixed libsys_acpi bad behavior when no ac_adapter and battery found, now
+  cpufreqd is usable on desktops too, it considers always online a system with
+  a missing ac_adapater directory.
+* added translation between percentage/Hz-speed based on a patch from
+  <rv@eychenne.org> (see http://bugs.debian.org/254418).
+
+version 1.1.2
+-------------
+* added missing fclose in libsys_pmu
+* fixed old gentoo scripts (wrong deamon path)
+* fixed debian init script (missing arguments for cpufreqd start)
+
+version 1.1.1
+-------------
+* fixed a bug in /proc/cpufreq writes handling (wrote the wrong separator
+  thus failing to switch frequencies
+* enhanced program matching, it now considers the base name found in 
+  /proc/<pid>/cmdline (<plasmagunman@users.sourceforge.net>)
+
+version 1.1
+-----------
+* fixed potential buffer overflows in config file parser
+* fixed PPC bug (Dominik 'Aeneas' Schnitzer <dominik@schnitzer.at>)
+* added Mandrake init file (Michael Scherer <scherer.michael@free.fr>)
+* fixed pidfile permission on create (Michael Scherer
+  <scherer.michael@free.fr>)
+* fixed segfaults when some configuration options left blank
+* changed cpufreqd.1 in cpufreqd.8 (seems more appropriate)
+* changed default install dir to $sbindir as cpufreqd is a privileged
+  executable
+* fixed typos and missing information in manpages
+
+version 1.1-rc1
+---------------
+* added support for Power Management Unit of Apple NewWorld systems
+  (Rene Rebe <rene@rocklinux.org>)
+* added cpu monitoring (base code by Dietz Proepper <dietz@rotfl.franken.de>)
+* fixed HUP handler to reinitialize really _everything_
+* varoius smaller fixes
+
+version 1.0.1
+-------------
+* fixed support for sysfs interface for linux-2.6.0-test1 (I hope it won't
+  change anymore)
+* removed ISO C compile warnings
+
+version 1.0
+-----------
+* first stable release
