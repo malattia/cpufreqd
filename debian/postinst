@@ -42,25 +42,6 @@ case "$1" in
           
 
           if [ ${CPUFREQD_PM} ]; then
-            
- #           # Modify config file for 2.6
- #           if [ -d /sys/devices/system/cpu/cpu0/cpufreq ] ; then
- #           
- #             # translate percentages in integer values
- #             CPUFREQD_MAX_SPEED=`cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq`
- #             CPUFREQD_MIN_SPEED=`cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq`
- #             CPUFREQD_SPEED_DIFF=$(( $CPUFREQD_MAX_SPEED - $CPUFREQD_MIN_SPEED))
- #             CPUFREQD_MHIGH_SPEED=$(( $CPUFREQD_MIN_SPEED + ($CPUFREQD_SPEED_DIFF / 100 * 66) ))
- #             CPUFREQD_MLOW_SPEED=$(( $CPUFREQD_MIN_SPEED + ($CPUFREQD_SPEED_DIFF / 100 * 33) ))
- #              
- #             sed -i -e "s/100%/$CPUFREQD_MAX_SPEED/;  \
- #                        s/66%/$CPUFREQD_MHIGH_SPEED/; \
- #                        s/33%/$CPUFREQD_MLOW_SPEED/;  \
- #                        s/0%/$CPUFREQD_MIN_SPEED/;" \
- #                      /etc/cpufreqd.conf
- #
- #           fi
-
             # setup a very simple default configuration file
             sed -i -e "s/^\(pm_type=\)acpi\(.*\)/\1$CPUFREQD_PM\2/" /etc/cpufreqd.conf
 
@@ -98,5 +79,4 @@ db_stop
 #DEBHELPER#
 
 exit 0
-
 
