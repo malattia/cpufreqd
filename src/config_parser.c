@@ -330,21 +330,28 @@ int parse_config_profile (FILE *config, struct profile *p) {
   /* TODO: check if the selected governor is available */
 
 
-  /* calculate actual frequncies if percent where given frequencies */
-  if (state & HAS_CPU) {
-    if (min_is_percent)
-      p->policy.min = percent_to_absolute(configuration.limits[p->cpu].max, p->policy.min);
-    if (max_is_percent)
-      p->policy.max = percent_to_absolute(configuration.limits[p->cpu].max, p->policy.max);
+  if (configuration.limits!=NULL) {
+    /* calculate actual frequncies if percent where given frequencies */
+    if (state & HAS_CPU) {
+      if (min_is_percent)
+        p->policy.min = percent_to_absolute(configuration.limits[p->cpu].max, p->policy.min);
+      if (max_is_percent)
+        p->policy.max = percent_to_absolute(configuration.limits[p->cpu].max, p->policy.max);
+    } else {
+      if (min_is_percent)
+        p->policy.min = percent_to_absolute(configuration.limits[0].max, p->policy.min);
+      if (max_is_percent)
+        p->policy.max = percent_to_absolute(configuration.limits[0].max, p->policy.max);
+    }
+    /* normalize frequencies if such informations are available */
+    p->policy.max = normalize_frequency(configuration.limits, configuration.sys_info->frequencies, p->policy.max);
+    p->policy.min = normalize_frequency(configuration.limits, configuration.sys_info->frequencies, p->policy.min);
   } else {
-    if (min_is_percent)
-      p->policy.min = percent_to_absolute(configuration.limits[0].max, p->policy.min);
-    if (max_is_percent)
-      p->policy.max = percent_to_absolute(configuration.limits[0].max, p->policy.max);
+    if (min_is_percent || max_is_percent)
+      cpufreqd_log(LOG_WARNING, "Unable to calculate absolute values for profile \"%s\".\n", p->name);
+    cpufreqd_log(LOG_WARNING, "Unable to normalize frequencies for profile \"%s\".\n", p->name);
   }
-  /* normalize frequencies if such informations are available */
-  p->policy.max = normalize_frequency(configuration.limits, configuration.sys_info->frequencies, p->policy.max);
-  p->policy.min = normalize_frequency(configuration.limits, configuration.sys_info->frequencies, p->policy.min);
+
   cpufreqd_log(LOG_DEBUG,
       "parse_config_profile(): [Profile] \"%s\" MAX is %ld, MIN is %ld\n", p->name,
       p->policy.max, p->policy.min);

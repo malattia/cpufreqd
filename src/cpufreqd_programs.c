@@ -357,6 +357,7 @@ static int programs_update(void) {
 }
 
 static int programs_exit(void) {
+  programs.cfdprint(LOG_INFO, "%s - exit() called\n", programs.plugin_name);
   free_tree(running_programs);
   return 0;
 }
