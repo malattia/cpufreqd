@@ -45,44 +45,38 @@ set -e
 
 case "$1" in
   start)
-  check_for_cpufreq_support
-  check_for_pm_support
-	echo -n "Starting $DESC: $NAME"
-	start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
-	echo "."
-	;;
+      check_for_cpufreq_support
+      check_for_pm_support
+      echo -n "Starting $DESC: $NAME"
+      start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+      echo "."
+      ;;
   stop)
-	echo -n "Stopping $DESC: $NAME"
-	start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
-	echo "."
-	;;
+      echo -n "Stopping $DESC: $NAME"
+      start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+      echo "."
+      ;;
   reload|force-reload)
-  check_for_cpufreq_support
-  check_for_pm_support
-	echo -n "Reloading $DESC configuration..."
-	start-stop-daemon --stop --oknodo --signal 1 --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
-	echo "done."
-  ;;
+      check_for_cpufreq_support
+      check_for_pm_support
+      echo -n "Reloading $DESC configuration..."
+      start-stop-daemon --stop --oknodo --signal 1 --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+      echo "done."
+      ;;
   restart)
-	#
-	#	If the "reload" option is implemented, move the "force-reload"
-	#	option to the "reload" entry above. If not, "force-reload" is
-	#	just the same as "restart".
-	#
-	echo -n "Restarting $DESC: $NAME"
-	start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
-  check_for_cpufreq_support
-  check_for_pm_support
-	sleep 1
-	start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
-	echo "."
-	;;
+      echo -n "Restarting $DESC: $NAME"
+      start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+      check_for_cpufreq_support
+      check_for_pm_support
+      sleep 1
+      start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+      echo "."
+      ;;
   *)
-	N=/etc/init.d/$NAME
-	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $N {start|stop|restart|force-reload}" >&2
-	exit 1
-	;;
+      N=/etc/init.d/$NAME
+      echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+      exit 1
+      ;;
 esac
 
 exit 0
