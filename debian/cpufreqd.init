@@ -47,7 +47,10 @@ case "$1" in
       check_for_cpufreq_support
       check_for_pm_support
       echo -n "Starting $DESC: $NAME"
-      start-stop-daemon --start --oknodo --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+      start-stop-daemon --start --oknodo --exec $DAEMON -- -f $CPUFREQD_CONFFILE || retval=$?
+      if [ "x$retval" != "x" ] ; then
+        echo -n " Errors occurred starting cpufreqd"
+      fi
       echo "."
       ;;
   stop)
@@ -68,7 +71,10 @@ case "$1" in
       check_for_cpufreq_support
       check_for_pm_support
       sleep 1
-      start-stop-daemon --start --oknodo --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+      start-stop-daemon --start --oknodo --exec $DAEMON -- -f $CPUFREQD_CONFFILE || retval=$?
+      if [ "x$retval" != "x" ] ; then
+        echo -n " Errors occurred starting cpufreqd"
+      fi
       echo "."
       ;;
   *)
