@@ -435,6 +435,7 @@ int main (int argc, char *argv[]) {
     ret = 1;
     goto out_sys_info;
   }
+  memset(configuration.limits, 0, configuration.cpu_num * sizeof(struct cpufreq_limits));
   for (i=0; i<configuration.cpu_num; i++) {
     /* if one of the probes fails remove all the others also */
     if (cpufreq_get_hardware_limits(i, &(configuration.limits->min), &(configuration.limits->max))!=0) {
