@@ -94,20 +94,18 @@ int init_configuration(void) {
               load_plugin(o_plugin)==0 &&
               get_cpufreqd_object(o_plugin)==0 &&
               initialize_plugin(o_plugin) == 0
-              
               ) { 
               cpufreqd_log(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
+              n=n->next;
               
           } else {
             cpufreqd_log(LOG_INFO, "plugin failed to load: %s\n", o_plugin->name);
-            /* remove the list item and assing nd the next node (returned from list_remove_node) */
-            n = list_remove_node(&(configuration.plugins), n);
+            /* remove the list item and assing n the next node (returned from list_remove_node) */
             cpufreqd_log(LOG_NOTICE, "discarded plugin %s\n", o_plugin->name);
-            continue;
-          }
-          n=n->next;
-        }
-      } //end else
+            n = list_remove_node(&(configuration.plugins), n);
+          } /* end else */
+        } /* end while */
+      } /* end else */
       continue;
     }
 
@@ -275,7 +273,7 @@ int read_args (int argc, char *argv[]) {
     { "version", 0, 0, 'v' }, 
     { "file", 1, 0, 'f' },
     { "no-daemon", 0, 0, 'D' },
-    { "verbosity", 0, 0, 'V' },
+    { "verbosity", 1, 0, 'V' },
     { 0, 0, 0, 0 }, 
   };
   int ch,option_index = 0;
@@ -411,7 +409,7 @@ int main (int argc, char *argv[]) {
   sigaction(SIGHUP, &signal_action, 0);
  
   /*
-   *  read ho many cpus are available here
+   *  read how many cpus are available here
    */
   configuration.cpu_num = get_cpu_num();
 
@@ -423,12 +421,12 @@ int main (int argc, char *argv[]) {
     ret = 1;
     goto out;
   }
-  
   for (i=0; i<configuration.cpu_num; i++) {
     (configuration.sys_info+i)->affected_cpus = cpufreq_get_affected_cpus(i);
     (configuration.sys_info+i)->governors = cpufreq_get_available_governors(i);
     (configuration.sys_info+i)->frequencies = cpufreq_get_available_frequencies(i);
   }
+
   /* SMP with different speed cpus awareness */
   if ((configuration.limits = malloc(configuration.cpu_num * sizeof(struct cpufreq_limits))) == NULL) {
     cpufreqd_log(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
@@ -439,6 +437,7 @@ int main (int argc, char *argv[]) {
   for (i=0; i<configuration.cpu_num; i++) {
     /* if one of the probes fails remove all the others also */
     if (cpufreq_get_hardware_limits(i, &(configuration.limits->min), &(configuration.limits->max))!=0) {
+      /* TODO: if libcpufreq fails try to read /proc/cpuinfo and warn about this not baing reliable */
       cpufreqd_log(LOG_WARNING, "Unable to get hardware frequency limits for CPU%d.\n", i);
       free(configuration.limits);
       configuration.limits = NULL;

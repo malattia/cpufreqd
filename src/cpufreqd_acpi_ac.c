@@ -14,8 +14,8 @@
 #define UNPLUGGED 0
 
 static char *ac_filelist[64];
-static unsigned short ac_state  = 0;
-static int ac_dir_num           = 0;
+static unsigned short ac_state;
+static int ac_dir_num;
 
 static int no_dots(const struct dirent *d);
 static int acpi_ac_init(void);

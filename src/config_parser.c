@@ -221,11 +221,11 @@ int parse_config_general (FILE *config) {
  * Returns -1 if required properties are missing, 0 otherwise
  */
 int parse_config_profile (FILE *config, struct profile *p) {
-#define HAS_NAME    1
-#define HAS_MIN     2
-#define HAS_MAX     4
-#define HAS_POLICY  8
-#define HAS_CPU    16
+#define HAS_NAME    (1<<0)
+#define HAS_MIN     (1<<1)
+#define HAS_MAX     (1<<2)
+#define HAS_POLICY  (1<<3)
+#define HAS_CPU     (1<<4)
   int state=0, min_is_percent=0, max_is_percent=0, tmp_freq=0;
   char buf[MAX_STRING_LEN];
 
@@ -370,8 +370,8 @@ int parse_config_profile (FILE *config, struct profile *p) {
  * Returns -1 if required properties are missing, 0 otherwise
  */
 int parse_config_rule (FILE *config, struct rule *r) {
-#define HAS_NAME    1 
-#define HAS_PROFILE 2
+#define HAS_NAME    (1<<0) 
+#define HAS_PROFILE (1<<1)
   int state=0, keyword_handler_found=0;
   char buf[MAX_STRING_LEN];
   char *clean, *name, *value;
@@ -386,7 +386,7 @@ int parse_config_rule (FILE *config, struct rule *r) {
 
     clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
-    if (!clean[0]) /* returned an empty line, end of section */
+    if (!clean[0]) /* returned an empty line */
       continue;
 
     if (strcmp(clean,"[/Rule]") == 0)
