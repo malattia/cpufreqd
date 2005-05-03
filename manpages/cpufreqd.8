@@ -1,0 +1,86 @@
+.\" Copyright 2002-2003, George Staikos (staikos@0wned.org)
+.\"                      Mattia Dongili (dongili@supereva.it)
+.\"                      Rene Rebe (rene@rocklinux.org)
+.\" This file may be used subject to the terms and conditions of the
+.\" GNU General Public License Version 2, or any later version
+.\" at your option, as published by the Free Software Foundation.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details."
+.TH CPUFREQD 8 "25 Mar 2003" "" ""
+.SH NAME
+cpufreqd \- intelligently monitor and manipulate CPU frequency
+.SH SYNOPSIS
+.B "cpufreqd [-Dhv] [-f filename] [-V verbosity]"
+.SH DESCRIPTION
+.B cpufreqd
+is used to monitor the status of the battery and adjust the frequency of the
+CPU accordingly in order to preserve battery power while providing optimal
+performance.  The behaviour of the daemon is fully configurable. Logs are reported through syslogd.
+.SH PARAMETERS
+.TP
+.B "-D, --no-daemon"
+stay in foreground (used to debug).
+.TP
+.B "-f filename, --file=filename"
+Specify the configuration file to read.  The default is /etc/cpufreqd.conf.
+.TP
+.B "-h, --help"
+Display command line help.
+.TP
+.B "-v, --version"
+Display the version number of the daemon.
+.TP
+.B "-V, --verbosity"
+verbosity level from 0 (less verbose) to 7 (most verbose). Default verbosity is 4
+.SH SIGNALS
+.TP
+.B SIGHUP
+This lets 
+.B cpufreqd 
+perform a re-initialization.  The configuration file (default is /etc/cpufreqd.conf) will  be re-read and probes re-done.
+.TP
+.B SIGINT, SIGTERM
+.B cpufreqd
+will terminate.
+
+.SH EXAMPLES
+.TP
+/usr/sbin/cpufreqd \-D
+.SH NOTES
+.TP
+Some ACPI implementations are very cpu-consuming when reading the info file of system batteries. Cpufreqd implements a simple workaround that avoids reading that file except on initialization or reinitialization. This has the effect of needing to send an HUP signal if inserting a new battery, otherwise battery measurement won't be correct.
+.SH FILES
+.TP
+.I /sys/devices/system/cpu/cpu*/cpufreq
+2.6 kernel cpu frequency interface
+.TP
+.I /proc/cpufreq
+2.4 kernel cpu frequency interface
+.TP
+.I /proc/apm
+kernel power management interface (APM)
+.TP
+.I /proc/acpi
+kernel power management interface (ACPI)
+.TP
+.I /proc/pmu
+kernel power management interface (PMU)
+
+.TP
+.I /etc/cpufreqd.conf
+.B cpufreqd
+configuration file
+.SH SEE ALSO
+.BR cpufreqd.conf (5), syslogd (8)
+.SH BUGS
+Multiple CPUs are not supported.
+Battery can only be specified in percent, not in minutes remaining.
+.SH AUTHOR
+.TP
+George Staikos <staikos@0wned.org>
+.TP
+Mattia Dongili <dongili@supereva.it>
+.TP
+Rene Rebe <rene@rocklinux.org>

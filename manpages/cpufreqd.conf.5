@@ -1,0 +1,243 @@
+.\" Copyright 2002-2003, George Staikos (staikos@0wned.org)
+.\"                      Mattia Dongili (dongili@supereva.it)
+.\"                      Rene Rebe (rene@rocklinux.org)
+.\" This file may be used subject to the terms and conditions of the
+.\" GNU General Public License Version 2, or any later version
+.\" at your option, as published by the Free Software Foundation.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details."
+.TH CPUFREQD.CONF 5 "25 Mar 2003" "" ""
+.SH NAME
+cpufreqd.conf \- configuration file for cpufreqd(1)
+.SH DESCRIPTION
+.I cpufreqd.conf
+is a simple text file containing rules to be used by 
+.B cpufreqd(1).
+
+.B cpufreqd.conf
+is divided into sections identified by [] and separated by
+blank lines. You need at least one [General] section and one or more 
+[Profile] and [Rule] sections.  Each [Rule] depends on previously defined 
+[Profile] subsections.
+
+Rule matching is done in the following way:
+
+.RS
+- the precedence of matching is "ac", "cpu_interval",  "battery_interval", 
+"programs" (from highest to lowest)
+
+- matching "ac" will gain 8 hits, "cpu_interval" 4 hits, "battery_interval" 
+2 hits and "programs" 1 hit.  To ensure that the proper rule is
+applied, be sure that rule has the highest score for the
+applicable system state.
+
+- the 1st scan through rules will search for a 15 hits rule
+
+- the 2nd scan will search for more than 7 hits
+
+- the 3rd scan will search for more than 3 hit
+
+- the 4th scan will search for more than 1  hit
+
+- the first rule matching the requirement will have its profile applied
+(remember that the order of rules in your config file is important)
+
+- if no rule matches the current system status, the profile 
+will not be changed
+.RE
+
+.fi
+.sp
+.PP
+Note that no whitespace is allowed between name and value pairs.
+Lines which begin with # are considered comments and ignored.
+.sp
+.SH "SECTIONS"
+.PP
+Acceptable configuration tokens and values include:
+
+.PP
+.SS "[General]"
+.TP
+.B "poll_interval"
+An integer larger than 0, measures the interval between system status reading in seconds. (default: 1)
+
+.TP
+.B "pm_type"
+Can be either 
+.B "apm"
+.B "acpi"
+or
+.B "pmu".
+Depending on this value
+.B cpufreqd
+will try to read from /proc/apm, /proc/acpi or /proc/pmu.  You will need to enable power
+management in your kernel configuration. (default: apm)
+
+.TP
+.B "pidfile"
+Specifies the file to write as its process identification file. (default: /var/run/cpufreqd.pid)
+
+.TP
+.B "acpi_workaround"
+0 or 1 meaning disable and enable respectively. (default: 0) As some ACPI implementations are very cpu-consuming when reading the info file of system batteries. Cpufreqd implements a simple workaround that avoids reading that file except on initialization or reinitialization. This has the effect of needing to send an HUP signal if inserting a new battery, otherwise battery measurement won't be correct.
+
+
+.TP
+.B "verbosity"
+Verbosity level from 0 (less verbose) to 7 (most verbose), the default value only prints 
+warning/error/critical messages. (default: 4)
+
+.sp
+.PP
+.SS "[Profile]"
+
+.TP
+.B "name"
+An arbitrary and unique name for your profile. [REQUIRED]
+
+.TP
+.B "minfreq"
+An integer value representing the minimum frequency to set in /proc/cpufreq. This value can be both a percentage of the CPU full capacity or frequency in kHz, if you are using the 2.4 /proc/cpufreq interface, while it must be a frequency in kHz if you are using the newer sysfs interface available in 2.6 kernels. [REQUIRED]
+
+.TP
+.B "maxfreq"
+An integer value representing the maximum frequency to set in /proc/cpufreq. This value can be both a percentage of the CPU full capacity or frequency in kHz, if you are using the 2.4 /proc/cpufreq interface, while it must be a frequency in kHz if you are using the newer sysfs interface available in 2.6 kernels. [REQUIRED]
+
+.TP
+.B "policy"
+Can be
+.B "powersave"
+or
+.B "performance"
+or any of the governors you compiled (see Documentation/cpufreq in your kernel
+source tree for more information).  The CPU will be optimised for power saving
+or performance accordingly. [REQUIRED]
+
+.sp
+.PP
+.SS "[Rule]"
+
+.TP
+.B "name"
+An arbitrary and unique name for your rule. [REQUIRED]
+
+.TP
+.B "ac"
+Can be
+.B "on"
+or
+.B "off."
+The rule will have a higher score if the A/C adapter is on or off as defined in this setting. (default: off)
+
+.TP
+.B "programs"
+The rule will have a higher score if one of the listed processes is running. 
+This is a comma separated list.  No white space is allowed between values.
+.B cpufreqd
+will try to match each process name with the configured process list. If you need to match against program from a specific location you have to supply the full path as search pattern.
+
+.TP
+.B "cpu_interval"
+The rule will have a higher score if cpu usage is between the values
+provided.  Must be of the form %d-%d (e.g.: 10-100). Rules with overlapping
+cpu_intervals are allowed. (default 0-0 )
+
+.TP
+.B "battery_interval"
+The rule will have a higher score if battery percentage is between the values
+provided.  Must be of the form %d-%d (e.g.: 10-100). (default 0-0)
+
+.TP
+.B "profile"
+A character string that must match a [Profile] section name property. [REQUIRED]
+
+.SH EXAMPLE
+.RS
+.sp
+.nf
+.ne 7
+# cpufreqd.conf sample
+
+# this is a comment
+[General]
+pidfile=/var/run/cpufreqd.pid
+poll_interval=2
+pm_type=acpi
+verbosity=5 #(if you want a minimal logging)
+
+[Profile]
+name=hi_boost
+minfreq=0%
+maxfreq=100%
+policy=performance
+
+[Profile]
+name=medium_boost
+minfreq=33%
+maxfreq=66%
+policy=performance
+
+[Profile]
+name=lo_boost
+minfreq=0%
+maxfreq=33%
+policy=performance
+
+[Profile]
+name=lo_power
+minfreq=0%
+maxfreq=33%
+policy=powersave
+
+# conservative mode when not AC
+[Rule]
+name=conservative
+ac=off                   # (on/off)
+battery_interval=0-100
+cpu_interval=0-40
+profile=lo_boost
+
+# need some power
+[Rule]
+name=lo_cpu_boost
+ac=off                   # (on/off)
+battery_interval=0-100
+cpu_interval=30-80
+profile=medium_boost
+
+# need big power (not if battery very low)
+[Rule]
+name=hi_cpu_boost
+ac=off                   # (on/off)
+battery_interval=30-100
+cpu_interval=70-100
+profile=medum_boost
+
+# full power when AC
+[Rule] 
+name=AC_on
+ac=on                   # (on/off)
+profile=hi_boost
+
+# full power when watching DVDs and not AC
+[Rule]
+name=dvd_watching
+ac=off                   # (on/off)
+battery_interval=0-100
+cpu_interval=0-100
+programs=xine,mplayer
+profile=hi_boost
+
+.fi
+.sp
+.RE
+.PP
+.SH SEE ALSO
+.BR cpufreqd(8)
+.SH AUTHOR
+George Staikos <staikos@0wned.org>
+
+Mattia Dongili <dongili@supereva.it>
