@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2002,2003,2004  Mattia Dongili<dongili@supereva.it>
- *                                George Staikos <staikos@0wned.org>
+ *  Copyright (C) 2002-2005  Mattia Dongili<dongili@supereva.it>
+ *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,17 +36,17 @@
 
 /* default configuration */
 struct cpufreqd_conf configuration = {
-  .config_file = CPUFREQD_CONFDIR"cpufreqd.conf",
-  .pidfile = "b",
-  .cpu_num = 1,
-  .poll_interval = DEFAULT_POLL,
-  .has_sysfs = 1,
-  .no_daemon = 0,
+  .config_file          = CPUFREQD_CONFDIR"cpufreqd.conf",
+  .pidfile              = "b",
+  .cpu_num              = 1,
+  .poll_interval        = DEFAULT_POLL,
+  .has_sysfs            = 1,
+  .no_daemon            = 0,
   .log_level_overridden = 0,
-  .log_level = DEFAULT_VERBOSITY,
-  .acpi_workaround=0,
-  .print_help = 0,
-  .print_version = 0
+  .log_level            = DEFAULT_VERBOSITY,
+  .acpi_workaround      = 0,
+  .print_help           = 0,
+  .print_version        = 0
 };
 
 static int force_reinit = 0;
@@ -359,9 +359,11 @@ int main (int argc, char *argv[]) {
   struct NODE *nd = NULL;
   struct NODE *n1 = NULL;
   struct sigaction signal_action;
-  struct plugin_obj *o_plugin;
-  struct rule_en *re;
-  unsigned int i;
+  struct plugin_obj *o_plugin = NULL;
+  struct rule *tmp_rule = NULL;
+  struct profile *current_profile=NULL, *tmp_profile=NULL;
+  struct rule_en *re = NULL;
+  unsigned int i=0, tmp_score=0;
   int ret = 0;
 
   /* 
@@ -436,12 +438,15 @@ int main (int argc, char *argv[]) {
   memset(configuration.limits, 0, configuration.cpu_num * sizeof(struct cpufreq_limits));
   for (i=0; i<configuration.cpu_num; i++) {
     /* if one of the probes fails remove all the others also */
-    if (cpufreq_get_hardware_limits(i, &(configuration.limits->min), &(configuration.limits->max))!=0) {
+    if (cpufreq_get_hardware_limits(i, &((configuration.limits+i)->min), &((configuration.limits+i)->max))!=0) {
       /* TODO: if libcpufreq fails try to read /proc/cpuinfo and warn about this not baing reliable */
       cpufreqd_log(LOG_WARNING, "Unable to get hardware frequency limits for CPU%d.\n", i);
       free(configuration.limits);
       configuration.limits = NULL;
       break;
+    } else {
+      cpufreqd_log(LOG_INFO, "Limits for cpu%d: MIN=%lu - MAX=%lu\n", i, 
+          (configuration.limits+i)->min, (configuration.limits+i)->max);
     }
   }
 
@@ -512,23 +517,43 @@ int main (int argc, char *argv[]) {
     /* got objects and config now test it, call plugin->eval for each rule */
     /* O(rules*entries) */
     for (nd=configuration.rules.first; nd!=NULL; nd=nd->next) {
-      for (n1=((struct rule*)nd->content)->entries.first; n1!=NULL; n1=n1->next) {
+      tmp_rule = (struct rule*)nd->content;
+      /* reset the score before counting */
+      tmp_rule->score = 0;
+      tmp_score = 0;
+      cpufreqd_log(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
+
+      for (n1=tmp_rule->entries.first; n1!=NULL; n1=n1->next) {
         re = (struct rule_en *)n1->content;
 
         /* compute scores for rules and keep the highest */
         if (re->eval(re->obj) == MATCH) {
-          ((struct rule*)nd->content)->score++;
-          cpufreqd_log(LOG_INFO, "Rule %s matches entry.\n", ((struct rule*)nd->content)->name);
+          tmp_rule->score++;
+          cpufreqd_log(LOG_INFO, "Rule \"%s\" matches entry.\n", tmp_rule->name);
         }
-      }
-      cpufreqd_log(LOG_INFO, "Rule %s score: %d\n", ((struct rule*)nd->content)->name, 
-          ((struct rule*)nd->content)->score++);
-      /* reset the score for the next run */
-      ((struct rule*)nd->content)->score = 0;
-    }
-    /* TODO: set the policy associated with the highest score */
-    /* ... */
+      } /* end foreach rule entry */
 
+      if (tmp_rule->score > tmp_score) {
+        tmp_profile = tmp_rule->prof;
+        tmp_score = tmp_rule->score;
+      }
+
+      cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d\n", ((struct rule*)nd->content)->name, 
+          ((struct rule*)nd->content)->score++);
+    } /* end foreach rule */
+
+    /* set the policy associated with the highest score */
+    if (tmp_profile==NULL)
+      cpufreqd_log(LOG_WARNING, "No Rule matches current system status.\n");
+    else if (tmp_profile == current_profile)
+      cpufreqd_log(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
+          current_profile->name, tmp_profile->name);
+    else {
+      current_profile = tmp_profile;
+      cpufreqd_set_profile(current_profile);
+    }
+
+    tmp_profile = NULL;
     sleep(configuration.poll_interval);
   }
   
@@ -536,8 +561,9 @@ int main (int argc, char *argv[]) {
    *  Unload plugins
    */
   for (nd=configuration.plugins.first; nd!=NULL; nd=nd->next) {
-    finalize_plugin((struct plugin_obj*)nd->content);
-    close_plugin((struct plugin_obj*)nd->content);
+    o_plugin = (struct plugin_obj*)nd->content;
+    finalize_plugin(o_plugin);
+    close_plugin(o_plugin);
   }
 
   /*

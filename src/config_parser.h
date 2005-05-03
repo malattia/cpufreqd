@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2002,2003,2004  Mattia Dongili<dongili@supereva.it>
- *                                George Staikos <staikos@0wned.org>
+ *  Copyright (C) 2002-2005  Mattia Dongili <malattia@gmail.com>
+ *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ struct profile {
 struct rule {
   char name[MAX_STRING_LEN];
   char profile_name[MAX_STRING_LEN];
-  struct LIST entries;
+  struct LIST entries; /* list of struct rule_en */
   struct profile *prof;
   unsigned int score;
 };

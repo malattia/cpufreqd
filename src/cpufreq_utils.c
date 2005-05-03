@@ -6,9 +6,20 @@
 #include "cpufreqd_log.h"
 #include "cpufreq_utils.h"
 
-/* sets the input policy */
-int cpufreqd_set_policy (struct cpufreq_policy *policy) {
+extern struct cpufreqd_conf configuration;
 
+/* sets the input policy */
+int cpufreqd_set_profile (struct profile *p) {
+  unsigned int i;
+  /* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
+  for (i=0; i<configuration.cpu_num; i++) {
+    /* TODO: check return value */
+    if (cpufreq_set_policy(i, &(p->policy)))
+      cpufreqd_log(LOG_INFO, "Profile \"%s\" set for cpu%d\n", p->name, i);
+    else
+      cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", p->name, i);
+  }
+  
   return 0;
 }
 

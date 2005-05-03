@@ -22,7 +22,7 @@ struct battery_info {
   char path[100];
 };
 
-static struct battery_info *infos  = 0L;
+static struct battery_info *infos   = 0L;
 static int bat_num                  = 0;
 static int battery_level            = 0;
 
@@ -130,7 +130,7 @@ static int acpi_battery_init(void) {
 
   } else {
     acpi_battery.cfdprint(LOG_ERR, "acpi_battery_init() - no batteries found, not a laptop?\n");
-    acpi_battery.cfdprint(LOG_ERR, "acpi_battery_init() -  exiting.\n");
+    acpi_battery.cfdprint(LOG_ERR, "acpi_battery_init() - exiting.\n");
     return -1;
   }
   

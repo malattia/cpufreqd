@@ -403,12 +403,13 @@ int parse_config_rule (FILE *config, struct rule *r) {
       strncpy(r->profile_name, value, MAX_STRING_LEN);
       r->profile_name[MAX_STRING_LEN-1] = '\0';
       state |= HAS_PROFILE;
+
     } else if (strcmp(name,"name") == 0) {
       strncpy(r->name, value, MAX_STRING_LEN);
       r->name[MAX_STRING_LEN-1] = '\0';
       state |= HAS_NAME;
-    } else {
 
+    } else {
       /* foreach plugin */
       for (n=configuration.plugins.first; n!=NULL; n=n->next) {
         o_plugin = (struct plugin_obj*)n->content;
