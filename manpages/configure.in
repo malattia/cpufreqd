@@ -1,0 +1,9 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT([cpufreqd],[2.0.0],[malattia@gmail.com], [cpufreqd])
+AC_CANONICAL_TARGET([])
+
+AM_INIT_AUTOMAKE(1.6 dist-bzip2)
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
+

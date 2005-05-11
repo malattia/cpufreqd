@@ -19,13 +19,17 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <dirent.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <errno.h>
 #include "cpufreqd_plugin.h"
 #include "cpufreqd.h"
 
-#define APM_FILE "/proc/apm"
+#define APM_PROC_FILE "/proc/apm"
+#define PLUGGED   1
+#define UNPLUGGED 0
 
 struct battery_interval {
   int min, max;
@@ -33,7 +37,7 @@ struct battery_interval {
 
 static int battery_present;
 static int battery_percent;
-static int ac_state;
+static unsigned int ac_state;
 
 static int apm_init(void);
 static int apm_exit(void);
@@ -88,28 +92,29 @@ static int apm_update(void) {
   char buf[101];
   
   /***** APM SCAN *****/
-  char ignore3[101];
   int ignore;
   unsigned int ignore2;
+  char ignore3[101];
   unsigned int batt_flag;
     
   apm.cfdprint(LOG_DEBUG, "%s - update() called\n", apm.plugin_name);
 
   fp = fopen(APM_PROC_FILE , "r");
   if (!fp) {
-    cp_log(LOG_ERR, "scan_system_info(): %s: %s\n", APM_PROC_FILE, strerror(errno));
+    apm.cfdprint(LOG_ERR, "scan_system_info(): %s: %s\n", APM_PROC_FILE, strerror(errno));
     return -1;
   }
     
   if (!fgets(buf, 100, fp)) {
     fclose(fp);
-    cp_log(LOG_ERR, "scan_system_info(): %s: %s\n", APM_PROC_FILE, strerror(errno));
+    apm.cfdprint(LOG_ERR, "scan_system_info(): %s: %s\n", APM_PROC_FILE, strerror(errno));
     return -1;
   }
     
   sscanf(buf, "%s %d.%d %x %x %x %x %d%% %d %s\n",
-                    ignore3, &ignore, &ignore, &ignore, ac_state, &ignore2,
-                    &batt_flag, battery_percent, &ignore, ignore3);
+                    ignore3, &ignore, &ignore,
+                    &ignore2, &ac_state, &ignore2, &batt_flag,
+                    &battery_percent, &ignore, ignore3);
 
   if (battery_percent > 100) {
     battery_percent = -1;
@@ -119,7 +124,7 @@ static int apm_update(void) {
     
   fclose(fp);
   
-  cp_log(LOG_INFO, "scan_system_info(): battery %s - %d - ac: %s\n",
+  apm.cfdprint(LOG_INFO, "scan_system_info(): battery %s - %d - ac: %s\n",
                     battery_present?"present":"absent", 
                     battery_percent, 
                     ac_state?"on-line":"off-line");
@@ -130,7 +135,7 @@ static int apm_update(void) {
  *  parse the 'ac' keywork
  */
 static int apm_ac_parse(const char *ev, void **obj) {
-  int *ret = malloc(sizeof(int));
+  unsigned int *ret = malloc(sizeof(int));
   if (ret == NULL) {
     apm.cfdprint(LOG_ERR, 
         "%s - apm_ac_parse() couldn't make enough room for ac_status (%s)\n",
@@ -164,7 +169,7 @@ static int apm_ac_parse(const char *ev, void **obj) {
  *  evaluate the 'ac' keywork
  */
 static int apm_ac_evaluate(const void *s) {
-  const int *ac = (const int *)s;
+  const unsigned int *ac = (const unsigned int *)s;
   
   apm.cfdprint(LOG_DEBUG, "%s - evaluate() called: %s [%s]\n",
       apm.plugin_name, *ac==PLUGGED ? "on" : "off", ac_state==PLUGGED ? "on" : "off");
@@ -210,9 +215,9 @@ static int apm_bat_evaluate(const void *s) {
   const struct battery_interval *bi = (const struct battery_interval *)s;
   
   apm.cfdprint(LOG_DEBUG, "%s - apm_bat_evaluate() called: %d-%d [%d]\n",
-      apm.plugin_name, bi->min, bi->max, battery_level);
+      apm.plugin_name, bi->min, bi->max, battery_percent);
 
-  return (battery_level>=bi->min && battery_level<=bi->max) ? MATCH : DONT_MATCH;
+  return (battery_percent>=bi->min && battery_percent<=bi->max) ? MATCH : DONT_MATCH;
 }
 
 struct cpufreqd_plugin *create_plugin (void) {

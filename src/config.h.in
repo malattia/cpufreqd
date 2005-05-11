@@ -1,4 +1,4 @@
-/* src/config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.in by autoheader.  */
 
 /* Define this to configuration dir location */
 #undef CPUFREQD_CONFDIR
