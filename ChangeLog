@@ -1,7 +1,8 @@
 version 2.0.0
 -------------
-* fully refactored to support a better plugin infraatructure. Now plugins are
-more atomic wrt features and one can select single resources to monitor.
+* fully refactored to support a better plugin infraatructure. Now plugins can
+be atomic wrt features and one can select single resources to monitor. More
+plugins available, see docs for more.
 
 version 1.2.0
 -------------

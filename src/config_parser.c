@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2002,2003,2004  Mattia Dongili<dongili@supereva.it>
- *                                George Staikos <staikos@0wned.org>
+ *  Copyright (C) 2002-2005  Mattia Dongili <malattia@gmail.com>
+ *                           George Staikos <staikos@0wned.org>
  *  2004.10.12
  *  - reworked to support new plugin architecture
  *    by Mattia Dongili

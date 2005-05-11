@@ -15,7 +15,7 @@ EXTRA_DIST = cpufreqd.conf \
 #             examples/cpufreqd.conf-2.4 \
 #             examples/cpufreqd.conf-2.6
 
-SUBDIRS = src
+SUBDIRS = src manpages
 
 #man8_MANS = manpages/cpufreqd.8
 #man5_MANS = manpages/cpufreqd.conf.5

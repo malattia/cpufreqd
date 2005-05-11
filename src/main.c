@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili<dongili@supereva.it>
+ *  Copyright (C) 2002-2005  Mattia Dongili <malattia@gmail.com>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -543,12 +543,12 @@ int main (int argc, char *argv[]) {
     } /* end foreach rule */
 
     /* set the policy associated with the highest score */
-    if (tmp_profile==NULL)
+    if (tmp_profile==NULL) {
       cpufreqd_log(LOG_WARNING, "No Rule matches current system status.\n");
-    else if (tmp_profile == current_profile)
+    } else if (tmp_profile == current_profile) {
       cpufreqd_log(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
           current_profile->name, tmp_profile->name);
-    else {
+    } else {
       current_profile = tmp_profile;
       cpufreqd_set_profile(current_profile);
     }

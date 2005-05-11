@@ -18,7 +18,11 @@ lib_LTLIBRARIES = \
 									cpufreqd_acpi_battery.la \
                   cpufreqd_acpi_temperature.la \
 									cpufreqd_acpi_ac.la \
+									cpufreqd_apm.la \
                   cpufreqd_cpu.la
+
+cpufreqd_apm_la_SOURCES = \
+								cpufreqd_apm.c
 
 cpufreqd_acpi_ac_la_SOURCES = \
 								cpufreqd_acpi_ac.c

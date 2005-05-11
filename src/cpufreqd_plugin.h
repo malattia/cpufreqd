@@ -1,5 +1,24 @@
+/*
+ *  Copyright (C) 2002-2005  Mattia Dongili <malattia@gmail.com>
+ *                           George Staikos <staikos@0wned.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
-/*  Note: gestione della riga di una regola?? Ogni plugin deve fornire
+/*  ...Sorry... notes in italian.
+ *  Note: gestione della riga di una regola?? Ogni plugin deve fornire
  *  le keyword associate ad esso. Deve inoltre fornire essere in grado
  *  di dire se il valore attuale letto e' confacente la regola che il
  *  core sta analizzando.
@@ -47,7 +66,7 @@ struct cpufreqd_keyword {
 };
 
 /*
- *  A cpufreqd plugin is a collection of function and setting able to
+ *  A cpufreqd plugin is a collection of functions and settings able to
  *  monitor some kind of system resource/state and tell if the present
  *  state is conformant to the one configured.
  *  cpufreqd plugins must be decalared static to avoid symbol clashes.
@@ -57,10 +76,10 @@ struct cpufreqd_plugin {
   /****************************************
    *  PLUGIN IDENTIFICATION AND SETTINGS  *
    ****************************************/
-  /* plugin name, must be unique (see README.plugins) */
+  /* plugin name, must be unique (see README.plugins?) */
   const char *plugin_name;
   
-  /* char array of keywords triggering the parse function */
+  /* array of keywords handled by this plugin */
   struct cpufreqd_keyword *keywords;
 
   /* Interval between each poll (ms) */
@@ -81,10 +100,7 @@ struct cpufreqd_plugin {
   /* Plugin cleanup */
   int (*plugin_exit) (void);
 
-  /* Update plugin data. Must return either
-   * CPUFREQD_SYS_STATUS_UNCHANGED or CPUFREQD_SYS_STATUS_CHANGED. The
-   * return value will eventually trigger a CPUFREQD_EVENT_SYS_CHANGE
-   * event */
+  /* Update plugin data */
   int (*plugin_update) (void);
 
   /************************
@@ -99,7 +115,7 @@ struct cpufreqd_plugin {
 
 /*
  *  A cpufreqd plugin MUST define the following function to provide the
- *  core cpufred with the correct struct cpufreqd_plugin structure
+ *  core cpufreqd with the correct struct cpufreqd_plugin structure
  */
 struct cpufreqd_plugin *create_plugin(void);
 
