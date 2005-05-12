@@ -9,10 +9,10 @@ config.h.in
 stamp-h.in
 config.h.in~
 aclocal.m4
+src/aclocal.m4
+manpages/aclocal.m4
 config.h
 Makefile
-config_parser.o
-main.o
 stamp-h.in
 .libs
 .deps
@@ -31,3 +31,8 @@ src/*.la
 *.o
 *.lo
 *.la
+manpages/Makefile.in
+manpages/aclocal.m4
+manpages/configure
+src/aclocal.m4
+src/configure
