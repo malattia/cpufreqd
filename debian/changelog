@@ -1,3 +1,10 @@
+cpufreqd (1.2.3-1) unstable; urgency=low
+
+    * New upstrem release
+    * Ship cpufreq.conf with no unimplemented options (closes: #307650)
+
+ -- Mattia Dongili <malattia@debian.org>  Sat, 14 May 2005 21:04:10 +0200
+
 cpufreqd (1.2.2-3) unstable; urgency=low
 
     * Changed Maintainer address to the new shining @d.o
