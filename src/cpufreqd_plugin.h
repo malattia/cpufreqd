@@ -60,7 +60,8 @@ struct cpufreqd_keyword {
 
   /* function pointer to the evaluator. ev is the structure provided by 
    * the parse function and that represent the system state that must eventually
-   * be matched. If the system state matches the function must return 1 otherwise 0.
+   * be matched. If the system state matches the function must return MATCH (1) 
+   * otherwise DONT_MATCH (0).
    */
   int (*evaluate) (const void *ev);
 };
