@@ -1,3 +1,11 @@
+cpufreqd (1.2.3-2) unstable; urgency=high
+  
+  * Added Vietnamese debconf translation (closes: #310147)
+  * Corrected a typo in debconf templates (also cleared in translations)
+    (closes: #310149)
+
+ -- Mattia Dongili <malattia@debian.org>  Sun, 22 May 2005 14:47:18 +0200
+
 cpufreqd (1.2.3-1) unstable; urgency=low
 
     * New upstrem release
