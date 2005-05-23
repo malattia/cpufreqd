@@ -15,38 +15,44 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 
-#.Type: note
-#.Description
-#:../templates:4
+#. Type: note
+#. Description
+#: ../templates:4
 msgid "Unable to find a Power Management interface in your kernel."
 msgstr "Không tìm thấy giao diện Quản lý Năng lượng trong hạt nhân bạn."
 
-#.Type: note
-#.Description
-#:../templates:4
+#. Type: note
+#. Description
+#: ../templates:4
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
 " 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
-msgstr "Sẽ không khởi chạy trình nền (dæmon) Cpufreq(d) thì hãy hiệu lực ACPI, APM hay PMU trong hạt nhân bạn và:\n"
-"1. chạy lệnh «dpkg-reconfigure cpufreqd» để được một cấu hình tự động đơn giản, hoặc\n"
+msgstr ""
+"Sẽ không khởi chạy trình nền (dæmon) Cpufreq(d) thì hãy hiệu lực ACPI, APM "
+"hay PMU trong hạt nhân bạn và:\n"
+"1. chạy lệnh «dpkg-reconfigure cpufreqd» để được một cấu hình tự động đơn "
+"giản, hoặc\n"
 "2. tự sửa đổi tập tin /etc/cpufreqd.conf và chạy «dpkg-reconfigure cpufreqd»."
 
-#.Type: note
-#.Description
-#:../templates:12
+#. Type: note
+#. Description
+#: ../templates:12
 msgid "Unable to find a CpuFreq interface in your kernel."
 msgstr "Không tìm thấy giao diện CpuFreq trong hạt nhận bạn."
 
-#.Type: note
-#.Description
-#:../templates:12
+#. Type: note
+#. Description
+#: ../templates:12
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
 " 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
-msgstr "Sẽ không khởi chạy trình nền (dæmon) Cpufreq(d) thì hãy hiệu lực một trình hỗ trợ thiết bị CpuFreq trong hạt nhân bạn và:\n"
-"1. chạy lệnh «dpkg-reconfigure cpufreqd» để được một cấu hình tự động đơn giản, hoặc\n"
+msgstr ""
+"Sẽ không khởi chạy trình nền (dæmon) Cpufreq(d) thì hãy hiệu lực một trình "
+"hỗ trợ thiết bị CpuFreq trong hạt nhân bạn và:\n"
+"1. chạy lệnh «dpkg-reconfigure cpufreqd» để được một cấu hình tự động đơn "
+"giản, hoặc\n"
 "2. tự sửa đổi tập tin /etc/cpufreqd.conf và chạy «dpkg-reconfigure cpufreqd»."

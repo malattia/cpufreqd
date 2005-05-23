@@ -27,7 +27,8 @@ msgstr ""
 #. Description
 #: ../templates:4
 msgid "Unable to find a Power Management interface in your kernel."
-msgstr "Impossibile trovare l'interfaccia per la gestione energetica nel kernel. "
+msgstr ""
+"Impossibile trovare l'interfaccia per la gestione energetica nel kernel. "
 
 #. Type: note
 #. Description
@@ -38,15 +39,20 @@ msgid ""
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
 " 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
 msgstr ""
-" Cpufreqd non verra` avviato, abilita il supporto per ACPI, APM o PMU nel kernel e\n"
-" 1. esegui dpkg-reconfigure cpufreqd per avere una semplice configurazione automatica oppure\n"
-" 2. modifica manualmente il file /etc/cpufreqd.conf ed esegui dpkg-reconfigure cpufreqd."
+" Cpufreqd non verra` avviato, abilita il supporto per ACPI, APM o PMU nel "
+"kernel e\n"
+" 1. esegui dpkg-reconfigure cpufreqd per avere una semplice configurazione "
+"automatica oppure\n"
+" 2. modifica manualmente il file /etc/cpufreqd.conf ed esegui dpkg-"
+"reconfigure cpufreqd."
 
 #. Type: note
 #. Description
 #: ../templates:12
 msgid "Unable to find a CpuFreq interface in your kernel."
-msgstr "Impossibile trovare l'interfaccia per la gestione della frequenza del processore nel kernel."
+msgstr ""
+"Impossibile trovare l'interfaccia per la gestione della frequenza del "
+"processore nel kernel."
 
 #. Type: note
 #. Description
@@ -57,6 +63,9 @@ msgid ""
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
 " 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
 msgstr ""
-" Cpufreqd non verra` avviato, abilita il supporto per la gestione della frequenza (CPUFreq) nel kernel e\n"
-" 1. esegui dpkg-reconfigure cpufreqd per avere una semplice configurazione automatica oppure\n"
-" 2. modifica manualmente il file /etc/cpufreqd.conf ed esegui dpkg-reconfigure cpufreqd."
+" Cpufreqd non verra` avviato, abilita il supporto per la gestione della "
+"frequenza (CPUFreq) nel kernel e\n"
+" 1. esegui dpkg-reconfigure cpufreqd per avere una semplice configurazione "
+"automatica oppure\n"
+" 2. modifica manualmente il file /etc/cpufreqd.conf ed esegui dpkg-"
+"reconfigure cpufreqd."

@@ -1,8 +1,9 @@
-cpufreqd (1.2.3-2) unstable; urgency=high
+cpufreqd (1.2.3-2) unstable; urgency=medium
   
   * Added Vietnamese debconf translation (closes: #310147)
   * Corrected a typo in debconf templates (also cleared in translations)
     (closes: #310149)
+  * Urgency set to medium to let the package into sarge as soon as possible.
 
  -- Mattia Dongili <malattia@debian.org>  Sun, 22 May 2005 14:47:18 +0200
 
