@@ -320,8 +320,8 @@ int read_args (int argc, char *argv[]) {
  */
 void print_version(const char *me) {
   printf("%s version "__CPUFREQD_VERSION__".\n", me);
-  printf("Copyright 2002,2003,2004 Mattia Dongili <dongili@supereva.it>\n"
-	    	 "                         George Staikos <staikos@0wned.org>\n");
+  printf("Copyright 2002,2003,2004 Mattia Dongili <malattia@gmail.com>\n"
+	 "                         George Staikos <staikos@0wned.org>\n");
 }
 
 /*  void print_help(const char *me)
@@ -335,7 +335,7 @@ void print_help(const char *me) {
 "  -D, --no-daemon              stay in foreground and print log to stdout (used to debug)\n"
 "  -V, --verbosity              verbosity level from 0 (less verbose) to 7 (most verbose)\n"
 "\n"
-"Report bugs to Mattia Dongili <dongili@supereva.it>.\n", me);
+"Report bugs to Mattia Dongili <malattia@gmail.com>.\n", me);
 }
 
 void term_handler(int signo) {
@@ -532,20 +532,21 @@ int main (int argc, char *argv[]) {
         /* compute scores for rules and keep the highest */
         if (re->eval(re->obj) == MATCH) {
           tmp_rule->score++;
-          cpufreqd_log(LOG_INFO, "Rule \"%s\" matches entry.\n", tmp_rule->name);
+          cpufreqd_log(LOG_DEBUG, "Rule \"%s\" matches entry.\n", tmp_rule->name);
         }
       } /* end foreach rule entry */
 
       /* calculate score on a percentage base 
        * so that a single entry rule might be the best match
        */
-      if ((100*tmp_rule->score)/i > tmp_score) {
+      if ( tmp_rule->score+(100*tmp_rule->score)/i > tmp_score) {
         tmp_profile = tmp_rule->prof;
-        tmp_score = (100*tmp_rule->score)/i;
+        tmp_score = tmp_rule->score + (100 * tmp_rule->score) / i;
       }
 
       cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name,
 		      (100*tmp_rule->score)/i);
+
     } /* end foreach rule */
 
     /* set the policy associated with the highest score */

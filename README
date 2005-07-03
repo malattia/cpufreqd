@@ -1,6 +1,6 @@
 cpufreqd-2.0.0
 
-Please report any bug and suggestion to <dongili@supereva.it>.
+Please report any bug and suggestion to <malattia@gmail.com>.
 
 cpufreqd is meant to be a replacement of the speedstep applet you can find on
 some other OS, it monitors cpu usage, battery level, AC state and running
@@ -15,5 +15,5 @@ http://sf.net/projects/acpi while CPUFreq is available through recent  -ac
 kernels (that include ACPI too) or as patches at
 http://codemonkey.org.uk/projects/cpufreq.
 
-Copyright (C) 2002,2003,2004  Mattia Dongili<dongili@supereva.it>
+Copyright (C) 2002-2005  Mattia Dongili<malattia@gmail.com>
                               George Staikos <staikos@0wned.org>
