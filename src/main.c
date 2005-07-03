@@ -59,6 +59,8 @@ int init_configuration(void) {
   FILE *fp_config;
   struct NODE *n, *np_iter, *nr_iter;
   struct plugin_obj *o_plugin;
+  struct profile *tmp_profile;
+  struct rule *tmp_rule;
   char buf[256];
 
   /* configuration file */
@@ -119,19 +121,20 @@ int init_configuration(void) {
         return -1;
       }
       /* create governor string */
-      if ((((struct profile *)n->content)->policy.governor = malloc(MAX_STRING_LEN*sizeof(char))) ==NULL) {
+      tmp_profile = (struct profile *)n->content;
+      if ((tmp_profile->policy.governor = malloc(MAX_STRING_LEN*sizeof(char))) ==NULL) {
         cpufreqd_log(LOG_ERR, "init_configuration(): cannot make enough room for a new Profile governor (%s)\n",
             strerror(errno));
         return -1;
       }
       
-      if ( parse_config_profile(fp_config, n->content) != -1) {
+      if ( parse_config_profile(fp_config, tmp_profile) != -1) {
         /* checks duplicate names */
         for (np_iter=configuration.profiles.first; np_iter!=NULL; np_iter=np_iter->next) {
-          if (strcmp(((struct profile *)np_iter->content)->name, ((struct profile *)n->content)->name) == 0) {
+          if (strcmp(((struct profile *)np_iter->content)->name, tmp_profile->name) == 0) {
             cpufreqd_log(LOG_CRIT, 
                 "init_configuration(): [Profile] name \"%s\" already exists.\n", 
-                ((struct profile *)n->content)->name);
+                tmp_profile->name);
             node_free(n);
             fclose(fp_config);
             return -1;
@@ -160,13 +163,14 @@ int init_configuration(void) {
         return -1;
       }
       
-      if ( parse_config_rule(fp_config, n->content) != -1) {
+      tmp_rule = (struct rule *)n->content;
+      if ( parse_config_rule(fp_config, tmp_rule) != -1) {
         for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {
           /* check duplicate names */
-          if (strcmp(((struct profile *)nr_iter->content)->name, ((struct profile *)n->content)->name) == 0) {
+          if (strcmp(((struct rule *)nr_iter->content)->name, tmp_rule->name) == 0) {
             cpufreqd_log(LOG_CRIT, 
                 "init_configuration(): [Rule] name \"%s\" already exists.\n", 
-                ((struct profile *)n->content)->name);
+                tmp_rule->name);
             node_free(n);
             return -1;
           }
@@ -197,13 +201,13 @@ int init_configuration(void) {
    * go through rules and associate to the proper profile
    */
   for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {
+		tmp_rule = (struct rule *)nr_iter->content;
     int profile_found = 0;
 
     for (np_iter=configuration.profiles.first; np_iter!=NULL; np_iter=np_iter->next) {
-    /* go through profiles */
-      if (strcmp(
-            ((struct rule *)nr_iter->content)->profile_name, 
-            ((struct profile *)np_iter->content)->name)==0) {
+			tmp_profile = (struct profile *)np_iter->content;
+			/* go through profiles */
+      if (strcmp(tmp_rule->profile_name, tmp_profile->name)==0) {
         /* a profile is allowed to be addressed by more than 1 rule */
         ((struct rule *)nr_iter->content)->prof = np_iter->content;
         profile_found = 1;
@@ -213,17 +217,16 @@ int init_configuration(void) {
 
     if (!profile_found) {
       cpufreqd_log(LOG_CRIT, "init_configuration(): Syntax error: no Profile section found for Rule \"%s\" \
-                        (requested Profile \"%s\")\n",
-                       ((struct rule *)nr_iter->content)->name,
-                       ((struct rule *)nr_iter->content)->profile_name);
+                        (requested Profile \"%s\")\n", tmp_rule->name, tmp_rule->profile_name);
       return -1;
     }
   }
 
   for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {
-     cpufreqd_log(LOG_INFO, 
+		tmp_rule = (struct rule *)nr_iter->content;
+    cpufreqd_log(LOG_INFO, 
          "init_configuration(): Rule \"%s\" has Profile \"%s\"\n", 
-         ((struct rule *)nr_iter->content)->name, ((struct rule *)nr_iter->content)->prof->name);
+         tmp_rule->name, tmp_rule->prof->name);
   }
   return 0;
 }
@@ -439,7 +442,7 @@ int main (int argc, char *argv[]) {
   for (i=0; i<configuration.cpu_num; i++) {
     /* if one of the probes fails remove all the others also */
     if (cpufreq_get_hardware_limits(i, &((configuration.limits+i)->min), &((configuration.limits+i)->max))!=0) {
-      /* TODO: if libcpufreq fails try to read /proc/cpuinfo and warn about this not baing reliable */
+      /* TODO: if libcpufreq fails try to read /proc/cpuinfo and warn about this not being reliable */
       cpufreqd_log(LOG_WARNING, "Unable to get hardware frequency limits for CPU%d.\n", i);
       free(configuration.limits);
       configuration.limits = NULL;
@@ -514,12 +517,13 @@ int main (int argc, char *argv[]) {
       }
     }
 
+    tmp_score = 0;
     /* got objects and config now test it, call plugin->eval for each rule */
     /* O(rules*entries) */
     for (nd=configuration.rules.first; nd!=NULL; nd=nd->next) {
       tmp_rule = (struct rule*)nd->content;
       /* reset the score before counting */
-      tmp_rule->score = tmp_score = i = 0;
+      tmp_rule->score = i = 0;
       cpufreqd_log(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
 
       for (n1=tmp_rule->entries.first; n1!=NULL; n1=n1->next) {
@@ -535,13 +539,13 @@ int main (int argc, char *argv[]) {
       /* calculate score on a percentage base 
        * so that a single entry rule might be the best match
        */
-
       if ((100*tmp_rule->score)/i > tmp_score) {
         tmp_profile = tmp_rule->prof;
         tmp_score = (100*tmp_rule->score)/i;
       }
 
-      cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name, tmp_rule->score++);
+      cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name,
+		      (100*tmp_rule->score)/i);
     } /* end foreach rule */
 
     /* set the policy associated with the highest score */
