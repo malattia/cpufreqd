@@ -368,8 +368,8 @@ static int programs_update(void) {
   free(namelist);
   programs.cfdprint(LOG_INFO, "get_running_programs(): read %d processes\n", ret);
   preorder_visit(running_programs, &sweep_unused_node);
-  preorder_visit(running_programs, &debug_tnode);
 #ifdef DEBUG_TREE
+  preorder_visit(running_programs, &debug_tnode);
   preorder_visit(running_programs, &print_tree);
 #endif
   return ret;

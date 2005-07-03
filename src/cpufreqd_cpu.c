@@ -39,9 +39,9 @@ static int cpu_parse(const char *ev, void **obj);
 static int cpu_evaluate(const void *s);
 static int get_cpu(void);
 
-static unsigned int c_user, c_nice, c_sys;
-static unsigned int old_weighted_activity, old_time, delta_time, kernel_version;
-static unsigned long int delta_activity=0, weighted_activity=0;
+static unsigned int c_user, c_nice, c_sys, c_time;
+static unsigned int c_user_old, c_nice_old, c_sys_old, c_time_old;
+static unsigned int delta_time, kernel_version;
 
 static struct cpufreqd_keyword kw[] = {
   { .word = "cpu", .parse = &cpu_parse,   .evaluate = &cpu_evaluate },
@@ -132,8 +132,15 @@ static int cpu_parse(const char *ev, void **obj) {
 
 static int cpu_evaluate(const void *s) {
   int cpu_percent = 0;
+	unsigned int weighted_activity_old = 0;
+	unsigned long int delta_activity = 0, weighted_activity = 0;
+
   const struct cpu_interval *c = (const struct cpu_interval *) s;
 
+  weighted_activity = c_user + c_nice / c->nice_scale + c_sys;
+	weighted_activity_old = c_user_old + c_nice_old / c->nice_scale + c_sys_old;
+  delta_activity = weighted_activity - weighted_activity_old;
+  
   cpu_plugin.cfdprint(LOG_DEBUG,
          "cpu_evaluate(): CPU delta_activity=%d delta_time=%d weighted_activity=%d.\n",
          delta_activity, delta_time, weighted_activity);
@@ -155,10 +162,15 @@ static int get_cpu(void) {
   
   FILE* fp;
   int f;
-  unsigned int c_time=0;
   unsigned long int c_idle=0, c_iowait=0, c_irq=0, c_softirq=0; /* for linux 2.6 only */
 
   cpu_plugin.cfdprint(LOG_DEBUG, "%s - update() called\n", cpu_plugin.plugin_name);
+
+  c_user_old = c_user;
+  c_nice_old = c_nice;
+  c_sys_old = c_sys;
+  c_time_old = c_time;
+  
   /* read raw jiffies... */
   fp = fopen ("/proc/stat", "r");
   if (!fp) {
@@ -176,16 +188,19 @@ static int get_cpu(void) {
   cpu_plugin.cfdprint(LOG_INFO,
          "get_cpu(): CPU c_user=%d c_nice=%d c_sys=%d c_idle=%d c_iowait=%d c_irq=%d c_softirq=%d.\n",
          c_user, c_nice, c_sys, c_idle, c_iowait, c_irq, c_softirq);
-  /* calculate total jiffies, weight them and save */
+  
+  /* calculate total jiffies */
   c_sys += c_irq + c_softirq;
   c_idle += c_iowait;
   c_time = c_user + c_nice + c_sys + c_idle;
-  delta_time = c_time - old_time;
-  old_time = c_time;
+  /* calculate delta time */
+  delta_time = c_time - c_time_old;
   
+  /*
   weighted_activity = c_user + c_nice / 3 + c_sys;
   delta_activity = weighted_activity - old_weighted_activity;
   old_weighted_activity = weighted_activity;
+  */
 
   return 0;
 }

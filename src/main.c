@@ -82,19 +82,19 @@ int init_configuration(void) {
       if (parse_config_general(fp_config) < 0) {
         return -1;
       } else {
-        /* load plugins here! */
         /*
          *  Load plugins
+	 *  just after having read the General section
+	 *  and before the rest in order to be able to hadle
+	 *  options with them.
          */
         n=configuration.plugins.first;
         while (n != NULL) {
           o_plugin = (struct plugin_obj*)n->content;
-          /* take care!! nasty if statement!! */
-          if (
-              load_plugin(o_plugin)==0 &&
+          /* take care!! if statement!! */
+          if (load_plugin(o_plugin)==0 &&
               get_cpufreqd_object(o_plugin)==0 &&
-              initialize_plugin(o_plugin) == 0
-              ) { 
+              initialize_plugin(o_plugin) == 0) { 
               cpufreqd_log(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
               n=n->next;
               
@@ -429,7 +429,7 @@ int main (int argc, char *argv[]) {
     (configuration.sys_info+i)->frequencies = cpufreq_get_available_frequencies(i);
   }
 
-  /* SMP with different speed cpus awareness */
+  /* SMP: with different speed cpus */
   if ((configuration.limits = malloc(configuration.cpu_num * sizeof(struct cpufreq_limits))) == NULL) {
     cpufreqd_log(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
     ret = 1;
@@ -519,13 +519,12 @@ int main (int argc, char *argv[]) {
     for (nd=configuration.rules.first; nd!=NULL; nd=nd->next) {
       tmp_rule = (struct rule*)nd->content;
       /* reset the score before counting */
-      tmp_rule->score = 0;
-      tmp_score = 0;
+      tmp_rule->score = tmp_score = i = 0;
       cpufreqd_log(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
 
       for (n1=tmp_rule->entries.first; n1!=NULL; n1=n1->next) {
         re = (struct rule_en *)n1->content;
-
+	i++;
         /* compute scores for rules and keep the highest */
         if (re->eval(re->obj) == MATCH) {
           tmp_rule->score++;
@@ -533,13 +532,16 @@ int main (int argc, char *argv[]) {
         }
       } /* end foreach rule entry */
 
-      if (tmp_rule->score > tmp_score) {
+      /* calculate score on a percentage base 
+       * so that a single entry rule might be the best match
+       */
+
+      if ((100*tmp_rule->score)/i > tmp_score) {
         tmp_profile = tmp_rule->prof;
-        tmp_score = tmp_rule->score;
+        tmp_score = (100*tmp_rule->score)/i;
       }
 
-      cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d\n", ((struct rule*)nd->content)->name, 
-          ((struct rule*)nd->content)->score++);
+      cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name, tmp_rule->score++);
     } /* end foreach rule */
 
     /* set the policy associated with the highest score */
@@ -550,7 +552,15 @@ int main (int argc, char *argv[]) {
           current_profile->name, tmp_profile->name);
     } else {
       current_profile = tmp_profile;
+      /* TODO:
+       * Add a pre change event?
+       * Only for the rule entry with best match?
+       */
       cpufreqd_set_profile(current_profile);
+      /* TODO:
+       * Add a post change event?
+       * Only for the rule entry with best match?
+       */
     }
 
     tmp_profile = NULL;

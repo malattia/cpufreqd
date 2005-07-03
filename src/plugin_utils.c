@@ -63,8 +63,8 @@ int get_cpufreqd_object(struct plugin_obj *cp) {
   cpufreqd_log(LOG_INFO, "Getting plugin object for \"%s\".\n", cp->name);
   /* create plugin */
   create = (struct cpufreqd_plugin * (*) (void))dlsym(cp->library, "create_plugin");
-  /* uh! make gcc-3.4 happy with -pedantic... */
-  /**(void **) (&create) = dlsym(cp->library, "create_plugin");*/
+  /* uh! the following makes gcc-3.4 happy with -pedantic... */
+  /* *(void **) (&create) = dlsym(cp->library, "create_plugin"); */
   error = dlerror();
   if (error) {
     cpufreqd_log(LOG_ERR, "get_cpufreqd_object(): %s\n", error);
