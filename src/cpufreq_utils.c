@@ -32,7 +32,7 @@ void cpufreqd_set_profile (struct profile *p) {
   unsigned int i;
   /* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
   for (i=0; i<configuration.cpu_num; i++) {
-    if (cpufreq_set_policy(i, &(p->policy)))
+    if (cpufreq_set_policy(i, &(p->policy)) == 0)
       cpufreqd_log(LOG_INFO, "Profile \"%s\" set for cpu%d\n", p->name, i);
     else
       cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", p->name, i);

@@ -28,24 +28,22 @@
 #include "cpufreqd.h"
 #include "config_parser.h"
 
-extern struct cpufreqd_conf configuration;
-
-/* int write_cpufreqd_pid(void)
+/* int write_cpufreqd_pid(const char *)
  *
  * Writes the pid file.
  *
  * Returns 0 on success, -1 otherwise.
  */
-int write_cpufreqd_pid(void) {
+int write_cpufreqd_pid(const char *pidfile) {
   FILE *pid;
   struct stat sb;
   int rc = 0;
   
   /* check if old pidfile is still there */
-  rc = stat(configuration.pidfile, &sb);
+  rc = stat(pidfile, &sb);
   if (rc == 0) {
     char oldpid[10];
-    pid = fopen(configuration.pidfile, "r");
+    pid = fopen(pidfile, "r");
     /* see if there is a pid already */
     if (fscanf(pid, "%s", oldpid) == 1) {
       FILE *fd;
@@ -70,16 +68,16 @@ int write_cpufreqd_pid(void) {
   umask( S_IXGRP | S_IXOTH | S_IWOTH | S_IWGRP );
 
   /* write pidfile */
-  pid = fopen(configuration.pidfile, "w");
+  pid = fopen(pidfile, "w");
   if (!pid) {
-    cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): %s: %s.\n", configuration.pidfile, strerror(errno));
+    cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): %s: %s.\n", pidfile, strerror(errno));
     return -1;
   }
 
   if (!fprintf(pid, "%d", getpid())) {
     cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): cannot write pid %d.\n", getpid());
     fclose(pid);
-    clear_cpufreqd_pid();
+    clear_cpufreqd_pid(pidfile);
     return -1;
   }
 
@@ -87,16 +85,16 @@ int write_cpufreqd_pid(void) {
   return 0;
 }
 
-/* int clear_cpufreqd_pid(void)
+/* int clear_cpufreqd_pid(const char *)
  *
  * Removes pid file
  *
  * Returns 0 on success, -1 otherwise.
  */
-int clear_cpufreqd_pid(void) {
+int clear_cpufreqd_pid(const char *pidfile) {
         
-  if (unlink(configuration.pidfile) < 0) {
-    cpufreqd_log(LOG_ERR, "clear_cpufreqd_pid(): error while removing %s: %s.\n", configuration.pidfile, strerror(errno));
+  if (unlink(pidfile) < 0) {
+    cpufreqd_log(LOG_ERR, "clear_cpufreqd_pid(): error while removing %s: %s.\n", pidfile, strerror(errno));
     return -1;
   }
 

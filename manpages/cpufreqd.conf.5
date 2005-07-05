@@ -140,7 +140,7 @@ capacities. Available Rule entries:
 .TP
 .B "battery_interval"
 The rule will have a higher score if battery percentage is between the values
-provided.  Must be of the form %d-%d (e.g.: battery_interval=10-100).
+provided. Mustbe of the form %d-%d (e.g.: battery_interval=10-100).
 
 .PP
 .SS "acpi_ac plugin"
@@ -158,8 +158,8 @@ Unfortunately as I don't currently have the necessary harware, if multiple
 thermal zones are reported a medium value is computed. Available Rule entries:
 .TP
 .B "acpi_temperature"
-Can be on or off.  The rule will have a higher score if the A/C adapter is on or
-off as defined in this setting.
+The rule will have a higher score if the temperature percentage is corresponds
+to the provided values. Can be of the form %d-%d (e.g.: acpi_temperature=10-100) or %d.
 
 .PP
 .SS "apm plugin"
@@ -171,7 +171,7 @@ off as defined in this setting.
 .TP
 .B "battery_interval"
 The rule will have a higher score if battery percentage is between the values
-provided.  Must be of the form %d-%d (e.g.: battery_interval=10-100).
+provided. Must be of the form %d-%d (e.g.: battery_interval=10-100).
 
 .PP
 .SS "cpu plugin"
@@ -185,11 +185,9 @@ calculate niced processes cpu usage with the form %d-%d,%f (e.g.:
 cpu_interval=70-100,1.5), default is 3, in this way niced processes will be
 considered 1/3 of their real value.
 
-.TP
-.B
-
 .PP
 .SS "programs plugin"
+Monitors active processes. Available entries:
 .TP
 .B "programs"
  The rule will have a higher score if one of the listed processes is running.

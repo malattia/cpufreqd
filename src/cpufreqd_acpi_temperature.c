@@ -121,10 +121,16 @@ static int acpi_temperature_parse(const char *ev, void **obj) {
   acpi_temperature.cfdprint(LOG_DEBUG, "%s - acpi_temperature_parse() called with: %s\n",
       acpi_temperature.plugin_name, ev);
   
-  sscanf(ev, "%d-%d", &(ret->min), &(ret->max));
-  
-  acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %d-%d\n",
-      acpi_temperature.plugin_name, ret->min, ret->max);
+  if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) == 2) {
+		acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %d-%d\n",
+				acpi_temperature.plugin_name, ret->min, ret->max);
+	} else if (sscanf(ev, "%d", &(ret->min)) == 1) {
+		ret->max = ret->min;
+		acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %d\n",
+				acpi_temperature.plugin_name, ret->min);
+	} else {
+		return -1;
+	}
 
   *obj = ret;
   return 0;

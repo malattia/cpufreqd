@@ -37,7 +37,7 @@
 /* default configuration */
 struct cpufreqd_conf configuration = {
   .config_file          = CPUFREQD_CONFDIR"cpufreqd.conf",
-  .pidfile              = "b",
+  .pidfile              = CPUFREQD_STATEDIR"cpufreqd.pid",
   .cpu_num              = 1,
   .poll_interval        = DEFAULT_POLL,
   .has_sysfs            = 1,
@@ -93,7 +93,7 @@ int init_configuration(void) {
         n=configuration.plugins.first;
         while (n != NULL) {
           o_plugin = (struct plugin_obj*)n->content;
-          /* take care!! if statement!! */
+          /* take care!! if statement badly indented!! */
           if (load_plugin(o_plugin)==0 &&
               get_cpufreqd_object(o_plugin)==0 &&
               initialize_plugin(o_plugin) == 0) { 
@@ -295,6 +295,7 @@ int read_args (int argc, char *argv[]) {
           cpufreqd_log(LOG_ERR, "Error reading command line argument (%s: %s).\n", optarg, strerror(errno));
           return -1;
         }
+	cpufreqd_log(LOG_DEBUG, "Using configuration file at %s\n", configuration.config_file);
         break;
       case 'D':
         configuration.no_daemon = 1;
@@ -372,7 +373,7 @@ int main (int argc, char *argv[]) {
   /* 
    *  check perms
    */
-#if 0
+#if 1
   if (geteuid() != 0) {
     cpufreqd_log(LOG_CRIT, "%s: must be run as root.\n", argv[0]);
     ret = 1;
@@ -482,6 +483,13 @@ int main (int argc, char *argv[]) {
     goto out_config_read;
   }
 
+	/* write pidfile */
+	if (write_cpufreqd_pid(configuration.pidfile) < 0) {
+    cpufreqd_log(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
+    ret = 1;
+		goto out_config_read;
+	}
+  
   /*  
    *  Clean up plugins if they don't have any associated rule entry
    */
@@ -508,6 +516,8 @@ int main (int argc, char *argv[]) {
    *  Looooooooop
    */
   while (!force_exit) {
+    tmp_profile = NULL;
+    tmp_score = 0;
 
     /* update plugin states */
     for (nd=configuration.plugins.first; nd!=NULL; nd=nd->next) {
@@ -517,7 +527,6 @@ int main (int argc, char *argv[]) {
       }
     }
 
-    tmp_score = 0;
     /* got objects and config now test it, call plugin->eval for each rule */
     /* O(rules*entries) */
     for (nd=configuration.rules.first; nd!=NULL; nd=nd->next) {
@@ -528,18 +537,18 @@ int main (int argc, char *argv[]) {
 
       for (n1=tmp_rule->entries.first; n1!=NULL; n1=n1->next) {
         re = (struct rule_en *)n1->content;
-	i++;
+				i++;
         /* compute scores for rules and keep the highest */
         if (re->eval(re->obj) == MATCH) {
           tmp_rule->score++;
-          cpufreqd_log(LOG_DEBUG, "Rule \"%s\" matches entry.\n", tmp_rule->name);
+          cpufreqd_log(LOG_DEBUG, "Rule \"%s\": entry matches.\n", tmp_rule->name);
         }
       } /* end foreach rule entry */
 
       /* calculate score on a percentage base 
        * so that a single entry rule might be the best match
        */
-      if ( tmp_rule->score+(100*tmp_rule->score)/i > tmp_score) {
+      if ((tmp_rule->score + (100 * tmp_rule->score) / i) > tmp_score) {
         tmp_profile = tmp_rule->prof;
         tmp_score = tmp_rule->score + (100 * tmp_rule->score) / i;
       }
@@ -568,7 +577,6 @@ int main (int argc, char *argv[]) {
        */
     }
 
-    tmp_profile = NULL;
     sleep(configuration.poll_interval);
   }
   
@@ -581,6 +589,11 @@ int main (int argc, char *argv[]) {
     close_plugin(o_plugin);
   }
 
+	/*
+	 * Clean pidfile
+	 */
+	clear_cpufreqd_pid(configuration.pidfile);
+	
   /*
    *  Free configuration structures
    */

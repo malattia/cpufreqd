@@ -48,6 +48,7 @@ struct TNODE {
 typedef struct TNODE TNODE;
 typedef TNODE TREE;
 
+#if 0
 static void insert_tnode(TREE **t, const char *c);
 static TNODE * find_tnode(TREE *t, const char *c);
 static TNODE * new_tnode(void);
@@ -56,6 +57,7 @@ static void free_tree(TREE *t);
 static void preorder_visit(TREE *t, void (*cb)(TNODE *n));
 static void debug_tnode(TNODE *n);
 static TNODE *predecessor(TNODE *n);
+#endif
 #if 0
 static TNODE *successor(TNODE *n);
 #endif
@@ -88,6 +90,47 @@ static struct cpufreqd_plugin programs = {
   .plugin_update    = &programs_update,       /* plugin_update */
   .cfdprint         = NULL
 };
+
+/* create a new node obj */
+static TNODE * new_tnode(void) {
+  TNODE *ret = (TNODE *)malloc(sizeof(TNODE));
+  if (ret != NULL) {
+    ret->left = NULL;
+    ret->right = NULL;
+    ret->parent = NULL;
+    ret->name[0] = '\0';
+    ret->used = 0;
+    ret->height = 0;
+  }
+  return ret;
+}
+
+/* set the usage count to 0 */
+static void neglect_node(TNODE *n) {
+  if (n != NULL) {
+    n->used = 0;
+  }
+}
+
+/* free node */
+static void free_tnode(TNODE *n) {
+  free(n);
+}
+
+/* free a full tree */
+static void free_tree(TREE *t) {
+  if (t != NULL) {
+    if (t->right != NULL) {
+      free_tree(t->right);
+      t->right = NULL;
+    }
+    if (t->left != NULL) {
+      free_tree(t->left);
+      t->left = NULL;
+    }
+    free_tnode(t);
+  }
+}
 
 static void insert_tnode(TREE **t, const char *c) {
   int cmp = 0;
@@ -198,11 +241,11 @@ static void sweep_unused_node(TNODE *n) {
       /* consider predecessor subtree (can't have right childs) */
       if (swap->parent->left==swap) {
         swap->parent->left = swap->left;
-        if (swap->left != NULL) swap->left->parent = swap->parent;
       } else {
         swap->parent->right = swap->left;
-        if (swap->right != NULL) swap->right->parent = swap->parent;
       }
+			if (swap->left != NULL)
+				swap->left->parent = swap->parent;
       
       strncpy(n->name, swap->name, PRG_LENGTH);
       n->used = swap->used;
@@ -213,7 +256,7 @@ static void sweep_unused_node(TNODE *n) {
 
 /* preorder visit 
  *
- * TODO RIMUOVERE LA RICORSIONE!!!
+ * TODO remove recursion?
  */
 static void preorder_visit(TREE *t, void (*cb)(TNODE *n)) {
   if (t != NULL) {
@@ -245,51 +288,13 @@ static TNODE * find_tnode(TREE *t, const char *c) {
   return NULL;
 }
 
-/* create a new node obj */
-static TNODE * new_tnode(void) {
-  TNODE *ret = (TNODE *)malloc(sizeof(TNODE));
-  if (ret != NULL) {
-    ret->left = NULL;
-    ret->right = NULL;
-    ret->parent = NULL;
-    ret->name[0] = '\0';
-    ret->used = 0;
-    ret->height = 0;
-  }
-  return ret;
-}
-
-/* free node */
-static void free_tnode(TNODE *n) {
-  free(n);
-}
-
-/* free a full tree */
-static void free_tree(TREE *t) {
-  if (t != NULL) {
-    if (t->right != NULL)
-      free_tree(t->right);
-    if (t->left != NULL)
-      free_tree(t->left);
-    free_tnode(t);
-  }
-}
-
+#ifdef DEBUG_TREE
 static void debug_tnode(TNODE *n) {
   if (n != NULL) {
     programs.cfdprint(LOG_DEBUG, "%s [u:%d] [h:%d]\n", n->name, n->used, n->height);
   }
 }
 
-/* set the usage count to 0 */
-static void neglect_node(TNODE *n) {
-  if (n != NULL) {
-    n->used = 0;
-  }
-}
-
-#ifdef DEBUG_TREE
-static void print_tree(TNODE *n);
 static void print_tree(TNODE *n) {
   char tab[64];
   unsigned int i=0;

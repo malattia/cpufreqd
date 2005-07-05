@@ -278,9 +278,10 @@ static int acpi_battery_update(void) {
   } /* end infos loop */
 
   /* calculates medium battery life between all batteries */
-  if (n_read > 0) {
-    battery_level = 100 * (remaining / (double)capacity) / n_read;
-  }
+  if (n_read > 0)
+    battery_level = 100 * (remaining / (double)capacity);
+  else
+    battery_level = 0;
 
   acpi_battery.cfdprint(LOG_INFO, "acpi_battery_update(): battery life %d%%\n",
       battery_level);
