@@ -67,6 +67,7 @@ static int numeric_entry(const struct dirent *d);
 
 static int programs_exit(void);
 static int programs_parse(const char *ev, void **obj);
+static void programs_free(void *obj);
 static int programs_evaluate(const void *s);
 static int programs_update(void);
 static int find_program(const TNODE *l);
@@ -77,18 +78,16 @@ static TREE *running_programs = 0L;
 #undef DEBUG_TREE
 
 static struct cpufreqd_keyword kw[] = {
-  { .word = "programs", .parse = &programs_parse,   .evaluate = &programs_evaluate },
-  { .word = NULL,       .parse = NULL,              .evaluate = NULL }
+  { .word = "programs", .parse = &programs_parse,   .evaluate = &programs_evaluate, .free=programs_free },
+  { .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
 };
 
 static struct cpufreqd_plugin programs = {
   .plugin_name      = "programs_plugin",      /* plugin_name */
   .keywords         = kw,                     /* config_keywords */
   .poll_interval    = 1000,                   /* poll_interval (1 second) */
-  .plugin_init      = NULL,                   /* plugin_init */
   .plugin_exit      = &programs_exit,         /* plugin_exit */
   .plugin_update    = &programs_update,       /* plugin_update */
-  .cfdprint         = NULL
 };
 
 /* create a new node obj */
@@ -405,6 +404,10 @@ static int programs_parse(const char *ev, void **obj) {
   
   *obj = ret;
   return 0;
+}
+
+static void programs_free(void *obj) {
+	free_tree(obj);
 }
 
 static int find_program(const TNODE *l) {

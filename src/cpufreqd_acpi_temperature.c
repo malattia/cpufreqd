@@ -107,21 +107,22 @@ static int acpi_temperature_exit(void) {
   return 0;
 }
 
-static int acpi_temperature_parse(const char *ev, void **obj) {
-  struct temperature_interval *ret = malloc(sizeof(struct temperature_interval));
-  if (ret == NULL) {
-    acpi_temperature.cfdprint(LOG_ERR, 
-        "%s - acpi_temperature_parse() couldn't make enough room for temperature_interval (%s)\n",
-        strerror(errno));
-    return -1;
-  }
-  
-  ret->min = ret->max = 0;
-  
-  acpi_temperature.cfdprint(LOG_DEBUG, "%s - acpi_temperature_parse() called with: %s\n",
-      acpi_temperature.plugin_name, ev);
-  
-  if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) == 2) {
+static int acpi_temperature_parse(const char *ev, void **obj)
+{
+	struct temperature_interval *ret = malloc(sizeof(struct temperature_interval));
+	if (ret == NULL) {
+		acpi_temperature.cfdprint(LOG_ERR, 
+				"%s - acpi_temperature_parse() couldn't make enough room for temperature_interval (%s)\n",
+				strerror(errno));
+		return -1;
+	}
+
+	ret->min = ret->max = 0;
+
+	acpi_temperature.cfdprint(LOG_DEBUG, "%s - acpi_temperature_parse() called with: %s\n",
+			acpi_temperature.plugin_name, ev);
+
+	if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) == 2) {
 		acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %d-%d\n",
 				acpi_temperature.plugin_name, ret->min, ret->max);
 	} else if (sscanf(ev, "%d", &(ret->min)) == 1) {
@@ -129,11 +130,19 @@ static int acpi_temperature_parse(const char *ev, void **obj) {
 		acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %d\n",
 				acpi_temperature.plugin_name, ret->min);
 	} else {
+		free(ret);
 		return -1;
 	}
 
-  *obj = ret;
-  return 0;
+	if (ret->min > ret->max) {
+		acpi_temperature.cfdprint(LOG_ERR, "%s - acpi_battery_parse() Min higher than Max?\n",
+				acpi_temperature.plugin_name);
+		free(ret);
+		return -1;
+	}
+
+	*obj = ret;
+	return 0;
 }
 
 static int acpi_temperature_evaluate(const void *s) {

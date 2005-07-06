@@ -45,8 +45,6 @@ static struct battery_info *infos   = 0L;
 static int bat_num                  = 0;
 static int battery_level            = 0;
 
-static int no_dots(const struct dirent *d);
-static int check_battery(struct battery_info *info);
 static int acpi_battery_init(void);
 static int acpi_battery_exit(void);
 static int acpi_battery_parse(const char *ev, void **obj);
@@ -54,8 +52,8 @@ static int acpi_battery_evaluate(const void *s);
 static int acpi_battery_update(void);
 
 static struct cpufreqd_keyword kw[] = {
-  { .word = "battery_interval",  .parse = &acpi_battery_parse,  .evaluate = &acpi_battery_evaluate },
-  { .word = NULL,       .parse = NULL,            .evaluate = NULL }
+  { .word = "battery_interval", .parse = &acpi_battery_parse, .evaluate = &acpi_battery_evaluate },
+  { .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
 };
 
 static struct cpufreqd_plugin acpi_battery = {
@@ -65,7 +63,6 @@ static struct cpufreqd_plugin acpi_battery = {
   .plugin_init      = &acpi_battery_init,         /* plugin_init */
   .plugin_exit      = &acpi_battery_exit,         /* plugin_exit */
   .plugin_update    = &acpi_battery_update,       /* plugin_update */
-  .cfdprint         = NULL
 };
 
 /* int no_dots(const struct dirent *d)
@@ -184,6 +181,13 @@ static int acpi_battery_parse(const char *ev, void **obj) {
   if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) != 2) {
     acpi_battery.cfdprint(LOG_ERR, "%s - acpi_battery_parse() wrong parameter: %s\n",
         acpi_battery.plugin_name, ev);
+    free(ret);
+    return -1;
+  }
+
+  if (ret->min > ret->max) {
+    acpi_battery.cfdprint(LOG_ERR, "%s - acpi_battery_parse() Min higher than Max?\n",
+        acpi_battery.plugin_name);
     free(ret);
     return -1;
   }

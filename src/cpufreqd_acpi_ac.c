@@ -44,8 +44,8 @@ static int acpi_ac_parse(const char *ev, void **obj);
 static int acpi_ac_evaluate(const void *s);
 
 static struct cpufreqd_keyword kw[] = {
-  { .word = "ac",  .parse = &acpi_ac_parse,  .evaluate = &acpi_ac_evaluate },
-  { .word = NULL,       .parse = NULL,            .evaluate = NULL }
+  { .word = "ac", .parse = &acpi_ac_parse, .evaluate = &acpi_ac_evaluate },
+  { .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
 };
 
 static struct cpufreqd_plugin acpi_ac = {

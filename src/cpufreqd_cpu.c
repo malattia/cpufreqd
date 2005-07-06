@@ -44,8 +44,8 @@ static unsigned int c_user_old, c_nice_old, c_sys_old, c_time_old;
 static unsigned int delta_time, kernel_version;
 
 static struct cpufreqd_keyword kw[] = {
-  { .word = "cpu", .parse = &cpu_parse,   .evaluate = &cpu_evaluate },
-  { .word = NULL,  .parse = NULL,         .evaluate = NULL }
+  { .word = "cpu", .parse = &cpu_parse, .evaluate = &cpu_evaluate },
+  { .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
 };
 
 static struct cpufreqd_plugin cpu_plugin = {
@@ -103,31 +103,39 @@ static int cpufreqd_cpu_exit(void) {
   return 0;
 }
 
-static int cpu_parse(const char *ev, void **obj) {
-  struct cpu_interval *myObj;
+static int cpu_parse(const char *ev, void **obj)
+{
+	struct cpu_interval *ret;
 
-  myObj = malloc(sizeof(struct cpu_interval));
-  if (myObj == NULL) {
-    cpu_plugin.cfdprint(LOG_ERR, "%s - cpu_parse(): Unable to make room for a cpu interval (%s)\n", 
-        cpu_plugin.plugin_name, strerror(errno));
-    return -1;
-  }
-  myObj->min = myObj->max = 0;
-  myObj->nice_scale = 3;
-  
-  cpu_plugin.cfdprint(LOG_DEBUG, "%s - cpu interval: %s\n", cpu_plugin.plugin_name, ev);
+	ret = malloc(sizeof(struct cpu_interval));
+	if (ret == NULL) {
+		cpu_plugin.cfdprint(LOG_ERR, "%s - cpu_parse(): Unable to make room for a cpu interval (%s)\n", 
+				cpu_plugin.plugin_name, strerror(errno));
+		return -1;
+	}
+	ret->min = ret->max = 0;
+	ret->nice_scale = 3;
 
-  sscanf(ev, "%d-%d,%f", &(myObj->min), &(myObj->max), &(myObj->nice_scale));
-  cpu_plugin.cfdprint(LOG_INFO, "%s - read MIN:%d MAX:%d SCALE:%f\n", 
-      cpu_plugin.plugin_name, myObj->min, myObj->max, myObj->nice_scale);
+	cpu_plugin.cfdprint(LOG_DEBUG, "%s - cpu interval: %s\n", cpu_plugin.plugin_name, ev);
 
-  if (myObj->nice_scale < 0.0) {
-    cpu_plugin.cfdprint(LOG_WARNING, "%s - nice_scale value out of range(%f), resetting to default value(3).\n",
-        cpu_plugin.plugin_name, myObj->nice_scale);
-  }
-  
-  *obj = myObj;
-  return 0;
+	sscanf(ev, "%d-%d,%f", &(ret->min), &(ret->max), &(ret->nice_scale));
+	cpu_plugin.cfdprint(LOG_INFO, "%s - read MIN:%d MAX:%d SCALE:%.2f\n", 
+			cpu_plugin.plugin_name, ret->min, ret->max, ret->nice_scale);
+
+	if (ret->nice_scale < 0.0) {
+		cpu_plugin.cfdprint(LOG_WARNING, "%s - nice_scale value out of range(%.2f), resetting to default value(3).\n",
+				cpu_plugin.plugin_name, ret->nice_scale);
+	}
+
+	if (ret->min > ret->max) {
+		cpu_plugin.cfdprint(LOG_ERR, "%s - acpi_battery_parse() Min higher than Max?\n",
+				cpu_plugin.plugin_name);
+		free(ret);
+		return -1;
+	}
+
+	*obj = ret;
+	return 0;
 }
 
 static int cpu_evaluate(const void *s) {
