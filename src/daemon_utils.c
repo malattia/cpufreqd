@@ -34,55 +34,58 @@
  *
  * Returns 0 on success, -1 otherwise.
  */
-int write_cpufreqd_pid(const char *pidfile) {
-  FILE *pid;
-  struct stat sb;
-  int rc = 0;
-  
-  /* check if old pidfile is still there */
-  rc = stat(pidfile, &sb);
-  if (rc == 0) {
-    char oldpid[10];
-    pid = fopen(pidfile, "r");
-    /* see if there is a pid already */
-    if (fscanf(pid, "%s", oldpid) == 1) {
-      FILE *fd;
-      char old_pidfile[256];
-      char old_cmdline[256];
+int write_cpufreqd_pid(const char *pidfile)
+{
+	FILE *pid;
+	struct stat sb;
+	int rc = 0;
 
-      snprintf(old_pidfile, 256, "/proc/%s/cmdline", oldpid);
-      fd = fopen(old_pidfile, "r");
-      /* if the file exists see if there's another cpufreqd process running */
-      if (fd && fscanf(fd, "%s", old_cmdline) == 1 && strstr(old_cmdline,"cpufreqd") != NULL) {
-        cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): the daemon is already running.\n");
-        fclose(fd);
-        fclose(pid);
-        return -1;
-      }
-      fclose(fd);
-    }
-    fclose(pid);
-  }
+	/* check if old pidfile is still there */
+	rc = stat(pidfile, &sb);
+	if (rc == 0) {
+		char oldpid[10];
+		pid = fopen(pidfile, "r");
+		/* see if there is a pid already */
+		if (fscanf(pid, "%s", oldpid) != 1) {
+			FILE *fd;
+			char old_pidfile[256];
+			char old_cmdline[256];
 
-  /* set permission mask 033 */
-  umask( S_IXGRP | S_IXOTH | S_IWOTH | S_IWGRP );
+			snprintf(old_pidfile, 256, "/proc/%s/cmdline", oldpid);
+			fd = fopen(old_pidfile, "r");
+			/* if the file exists see if there's another cpufreqd process running */
+			if (fd) {
+				if (fscanf(fd, "%s", old_cmdline) == 1 && strstr(old_cmdline,"cpufreqd") != NULL) {
+					cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): the daemon is already running.\n");
+					fclose(fd);
+					fclose(pid);
+					return -1;
+				}
+				fclose(fd);
+			}
+		}
+		fclose(pid);
+	}
 
-  /* write pidfile */
-  pid = fopen(pidfile, "w");
-  if (!pid) {
-    cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): %s: %s.\n", pidfile, strerror(errno));
-    return -1;
-  }
+	/* set permission mask 033 */
+	umask( S_IXGRP | S_IXOTH | S_IWOTH | S_IWGRP );
 
-  if (!fprintf(pid, "%d", getpid())) {
-    cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): cannot write pid %d.\n", getpid());
-    fclose(pid);
-    clear_cpufreqd_pid(pidfile);
-    return -1;
-  }
+	/* write pidfile */
+	pid = fopen(pidfile, "w");
+	if (!pid) {
+		cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): %s: %s.\n", pidfile, strerror(errno));
+		return -1;
+	}
 
-  fclose(pid);
-  return 0;
+	if (!fprintf(pid, "%d", getpid())) {
+		cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): cannot write pid %d.\n", getpid());
+		fclose(pid);
+		clear_cpufreqd_pid(pidfile);
+		return -1;
+	}
+
+	fclose(pid);
+	return 0;
 }
 
 /* int clear_cpufreqd_pid(const char *)
