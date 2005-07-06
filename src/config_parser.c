@@ -411,11 +411,13 @@ int parse_config_rule (FILE *config, struct rule *r) {
 
     } else {
       /* foreach plugin */
-      for (n=configuration.plugins.first; n!=NULL; n=n->next) {
+      for (n=configuration.plugins.first; !keyword_handler_found && n!=NULL; n=n->next) {
         o_plugin = (struct plugin_obj*)n->content;
         if (o_plugin!=NULL && o_plugin->plugin!=NULL && o_plugin->plugin->keywords!=NULL) {
           /* foreach keyword */
-          for(ckw=o_plugin->plugin->keywords; ckw->word!=NULL; ckw++) {
+          for(ckw=o_plugin->plugin->keywords; !keyword_handler_found && ckw->word!=NULL; ckw++) {
+
+		  /* if keyword corresponds (TODO: use strncmp and bound check the string) */
             if (strcmp(ckw->word, name) == 0) {
               cpufreqd_log(LOG_DEBUG, "Plugin %s handles keyword %s (value=%s)\n",
                   o_plugin->plugin->plugin_name, name, value);
@@ -432,9 +434,11 @@ int parse_config_rule (FILE *config, struct rule *r) {
               if (ckw->parse(value, &(((struct rule_en *)ren->content)->obj)) !=0) {
                 cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] Plugin %s is unable to parse this value \"%s\".\n",
                     o_plugin->plugin->plugin_name, value);
+		node_free(ren);
                 return -1;
               }
               ((struct rule_en *)ren->content)->eval = ckw->evaluate;
+              ((struct rule_en *)ren->content)->keyword = ckw;
               list_append(&(r->entries), ren);
               keyword_handler_found=1;
             }

@@ -36,6 +36,9 @@
  *  sistema.
  */
 
+#ifndef __CPUFREQD_PLUGIN_H__
+#define __CPUFREQD_PLUGIN_H__
+
 #define MATCH       1
 #define DONT_MATCH  0
 
@@ -51,7 +54,6 @@ struct cpufreqd_plugin;
  */
 struct cpufreqd_keyword {
   const char *word;
-  /*int score;*/
 
   /* function pointer to the keyword parser. line is a config file line and obj
    * must point to a structure that will be used by the evaulate function 
@@ -64,6 +66,12 @@ struct cpufreqd_keyword {
    * otherwise DONT_MATCH (0).
    */
   int (*evaluate) (const void *ev);
+
+  /* Allows the owner to define a specific function to be called when freeing
+   * malloced during the 'parse' call. Not required, if missing a libc call to
+   * 'free' is performed with the same obj argument.
+   */
+  void (*free) (void *obj);
 };
 
 /*
@@ -120,3 +128,4 @@ struct cpufreqd_plugin {
  */
 struct cpufreqd_plugin *create_plugin(void);
 
+#endif

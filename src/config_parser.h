@@ -23,11 +23,13 @@
 #include <stdio.h>
 #include <cpufreq.h>
 #include "cpufreqd.h"
+#include "cpufreqd_plugin.h"
 #include "list.h"
 
 struct rule_en {
   void *obj;
   int (*eval) (const void *ev);
+  struct cpufreqd_keyword *keyword;
 };
 
 struct profile {
