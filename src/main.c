@@ -234,36 +234,62 @@ int init_configuration(void) {
 /* 
  * Frees the structures allocated.
  */
-void free_configuration(void) {
-  struct NODE *nr_iter, *ent;
-  
-  /* cleanup rule entries */
-  cpufreqd_log(LOG_INFO, "free_config(): freeing rules entries.\n");
-  for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {
-    for (ent=((struct rule *)nr_iter->content)->entries.first; ent!=NULL; ent=ent->next) {
-      free(((struct rule_en *)ent->content)->obj);
-    }
-  }
-  
-  /* cleanup config structs */
-  cpufreqd_log(LOG_INFO, "free_config(): freeing rules.\n"); 
-  list_free_sublist(&(configuration.rules), configuration.rules.first);
-  
-  cpufreqd_log(LOG_INFO, "free_config(): freeing profiles.\n"); 
-  list_free_sublist(&(configuration.profiles), configuration.profiles.first);
-  
-  cpufreqd_log(LOG_INFO, "free_config(): freeing plugins.\n"); 
-  list_free_sublist(&(configuration.plugins), configuration.plugins.first);
+void free_configuration(void)
+{
+	struct NODE *n_iter, *ent;
+	struct rule *tmp_rule;
+	struct rule_en *tmp_rule_en;
+	struct profile *tmp_profile;
+	struct plugin_obj *o_plugin;
 
-  /* clean other values */
-  configuration.poll_interval = DEFAULT_POLL;
-  configuration.has_sysfs = 0;
-  configuration.acpi_workaround = 0;
-  configuration.cpu_min_freq = 0;
-  configuration.cpu_max_freq = 0;
-  
-  if (!configuration.log_level_overridden)
-    configuration.log_level = DEFAULT_VERBOSITY;
+	/* cleanup rule entries */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing rules entries.\n");
+	for (n_iter=configuration.rules.first; n_iter!=NULL; n_iter=n_iter->next) {
+		tmp_rule = (struct rule *)n_iter->content;
+
+		for (ent=tmp_rule->entries.first; ent!=NULL; ent=ent->next) {
+			tmp_rule_en = (struct rule_en *)ent->content;
+			if (tmp_rule_en->keyword->free != NULL)
+				tmp_rule_en->keyword->free(tmp_rule_en->obj);
+			else 
+				free(tmp_rule_en->obj);
+		}
+		list_free_sublist(&tmp_rule->entries, tmp_rule->entries.first);
+	}
+
+	/* cleanup config structs */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing rules.\n"); 
+	list_free_sublist(&(configuration.rules), configuration.rules.first);
+	
+	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles.\n"); 
+	/* free policy governors string */
+	for (n_iter=configuration.profiles.first; n_iter!=NULL; n_iter=n_iter->next) {
+		tmp_profile = (struct profile *)n_iter->content;
+		free(tmp_profile->policy.governor);
+	}
+	list_free_sublist(&(configuration.profiles), configuration.profiles.first);
+
+	/* clean other values */
+	configuration.poll_interval = DEFAULT_POLL;
+	configuration.has_sysfs = 0;
+	configuration.acpi_workaround = 0;
+	configuration.cpu_min_freq = 0;
+	configuration.cpu_max_freq = 0;
+
+	if (!configuration.log_level_overridden)
+		configuration.log_level = DEFAULT_VERBOSITY;
+
+	/* finalize plugins!!!! */
+	/*
+	 *  Unload plugins
+	 */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing plugins.\n"); 
+	for (n_iter=configuration.plugins.first; n_iter!=NULL; n_iter=n_iter->next) {
+		o_plugin = (struct plugin_obj*)n_iter->content;
+		finalize_plugin(o_plugin);
+		close_plugin(o_plugin);
+	}
+	list_free_sublist(&(configuration.plugins), configuration.plugins.first);
 }
 
 /*  int read_args (int argc, char *argv[])
@@ -373,7 +399,7 @@ int main (int argc, char *argv[]) {
   /* 
    *  check perms
    */
-#if 1
+#if 0
   if (geteuid() != 0) {
     cpufreqd_log(LOG_CRIT, "%s: must be run as root.\n", argv[0]);
     ret = 1;
@@ -483,12 +509,12 @@ int main (int argc, char *argv[]) {
     goto out_config_read;
   }
 
-	/* write pidfile */
-	if (write_cpufreqd_pid(configuration.pidfile) < 0) {
-    cpufreqd_log(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
-    ret = 1;
-		goto out_config_read;
-	}
+  /* write pidfile */
+  if (write_cpufreqd_pid(configuration.pidfile) < 0) {
+	  cpufreqd_log(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
+	  ret = 1;
+	  goto out_config_read;
+  }
   
   /*  
    *  Clean up plugins if they don't have any associated rule entry
@@ -548,13 +574,13 @@ int main (int argc, char *argv[]) {
       /* calculate score on a percentage base 
        * so that a single entry rule might be the best match
        */
-      if ((tmp_rule->score + (100 * tmp_rule->score) / i) > tmp_score) {
+      if ((tmp_rule->score + (100 * tmp_rule->score / i)) > tmp_score) {
         tmp_profile = tmp_rule->prof;
-        tmp_score = tmp_rule->score + (100 * tmp_rule->score) / i;
+        tmp_score = tmp_rule->score + (100 * tmp_rule->score / i);
       }
 
       cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name,
-		      (100*tmp_rule->score)/i);
+		      tmp_rule->score+(100*tmp_rule->score)/i);
 
     } /* end foreach rule */
 
@@ -580,6 +606,7 @@ int main (int argc, char *argv[]) {
     sleep(configuration.poll_interval);
   }
   
+#if 0
   /*
    *  Unload plugins
    */
@@ -588,6 +615,7 @@ int main (int argc, char *argv[]) {
     finalize_plugin(o_plugin);
     close_plugin(o_plugin);
   }
+#endif
 
 	/*
 	 * Clean pidfile
