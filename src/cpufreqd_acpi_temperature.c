@@ -29,14 +29,15 @@
 #define ACPI_TEMPERATURE_FILE "temperature"
 #define ACPI_TEMPERATURE_FORMAT "temperature:             %ld C\n"
 
-struct temperature_interval {
-	int min, max;
-	char *zone_path;
+struct thermal_zone {
+	char name[32];
+	char zone_path[64];
+	long int temperature;
 };
 
-struct thermal_zone {
-	char zone_path[64];
-	int temperature;
+struct temperature_interval {
+	int min, max;
+	struct thermal_zone *tz;
 };
 
 static struct thermal_zone *atz_list;
@@ -70,6 +71,20 @@ static int no_dots(const struct dirent *d)
 	return d->d_name[0]!= '.';
 }
 
+static struct thermal_zone *get_thermal_zone(const char *name)
+{
+	int i;
+	struct thermal_zone *ret = NULL;
+	
+	for (i=0; i<temp_dir_num; i++) {
+		if (strncmp(atz_list[i].name, name, 32) == 0) {
+			ret = &atz_list[i];
+			break;
+		}
+	}
+	return ret;
+}
+
 /*  static int acpi_temperature_init(void)
  *
  *  test if ATZ dirs are present and read their 
@@ -86,11 +101,12 @@ static int acpi_temperature_init(void)
 		temp_dir_num = n;
 		atz_list = malloc(n * sizeof(struct thermal_zone));
 		while (n--) {
+			snprintf(atz_list[n].name, 32, "%s", namelist[n]->d_name);
 			snprintf(atz_list[n].zone_path, 64, "%s%s/",
 					ACPI_TEMPERATURE_DIR, namelist[n]->d_name);
 			acpi_temperature.cfdprint(LOG_INFO, 
-					"acpi_temperature_init() - TEMP path: %s\n",
-					atz_list[n].zone_path);
+					"acpi_temperature_init() - TEMP path: %s name: %s\n",
+					atz_list[n].zone_path, atz_list[n].name);
 			free(namelist[n]);
 		} 
 		free(namelist);
@@ -122,8 +138,8 @@ static int acpi_temperature_exit(void)
 
 static int acpi_temperature_parse(const char *ev, void **obj)
 {
-	/*char atz_name[64];*/
-	struct temperature_interval *ret = malloc(sizeof(struct temperature_interval));
+	char atz_name[32];
+	struct temperature_interval *ret = calloc(1, sizeof(struct temperature_interval));
 	if (ret == NULL) {
 		acpi_temperature.cfdprint(LOG_ERR, 
 				"%s - acpi_temperature_parse() couldn't "
@@ -132,29 +148,42 @@ static int acpi_temperature_parse(const char *ev, void **obj)
 		return -1;
 	}
 
-	ret->min = ret->max = 0;
-
 	acpi_temperature.cfdprint(LOG_DEBUG, "%s - acpi_temperature_parse() called with: %s\n",
 			acpi_temperature.plugin_name, ev);
 
-	/* TODO: try to parse the %s:%d-%d format first */
-
-	/*
-	if (sscanf(ev, "%s:%d-%d", atz_name, &(ret->min), &(ret->max)) == 3) {
+	/* try to parse the %[a-zA-Z0-9]:%d-%d format first */
+	if (sscanf(ev, "%64[a-zA-Z0-9]:%d-%d", atz_name, &(ret->min), &(ret->max)) == 3) {
+		/* validate zone name and assign pointer to struct thermal_zone */
+		if ((ret->tz = get_thermal_zone(atz_name)) == NULL) {
+			acpi_temperature.cfdprint(LOG_ERR, "%s - acpi_battery_parse(): non existent thermal zone %s!\n",
+					acpi_temperature.plugin_name, atz_name);
+			free(ret);
+			return -1;
+		}
 		acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %s %d-%d\n",
-				acpi_temperature.plugin_name, atz_name, ret->min, ret->max);
-	} else if (sscanf(ev, "%s:%d", atz_name, &(ret->min)) == 2) {
+				acpi_temperature.plugin_name, ret->tz->name, ret->min, ret->max);
+
+	} else if (sscanf(ev, "%64[a-zA-Z0-9]:%d", atz_name, &(ret->min)) == 2) {
+		/* validate zone name and assign pointer to struct thermal_zone */
+		if ((ret->tz = get_thermal_zone(atz_name)) == NULL) {
+			acpi_temperature.cfdprint(LOG_ERR, "%s - acpi_battery_parse(): non existent thermal zone %s!\n",
+					acpi_temperature.plugin_name, atz_name);
+			free(ret);
+			return -1;
+		}
 		ret->max = ret->min;
 		acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %s %d\n",
-				acpi_temperature.plugin_name, atz_name, ret->min);
-	} else */
-	if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) == 2) {
+				acpi_temperature.plugin_name, ret->tz->name, ret->min);
+
+	} else if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) == 2) {
 		acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %d-%d\n",
 				acpi_temperature.plugin_name, ret->min, ret->max);
+
 	} else if (sscanf(ev, "%d", &(ret->min)) == 1) {
 		ret->max = ret->min;
 		acpi_temperature.cfdprint(LOG_INFO, "%s - acpi_temperature_parse() parsed: %d\n",
 				acpi_temperature.plugin_name, ret->min);
+
 	} else {
 		free(ret);
 		return -1;
@@ -174,11 +203,16 @@ static int acpi_temperature_parse(const char *ev, void **obj)
 static int acpi_temperature_evaluate(const void *s)
 {
 	const struct temperature_interval *ti = (const struct temperature_interval *)s;
+	long int temp = temperature;
 
-	acpi_temperature.cfdprint(LOG_DEBUG, "%s - evaluate() called: %d-%d [%d]\n",
-			acpi_temperature.plugin_name, ti->min, ti->max, temperature);
+	if (ti->tz != NULL)
+		temp = ti->tz->temperature;
+		
+	acpi_temperature.cfdprint(LOG_DEBUG, "%s - evaluate() called: %d-%d [%s:%d]\n",
+			acpi_temperature.plugin_name, ti->min, ti->max, 
+			ti->tz != NULL ? ti->tz->name : "Medium", temp);
 
-	return (temperature <= ti->max && temperature >= ti->min) ? MATCH : DONT_MATCH;
+	return (temp <= ti->max && temp >= ti->min) ? MATCH : DONT_MATCH;
 }
 
 /*  static int acpi_temperature_update(void)
@@ -188,18 +222,24 @@ static int acpi_temperature_evaluate(const void *s)
 static int acpi_temperature_update(void)
 {
 	char fname[256];
-	int count=0, t=0, i=0;
+	int count = 0, i = 0;
+	long int t = 0;
 	FILE *fp = NULL;
 
 	acpi_temperature.cfdprint(LOG_DEBUG, "%s - update() called\n", acpi_temperature.plugin_name);
 
+	temperature = 0;
 	for (i=0; i<temp_dir_num; i++) {
 		snprintf(fname, 255, "%s%s", atz_list[i].zone_path, ACPI_TEMPERATURE_FILE);
 		fp = fopen(fname, "r");
 		if (fp) {
-			if (fscanf(fp, ACPI_TEMPERATURE_FORMAT, &temperature) == 1) {
+			if (fscanf(fp, ACPI_TEMPERATURE_FORMAT, &t) == 1) {
 				count++;
-				t += temperature;
+				temperature += t;
+				atz_list[i].temperature = t;
+				acpi_temperature.cfdprint(LOG_INFO,
+						"acpi_temperature_update(): temperature for %s is %ldC\n",
+						atz_list[i].name, temperature);
 			}
 			fclose(fp);
 
@@ -213,10 +253,11 @@ static int acpi_temperature_update(void)
 		}
 	}
 
+	/* compute global medium value */
 	if (count > 0) {
-		temperature = (float)t / (float)count;
+		temperature = (float)temperature / (float)count;
 	}
-	acpi_temperature.cfdprint(LOG_INFO, "acpi_temperature_update(): temperature is %ldC\n",
+	acpi_temperature.cfdprint(LOG_INFO, "acpi_temperature_update(): medium temperature is %ldC\n",
 			temperature);
 	return 0;
 }

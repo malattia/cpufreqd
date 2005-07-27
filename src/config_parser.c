@@ -432,10 +432,10 @@ int parse_config_rule (FILE *config, struct rule *r) {
               }
               
               if (ckw->parse(value, &(((struct rule_en *)ren->content)->obj)) !=0) {
-                cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] Plugin %s is unable to parse this value \"%s\".\n",
+                cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] Plugin %s is unable to parse this value \"%s\". Discarded\n",
                     o_plugin->plugin->plugin_name, value);
 		node_free(ren);
-                return -1;
+		continue;
               }
               ((struct rule_en *)ren->content)->eval = ckw->evaluate;
               ((struct rule_en *)ren->content)->keyword = ckw;
@@ -446,7 +446,7 @@ int parse_config_rule (FILE *config, struct rule *r) {
         } /* end if plugin_obj!=NULL */
       } /* enf foreach plugin */
       if (!keyword_handler_found)
-        cpufreqd_log(LOG_WARNING, "WARNING: [Rule] skipping unknown config option \"%s\"\n", name);
+        cpufreqd_log(LOG_DEBUG, "[Rule]: skipping unknown config option \"%s\"\n", name);
       keyword_handler_found=0;
     }
   }
