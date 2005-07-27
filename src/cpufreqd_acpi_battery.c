@@ -186,15 +186,13 @@ static int acpi_battery_exit(void) {
  */
 static int acpi_battery_parse(const char *ev, void **obj) {
 	char battery_name[32];
-	struct battery_interval *ret = malloc(sizeof(struct battery_interval));
+	struct battery_interval *ret = calloc(1, sizeof(struct battery_interval));
 	if (ret == NULL) {
 		acpi_battery.cfdprint(LOG_ERR, 
 				"%s - acpi_battery_parse() couldn't make enough room for battery_interval (%s)\n",
 				strerror(errno));
 		return -1;
 	}
-
-	ret->min = ret->max = 0;
 
 	acpi_battery.cfdprint(LOG_DEBUG, "%s - acpi_battery_parse() called with: %s\n",
 			acpi_battery.plugin_name, ev);
@@ -250,15 +248,13 @@ static int acpi_battery_parse(const char *ev, void **obj) {
 
 
 static int acpi_battery_evaluate(const void *s) {
-	const struct battery_interval *bi = NULL;
-	int level = 0;
+	const struct battery_interval *bi = (const struct battery_interval *)s;
+	int level = battery_level;
 
-	bi = (const struct battery_interval *)s;
 	if (bi != NULL && bi->bat != NULL) {
 		level = bi->bat->present ? bi->bat->level : -1;
-	} else {
-		level = battery_level;
 	}
+
 	acpi_battery.cfdprint(LOG_DEBUG, "%s - acpi_battery_evaluate() called: %d-%d [%s:%d]\n",
 			acpi_battery.plugin_name, bi->min, bi->max, 
 			bi != NULL && bi->bat != NULL ? bi->bat->name : "Medium", level);

@@ -203,12 +203,10 @@ static int acpi_temperature_parse(const char *ev, void **obj)
 static int acpi_temperature_evaluate(const void *s)
 {
 	const struct temperature_interval *ti = (const struct temperature_interval *)s;
-	long int temp = 0;
+	long int temp = temperature;
 
 	if (ti != NULL && ti->tz != NULL)
 		temp = ti->tz->temperature;
-	else 
-		temp = temperature;
 		
 	acpi_temperature.cfdprint(LOG_DEBUG, "%s - evaluate() called: %d-%d [%s:%d]\n",
 			acpi_temperature.plugin_name, ti->min, ti->max, 
