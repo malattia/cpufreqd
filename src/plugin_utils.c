@@ -24,6 +24,34 @@
 #include "cpufreqd_log.h"
 #include "cpufreqd.h"
 
+/*
+ *  Load plugins from a list of plugin_obj's. Also cleanup the
+ *  list if a plugin fails to load
+ */
+void load_plugin_list(struct LIST *plugins) {
+
+	struct plugin_obj *o_plugin = NULL;
+	struct NODE *n = NULL;
+	
+	n = plugins->first;
+	while (n != NULL) {
+		o_plugin = (struct plugin_obj*)n->content;
+		/* take care!! if statement badly indented!! */
+		if (load_plugin(o_plugin)==0 &&
+				get_cpufreqd_object(o_plugin)==0 &&
+				initialize_plugin(o_plugin) == 0) { 
+			cpufreqd_log(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
+			n=n->next;
+
+		} else {
+			cpufreqd_log(LOG_INFO, "plugin failed to load: %s\n", o_plugin->name);
+			/* remove the list item and assing n the next node (returned from list_remove_node) */
+			cpufreqd_log(LOG_NOTICE, "discarded plugin %s\n", o_plugin->name);
+			n = list_remove_node(plugins, n);
+		} /* end else */
+	} /* end while */
+}
+	
 /*  int load_plugin(struct plugin_obj *cp)
  *  Open shared libraries
  */
@@ -47,7 +75,9 @@ int load_plugin(struct plugin_obj *cp) {
  */
 void close_plugin(struct plugin_obj *cp) {
   /* close library */
-  dlclose(cp->library);
+  if (dlclose(cp->library) != 0) {
+	cpufreqd_log(LOG_ERR, "Error unloading plugin %s: %s\n", cp->name, dlerror());
+  }
 }
 
 /*  int get_cpufreqd_object(struct plugin_obj *cp)
@@ -70,7 +100,7 @@ int get_cpufreqd_object(struct plugin_obj *cp) {
     cpufreqd_log(LOG_ERR, "get_cpufreqd_object(): %s\n", error);
     return -1;
   }
-  cp->plugin = (*create)();
+  cp->plugin = create();
 
   return 0;
 }

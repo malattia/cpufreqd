@@ -58,7 +58,6 @@ static int force_exit = 0;
 int init_configuration(void) {
 	FILE *fp_config;
 	struct NODE *n, *np_iter, *nr_iter;
-	struct plugin_obj *o_plugin;
 	struct profile *tmp_profile;
 	struct rule *tmp_rule;
 	char buf[256];
@@ -85,31 +84,14 @@ int init_configuration(void) {
 			if (parse_config_general(fp_config) < 0) {
 				fclose(fp_config);
 				return -1;
-			} else {
-				/*
-				 *  Load plugins
-				 *  just after having read the General section
-				 *  and before the rest in order to be able to hadle
-				 *  options with them.
-				 */
-				n=configuration.plugins.first;
-				while (n != NULL) {
-					o_plugin = (struct plugin_obj*)n->content;
-					/* take care!! if statement badly indented!! */
-					if (load_plugin(o_plugin)==0 &&
-							get_cpufreqd_object(o_plugin)==0 &&
-							initialize_plugin(o_plugin) == 0) { 
-						cpufreqd_log(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
-						n=n->next;
-
-					} else {
-						cpufreqd_log(LOG_INFO, "plugin failed to load: %s\n", o_plugin->name);
-						/* remove the list item and assing n the next node (returned from list_remove_node) */
-						cpufreqd_log(LOG_NOTICE, "discarded plugin %s\n", o_plugin->name);
-						n = list_remove_node(&(configuration.plugins), n);
-					} /* end else */
-				} /* end while */
-			} /* end else */
+			}
+			/*
+			 *  Load plugins
+			 *  just after having read the General section
+			 *  and before the rest in order to be able to hadle
+			 *  options with them.
+			 */
+			load_plugin_list(&configuration.plugins);
 			continue;
 		}
 
@@ -319,34 +301,34 @@ int read_args (int argc, char *argv[]) {
 
 	while ((ch = getopt_long(argc, argv, "hvf:DV:", long_options, &option_index)) != -1) {
 		switch (ch) {
-			case '?':
-			case 'h':
-				configuration.print_help = 1;
-				return 0;
-			case 'v':
-				configuration.print_version = 1;
-				return 0;
-			case 'f':
-				if (realpath(optarg, configuration.config_file) == NULL) {
-					cpufreqd_log(LOG_ERR, "Error reading command line argument (%s: %s).\n", optarg, strerror(errno));
-					return -1;
-				}
-				cpufreqd_log(LOG_DEBUG, "Using configuration file at %s\n", configuration.config_file);
-				break;
-			case 'D':
-				configuration.no_daemon = 1;
-				break;
-			case 'V':
-				configuration.log_level = atoi(optarg);
-				if (configuration.log_level>7) {
-					configuration.log_level = 7;
-				} else if (configuration.log_level<0) {
-					configuration.log_level = 0;
-				}
-				configuration.log_level_overridden = 1;
-				break;
-			default:
-				break;
+		case '?':
+		case 'h':
+			configuration.print_help = 1;
+			return 0;
+		case 'v':
+			configuration.print_version = 1;
+			return 0;
+		case 'f':
+			if (realpath(optarg, configuration.config_file) == NULL) {
+				cpufreqd_log(LOG_ERR, "Error reading command line argument (%s: %s).\n", optarg, strerror(errno));
+				return -1;
+			}
+			cpufreqd_log(LOG_DEBUG, "Using configuration file at %s\n", configuration.config_file);
+			break;
+		case 'D':
+			configuration.no_daemon = 1;
+			break;
+		case 'V':
+			configuration.log_level = atoi(optarg);
+			if (configuration.log_level>7) {
+				configuration.log_level = 7;
+			} else if (configuration.log_level<0) {
+				configuration.log_level = 0;
+			}
+			configuration.log_level_overridden = 1;
+			break;
+		default:
+			break;
 		}
 	}
 	return 0;
@@ -386,8 +368,12 @@ void int_handler(int signo) {
 }
 
 void hup_handler(int signo) {
+
+	cpufreqd_log(LOG_NOTICE, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
+#if 0
 	cpufreqd_log(LOG_NOTICE, "Caught HUP signal (%s), reloading configuration file.\n", strsignal(signo));
 	force_reinit = 1;
+#endif
 }
 
 /*
@@ -499,6 +485,7 @@ int main (int argc, char *argv[]) {
 		goto out_limits;
 	}
 
+cpufreqd_start:
 	/*
 	 *  1- open config file
 	 *  2- start reading
@@ -551,7 +538,7 @@ int main (int argc, char *argv[]) {
 	/*
 	 *  Looooooooop
 	 */
-	while (!force_exit) {
+	while (!force_exit && !force_reinit) {
 		tmp_profile = NULL;
 		tmp_score = 0;
 
@@ -616,17 +603,6 @@ int main (int argc, char *argv[]) {
 		sleep(configuration.poll_interval);
 	}
 
-#if 0
-	/*
-	 *  Unload plugins
-	 */
-	for (nd=configuration.plugins.first; nd!=NULL; nd=nd->next) {
-		o_plugin = (struct plugin_obj*)nd->content;
-		finalize_plugin(o_plugin);
-		close_plugin(o_plugin);
-	}
-#endif
-
 	/*
 	 * Clean pidfile
 	 */
@@ -637,6 +613,11 @@ int main (int argc, char *argv[]) {
 	 */
 out_config_read:
 	free_configuration();
+	if (force_reinit && !force_exit) {
+		force_reinit = 0;
+		cpufreqd_log(LOG_INFO, "Restarting cpufreqd\n");
+		goto cpufreqd_start;
+	}
 
 out_limits:
 	if (configuration.limits != NULL)
