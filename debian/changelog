@@ -1,3 +1,10 @@
+cpufreqd (1.2.3-3) unstable; urgency=low
+
+  * Added dependency alternative to debconf to allow installation of cdebconf.
+  * Updated Standards-Version to 3.6.2
+
+ -- Mattia Dongili <malattia@debian.org>  Wed, 03 Aug 2005 18:48:21 +0200
+
 cpufreqd (1.2.3-2) unstable; urgency=medium
   
   * Added Vietnamese debconf translation (closes: #310147)

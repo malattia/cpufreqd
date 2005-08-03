@@ -19,17 +19,18 @@ set -e
 
 
 case "$1" in
-        purge|remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-            if [ "$1" = "purge" ] ; then
-                update-rc.d -f cpufreqd remove > /dev/null
-            fi
-
+        purge)
+		update-rc.d -f cpufreqd remove > /dev/null
+	;;
+	
+	remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+		# do nothing
         ;;
 
-    *)
-        echo "postrm called with unknown argument \`$1'" >&2
-        exit 1
-
+	*)
+		echo "postrm called with unknown argument \`$1'" >&2
+		exit 1
+	;;
 esac
 
 # dh_installdeb will replace this with shell code automatically

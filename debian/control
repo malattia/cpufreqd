@@ -2,12 +2,12 @@ Source: cpufreqd
 Section: admin
 Priority: optional
 Maintainer: Mattia Dongili <malattia@debian.org>
-Build-Depends: debhelper (>= 4.1.16), debconf (>= 1.2.9)
-Standards-Version: 3.6.1
+Build-Depends: debhelper (>= 4.1.16), debconf (>= 1.2.9) | debconf-2.0
+Standards-Version: 3.6.2
 
 Package: cpufreqd
 Architecture: any
-Depends: debconf, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Conflicts: cpudyn, powernowd
 Description: A speedstep applet clone
  cpufreqd is meant to be a replacement of the speedstep applet you
