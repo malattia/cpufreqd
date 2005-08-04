@@ -17,27 +17,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*  ...Sorry... notes in italian.
- *  Note: gestione della riga di una regola?? Ogni plugin deve fornire
- *  le keyword associate ad esso. Deve inoltre fornire essere in grado
- *  di dire se il valore attuale letto e' confacente la regola che il
- *  core sta analizzando.
- *
- *  Il core deve essere in grado di accettare i tipi di valore
- *  cpufreqd_value forniti dal plugin in corrispondenza di ogni sua
- *  keyword e di confrontare questi valori con le regole configurate.
- *
- *  oppure
- *  
- *  Il core deve rappresentare le regole parserizzate dal plugin e
- *  mantenere un puntatore alla funzione in grado di valutare
- *  l'espressione. Il plugin e' responsabile della valutazione della
- *  regola e deve dire se tale regola e conforme allo stato attuale del
- *  sistema.
- */
-
 #ifndef __CPUFREQD_PLUGIN_H__
 #define __CPUFREQD_PLUGIN_H__
+
+#include <cpufreq.h>
 
 #define MATCH       1
 #define DONT_MATCH  0
@@ -48,9 +31,12 @@ struct cpufreqd_plugin;
  *  A cpufreqd keyword consists of the proper word to match at the
  *  beginning of the Rule line. The struct consists of two other function
  *  pointers, one will provide the function to be called if the keyword
- *  being considered matches, the sencond will provide a function to be
- *  called during the main loop and that will evaluate the current
+ *  being considered matches with *word, the sencond will provide a function to
+ *  be called during the main loop that will evaluate the current
  *  system state (as read by the same plugin) against it.
+ *
+ *  At least one out of evaluate, pre_change, post_change MUST be defined by the
+ *  plugin.
  */
 struct cpufreqd_keyword {
   const char *word;
@@ -64,8 +50,33 @@ struct cpufreqd_keyword {
    * the parse function and that represent the system state that must eventually
    * be matched. If the system state matches the function must return MATCH (1) 
    * otherwise DONT_MATCH (0).
+   *
+   * Can be NULL
    */
   int (*evaluate) (const void *ev);
+
+  /* function pointer to the pre_change event. ev is the structure previously
+   * provided by the parse function, old and new are the old and new policy
+   * pointer respctively.
+   * The function is called prior to the call to set_policy() when a new Rule
+   * applies the current system state. Note however that set_policy() will not
+   * be called if the Profile doesn't change (you can tell that by comparing the
+   * old and new policy pointers, if they are the same then set_policy() won't
+   * be called).
+   *
+   * Can be NULL
+   */
+  void (*pre_change) (const void *ev, struct cpufreq_policy *old,
+		  struct cpufreq_policy *new);
+
+  /* function pointer to the post_change event. The same as pre_change applies
+   * except for the fact that everything is referred tto _after_ set_policy()
+   * has been called.
+   *
+   * Can be NULL
+   */
+  void (*post_change) (const void *ev, struct cpufreq_policy *old,
+		  struct cpufreq_policy *new);
 
   /* Allows the owner to define a specific function to be called when freeing
    * malloced during the 'parse' call. Not required, if missing a libc call to
@@ -111,6 +122,15 @@ struct cpufreqd_plugin {
 
   /* Update plugin data */
   int (*plugin_update) (void);
+
+  /* Pre rule-change */
+#if 0
+  void (*pre_rule_change) (void *obj, struct cpufreq_policy *new_policy,
+		  struct cpufreq_policy *old_policy);
+#endif
+  /* Post rule-change */
+  /* Pre policy-change */
+  /* Post policy-change */
 
   /************************
    *  FUNCTION POINTERS   *

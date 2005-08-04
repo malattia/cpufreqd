@@ -28,8 +28,8 @@
 
 struct rule_en {
   void *obj;
-  int (*eval) (const void *ev);
   struct cpufreqd_keyword *keyword;
+  struct cpufreqd_plugin *plugin;
 };
 
 struct profile {

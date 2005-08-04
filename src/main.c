@@ -165,6 +165,14 @@ int init_configuration(void) {
 						return -1;
 					}
 				}
+				/* check if there are options */
+				if (tmp_rule->entries.first == NULL) {
+					cpufreqd_log(LOG_CRIT, 
+							"init_configuration(): [Rule] name \"%s\" has no options, discarding.\n", 
+							tmp_rule->name);
+					node_free(n);
+					continue;
+				}
 				list_append(&configuration.rules, n);
 			} else {
 				cpufreqd_log(LOG_CRIT, 
@@ -386,10 +394,10 @@ int main (int argc, char *argv[]) {
 	struct NODE *n1 = NULL;
 	struct sigaction signal_action;
 	struct plugin_obj *o_plugin = NULL;
-	struct rule *tmp_rule = NULL;
-	struct profile *current_profile=NULL, *tmp_profile=NULL;
+	struct rule *current_rule = NULL, *tmp_rule = NULL, *win_rule = NULL;
+	struct profile *current_profile = NULL, *tmp_profile = NULL;
 	struct rule_en *re = NULL;
-	unsigned int i=0, tmp_score=0;
+	unsigned int i = 0, tmp_score = 0;
 	int ret = 0;
 
 	/* 
@@ -539,6 +547,7 @@ cpufreqd_start:
 	 *  Looooooooop
 	 */
 	while (!force_exit && !force_reinit) {
+		win_rule = NULL;
 		tmp_profile = NULL;
 		tmp_score = 0;
 
@@ -562,7 +571,7 @@ cpufreqd_start:
 				re = (struct rule_en *)n1->content;
 				i++;
 				/* compute scores for rules and keep the highest */
-				if (re->eval(re->obj) == MATCH) {
+				if (re->keyword->evaluate != NULL && re->keyword->evaluate(re->obj) == MATCH) {
 					tmp_rule->score++;
 					cpufreqd_log(LOG_DEBUG, "Rule \"%s\": entry matches.\n", tmp_rule->name);
 				}
@@ -572,6 +581,7 @@ cpufreqd_start:
 			 * so that a single entry rule might be the best match
 			 */
 			if ((tmp_rule->score + (100 * tmp_rule->score / i)) > tmp_score) {
+				win_rule = tmp_rule;
 				tmp_profile = tmp_rule->prof;
 				tmp_score = tmp_rule->score + (100 * tmp_rule->score / i);
 			}
@@ -584,20 +594,40 @@ cpufreqd_start:
 		/* set the policy associated with the highest score */
 		if (tmp_profile==NULL) {
 			cpufreqd_log(LOG_WARNING, "No Rule matches current system status.\n");
-		} else if (tmp_profile == current_profile) {
-			cpufreqd_log(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
-					current_profile->name, tmp_profile->name);
 		} else {
+			/* pre change event */
+			if (current_rule != win_rule) {
+				cpufreqd_log(LOG_DEBUG, "Triggering pre-change event\n");
+				for (n1=win_rule->entries.first; n1!=NULL; n1=n1->next) {
+					re = (struct rule_en *)n1->content;
+					if (re->keyword->pre_change != NULL)
+						re->keyword->pre_change(re->obj, 
+								&current_rule->prof->policy,
+								&tmp_rule->prof->policy);
+				} /* end foreach rule entry */
+			}
+
+			/* change frequency */
+			if (tmp_profile != current_profile) {
+				cpufreqd_set_profile(tmp_profile);
+			} else {
+				cpufreqd_log(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
+						current_profile->name, tmp_profile->name);
+			}
+
+			/* post change event */
+			if (current_rule != win_rule) {
+				cpufreqd_log(LOG_DEBUG, "Triggering post-change event\n");
+				for (n1=win_rule->entries.first; n1!=NULL; n1=n1->next) {
+					re = (struct rule_en *)n1->content;
+					if (re->keyword->post_change != NULL)
+						re->keyword->post_change(re->obj, 
+								&current_rule->prof->policy,
+								&tmp_rule->prof->policy);
+				} /* end foreach rule entry */
+			}
+			current_rule = win_rule;
 			current_profile = tmp_profile;
-			/* TODO:
-			 * Add a pre change event?
-			 * Only for the rule entry with best match?
-			 */
-			cpufreqd_set_profile(current_profile);
-			/* TODO:
-			 * Add a post change event?
-			 * Only for the rule entry with best match?
-			 */
 		}
 
 		sleep(configuration.poll_interval);

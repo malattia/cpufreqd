@@ -421,8 +421,6 @@ int parse_config_rule (FILE *config, struct rule *r) {
             if (strcmp(ckw->word, name) == 0) {
               cpufreqd_log(LOG_DEBUG, "Plugin %s handles keyword %s (value=%s)\n",
                   o_plugin->plugin->plugin_name, name, value);
-              /* increase plugin use count */
-              o_plugin->used++;
 
               ren = node_new(NULL, sizeof(struct rule_en));
               if (ren == NULL) {
@@ -437,10 +435,11 @@ int parse_config_rule (FILE *config, struct rule *r) {
 		node_free(ren);
 		continue;
               }
-              ((struct rule_en *)ren->content)->eval = ckw->evaluate;
               ((struct rule_en *)ren->content)->keyword = ckw;
               list_append(&(r->entries), ren);
               keyword_handler_found=1;
+              /* increase plugin use count */
+              o_plugin->used++;
             }
           } /* end foreach keyword */
         } /* end if plugin_obj!=NULL */
