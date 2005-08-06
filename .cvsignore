@@ -9,6 +9,7 @@ config.status
 configure
 cpufreqd
 .deps
+*.old
 *.la
 .libs
 libtool
