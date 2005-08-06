@@ -29,77 +29,77 @@ extern struct cpufreqd_conf configuration;
 
 /* sets the input policy */
 void cpufreqd_set_profile (struct profile *p) {
-  unsigned int i;
-  /* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
-  for (i=0; i<configuration.cpu_num; i++) {
-    if (cpufreq_set_policy(i, &(p->policy)) == 0)
-      cpufreqd_log(LOG_INFO, "Profile \"%s\" set for cpu%d\n", p->name, i);
-    else
-      cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", p->name, i);
-  }
+	unsigned int i;
+	/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
+	for (i=0; i<configuration.cpu_num; i++) {
+		if (cpufreq_set_policy(i, &(p->policy)) == 0)
+			cpufreqd_log(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", p->name, i);
+		else
+			cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", p->name, i);
+	}
 }
 
 /* normalizes the user supplied frequency to a cpufreq available freq 
  * ROUNDS ALWAYS UP (except if the values is over the limits)!!
  */
-unsigned long normalize_frequency (
-    struct cpufreq_limits *limits,  
-    struct cpufreq_available_frequencies *freqs, 
-    unsigned long user_freq) {
+unsigned long normalize_frequency (struct cpufreq_limits *limits,
+		struct cpufreq_available_frequencies *freqs,
+		unsigned long user_freq)
+{
 
-  struct cpufreq_available_frequencies *tmp = freqs;
-  unsigned long higher=0L, lower=0L;
+	struct cpufreq_available_frequencies *tmp = freqs;
+	unsigned long higher=0L, lower=0L;
 
-  /* if limits are available determine if an out of bounds values is given */
-  if (limits != NULL) {
-    if (user_freq<=limits->min)
-      return limits->min;
+	/* if limits are available determine if an out of bounds values is given */
+	if (limits != NULL) {
+		if (user_freq<=limits->min)
+			return limits->min;
 
-    if (user_freq>=limits->max)
-      return limits->max;
-  }
+		if (user_freq>=limits->max)
+			return limits->max;
+	}
 
-  /* normalize freq */
-  while (tmp != NULL) {
-    if (tmp->frequency>=user_freq && (tmp->frequency<higher || higher==0))
-      higher = tmp->frequency;
+	/* normalize freq */
+	while (tmp != NULL) {
+		if (tmp->frequency>=user_freq && (tmp->frequency<higher || higher==0))
+			higher = tmp->frequency;
 
-    if (tmp->frequency<=user_freq && (tmp->frequency>lower || lower==0))
-      lower = tmp->frequency;
-    
-    tmp = tmp->next;
-  }
+		if (tmp->frequency<=user_freq && (tmp->frequency>lower || lower==0))
+			lower = tmp->frequency;
 
-  return user_freq >= ((higher-lower)/2)+lower ? higher : lower;
+		tmp = tmp->next;
+	}
+
+	return user_freq >= ((higher-lower)/2)+lower ? higher : lower;
 }
 
 /* translate percent values to absolute values */
 unsigned long percent_to_absolute(unsigned long max_freq, unsigned long user_freq) {
-  return max_freq * ((float)user_freq / 100);
+	return max_freq * ((float)user_freq / 100);
 }
 
 /* goes through the list and returns the highest frequency */
 unsigned long get_max_available_freq(struct cpufreq_available_frequencies *freqs) {
-  unsigned long max = 0;
-  struct cpufreq_available_frequencies *tmp = freqs;
-  while(tmp != NULL) {
-    if (max < tmp->frequency)
-      max = tmp->frequency;
-    tmp = tmp->next;
-  }
-  return max;
+	unsigned long max = 0;
+	struct cpufreq_available_frequencies *tmp = freqs;
+	while(tmp != NULL) {
+		if (max < tmp->frequency)
+			max = tmp->frequency;
+		tmp = tmp->next;
+	}
+	return max;
 }
 
 /* goes through the list and returns the lowest frequency */
 unsigned long get_min_available_freq(struct cpufreq_available_frequencies *freqs) {
-  unsigned long min = 0;
-  struct cpufreq_available_frequencies *tmp = freqs;
-  while(tmp != NULL) {
-    if (min > tmp->frequency)
-      min = tmp->frequency;
-    tmp = tmp->next;
-  }
-  return min;
+	unsigned long min = 0;
+	struct cpufreq_available_frequencies *tmp = freqs;
+	while(tmp != NULL) {
+		if (min > tmp->frequency)
+			min = tmp->frequency;
+		tmp = tmp->next;
+	}
+	return min;
 }
 
 /* int get_cpu_num(general *configuration)
@@ -110,25 +110,25 @@ unsigned long get_min_available_freq(struct cpufreq_available_frequencies *freqs
  * Returns always at least 1 (you can't run this function without any cpu!)
  */
 int get_cpu_num(void) {
-  FILE *fp;
-  int n;
-  char line[256];
+	FILE *fp;
+	int n;
+	char line[256];
 
-  fp = fopen(CPUINFO_PROC, "r");
-  if(!fp) {
-    cpufreqd_log(LOG_ERR, "get_cpu_num(): %s: %s\n", CPUINFO_PROC, strerror(errno));
-    return 1;
-  }
-  
-  n = 0;
-  while(!feof(fp)) {
-    fgets(line, 255, fp);
-    if(!strncmp(line, "processor", 9))
-      n++;
-  }
-  fclose(fp);
-  
-  cpufreqd_log(LOG_DEBUG, "get_cpu_num(): found %i CPUs\n", n);
+	fp = fopen(CPUINFO_PROC, "r");
+	if(!fp) {
+		cpufreqd_log(LOG_ERR, "get_cpu_num(): %s: %s\n", CPUINFO_PROC, strerror(errno));
+		return 1;
+	}
 
-  return n > 0 ? n : 1;
+	n = 0;
+	while(!feof(fp)) {
+		fgets(line, 255, fp);
+		if(!strncmp(line, "processor", 9))
+			n++;
+	}
+	fclose(fp);
+
+	cpufreqd_log(LOG_DEBUG, "get_cpu_num(): found %i CPUs\n", n);
+
+	return n > 0 ? n : 1;
 }
