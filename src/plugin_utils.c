@@ -133,4 +133,15 @@ int finalize_plugin(struct plugin_obj *cp) {
   return 0;
 }
 
+void update_plugin_states(struct LIST *plugins) {
+	struct NODE *nd;
+	struct plugin_obj *o_plugin;
 
+	/* update plugin states */
+	for (nd=plugins.first; nd!=NULL; nd=nd->next) {
+		o_plugin = (struct plugin_obj*)nd->content;
+		if (o_plugin!=NULL && o_plugin->used>0) {
+			o_plugin->plugin->plugin_update();
+		}
+	}
+}
