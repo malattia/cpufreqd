@@ -10,7 +10,6 @@ config.guess
 config.sub
 configure
 cpufreqd
-debian/
 .deps
 *.old
 *.la
