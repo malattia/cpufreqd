@@ -207,25 +207,11 @@ int parse_config_general (FILE *config) {
 			continue;
 		}
 
-		if (strcmp(name,"socketfile") == 0) {
+		if (strcmp(name,"acpi_workaround") == 0) {
 			if (value != NULL) {
-				strncpy(configuration.sockfile, value, MAX_PATH_LEN);
-			} else {
-				cpufreqd_log(LOG_WARNING, 
-						"parse_config_general(): empty \"socketfile\", "
-						"using default %s.\n", CPUFREQD_SOCKFILE);
-				strncpy(configuration.pidfile, CPUFREQD_SOCKFILE, MAX_PATH_LEN);
-			}
-			configuration.sockfile[MAX_PATH_LEN-1] = '\0';
-			continue;
-		}
-
-		if (strcmp(name,"enable_remote") == 0) {
-			if (value != NULL) {
-				configuration.enable_remote = atoi (value);
+				configuration.acpi_workaround = atoi (value);
 				cpufreqd_log(LOG_WARNING, "parse_config_general(): "
-						"Remote control %s.\n", 
-						configuration.enable_remote ? "enabled" : "disabled");
+						"ACPI workaround enabled.\n");
 			}
 			continue;
 		}
