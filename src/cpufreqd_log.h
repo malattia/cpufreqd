@@ -17,4 +17,14 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* log levels, for use in the whole application */
+#define LOG_EMERG		0	
+#define LOG_ALERT		1
+#define LOG_CRIT		2
+#define LOG_ERR			3
+#define LOG_WARNING		4
+#define LOG_NOTICE		5
+#define LOG_INFO		6
+#define LOG_DEBUG		7
+
 void cpufreqd_log (const int prio, const char *fmt, ...);

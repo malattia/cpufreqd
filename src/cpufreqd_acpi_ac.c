@@ -22,6 +22,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
+#include "cpufreqd_log.h"
 #include "cpufreqd_plugin.h"
 #include "cpufreqd.h"
 

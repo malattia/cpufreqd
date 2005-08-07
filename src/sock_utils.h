@@ -17,22 +17,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "cpufreqd_plugin.h"
-#include "list.h"
+#define CPUFREQD_SOCKET		"/cpufreqd"
+#define TMP_DIR_TEMPL		"/tmp/cpufreqd-XXXXXX"
+#define TMP_DIR_TEMPL_LEN	21
 
-struct plugin_obj {
-	char name[256];
-	void *library;
-	struct cpufreqd_plugin *plugin;
-	unsigned int used;
-};
-
-void	load_plugin_list	(struct LIST *plugins);
-int	validate_plugins	(struct LIST *plugins);
-int     load_plugin		(struct plugin_obj *cp);
-void    close_plugin		(struct plugin_obj *cp);
-int     get_cpufreqd_object	(struct plugin_obj *cp);
-int     initialize_plugin	(struct plugin_obj *cp);
-int     finalize_plugin		(struct plugin_obj *cp);
-void	update_plugin_states	(struct LIST *plugins);
-
+char *create_temp_dir(char *buf);
+void delete_temp_dir(const char *name);
+int open_unix_sock(const char *dirname);
+void close_unix_sock(int fd);

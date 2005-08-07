@@ -66,8 +66,8 @@ struct cpufreqd_keyword {
    *
    * Can be NULL
    */
-  void (*pre_change) (const void *ev, struct cpufreq_policy *old,
-		  struct cpufreq_policy *new);
+  void (*pre_change) (const void *ev, const struct cpufreq_policy *old,
+		  const struct cpufreq_policy *new);
 
   /* function pointer to the post_change event. The same as pre_change applies
    * except for the fact that everything is referred tto _after_ set_policy()
@@ -75,12 +75,14 @@ struct cpufreqd_keyword {
    *
    * Can be NULL
    */
-  void (*post_change) (const void *ev, struct cpufreq_policy *old,
-		  struct cpufreq_policy *new);
+  void (*post_change) (const void *ev, const struct cpufreq_policy *old,
+		  const struct cpufreq_policy *new);
 
   /* Allows the owner to define a specific function to be called when freeing
    * malloced during the 'parse' call. Not required, if missing a libc call to
    * 'free' is performed with the same obj argument.
+   *
+   * Can be NULL
    */
   void (*free) (void *obj);
 };

@@ -17,6 +17,7 @@ cpufreqd_SOURCES = \
 		cpufreqd_log.c \
 		daemon_utils.c \
 		plugin_utils.c \
+		sock_utils.c \
 		cpufreq_utils.c \
 		list.c
 
@@ -53,6 +54,8 @@ noinst_HEADERS = \
 		cpufreq_utils.h \
 		daemon_utils.h \
 		plugin_utils.h \
+		cpufreqd_remote.h \
+		sock_utils.h \
 		main.h \
 		config_parser.h \
 		list.h

@@ -50,6 +50,7 @@ struct rule {
   struct LIST entries; /* list of struct rule_en */
   struct profile *prof;
   unsigned int score;
+  unsigned int entries_count;
 };
 
 struct cpufreq_sys_info {
@@ -67,9 +68,10 @@ struct cpufreqd_conf {
   
   char config_file[MAX_PATH_LEN];
   char pidfile[MAX_PATH_LEN];
+  char sockfile[MAX_PATH_LEN];
   int log_level;
   unsigned int cpu_num;
-  unsigned int acpi_workaround;
+  unsigned int enable_remote;
   unsigned int poll_interval;
   unsigned int has_sysfs;
   unsigned int no_daemon;
@@ -84,7 +86,6 @@ struct cpufreqd_conf {
 
   struct LIST rules; /* list of configured struct rule */
   struct LIST profiles; /* list of configured struct profile */
-
   struct LIST plugins; /* list of configured plugins */
 
 };

@@ -21,82 +21,82 @@
 #include "list.h"
 
 int list_free_sublist(struct LIST *l, struct NODE *n) {
-  int ret = 0;
-  struct NODE *prev = 0L;
-  
-  /* return if !n */
-  if (!n)
-    return 0;
-  
-  /* terminate the list just before the subtree to remove */
-  if (n->prev) {  /* unless the starting node is the first */
-    l->last = n->prev;
-    l->last->next = 0L;
-  }
+	int ret = 0;
+	struct NODE *prev = 0L;
 
-  /* free subtree */
-  while(n) {
-    prev = n;
-    n = n->next;
-    free(prev);
-    ret++;
-  }
-  return ret;
+	/* return if !n */
+	if (!n)
+		return 0;
+
+	/* terminate the list just before the subtree to remove */
+	if (n->prev) {  /* unless the starting node is the first */
+		l->last = n->prev;
+		l->last->next = 0L;
+	}
+
+	/* free subtree */
+	while(n) {
+		prev = n;
+		n = n->next;
+		free(prev);
+		ret++;
+	}
+	return ret;
 }
 
 struct LIST *list_new(void) {
-  struct LIST *ret = 0L;
-  ret = malloc(sizeof(struct LIST));
-  if (ret != NULL) {
-    memset(ret, 0, sizeof(struct LIST));
-  }
-  return ret;
+	struct LIST *ret = 0L;
+	ret = malloc(sizeof(struct LIST));
+	if (ret != NULL) {
+		memset(ret, 0, sizeof(struct LIST));
+	}
+	return ret;
 }
 
 /*  Removes the node nd and returns the pointer
  *  to the next node
  */
 struct NODE *list_remove_node(struct LIST *l, struct NODE *nd) {
-  struct NODE *ret = NULL;
-  if (nd != NULL) {
-    if (nd->prev != NULL) {
-      nd->prev->next = nd->next;
-    } else {
-      l->first = nd->next;
-    }
-    if (nd->next != NULL) {
-      nd->next->prev = nd->prev;
-      ret = nd->next;
-    } else {
-      l->last = nd->prev;
-    }
-    node_free(nd);
-  }
-  return ret;
+	struct NODE *ret = NULL;
+	if (nd != NULL) {
+		if (nd->prev != NULL) {
+			nd->prev->next = nd->next;
+		} else {
+			l->first = nd->next;
+		}
+		if (nd->next != NULL) {
+			nd->next->prev = nd->prev;
+			ret = nd->next;
+		} else {
+			l->last = nd->prev;
+		}
+		node_free(nd);
+	}
+	return ret;
 }
 
 struct NODE *node_new(void *cnt, size_t s) {
-  struct NODE *ret = 0L;
-  ret = malloc(sizeof(struct NODE) + s);
-  if (ret != NULL) {
-    memset(ret, 0, sizeof(struct NODE) + s);
-    ret->content = ret + 1;
-    if (cnt != NULL)
-      memcpy(ret->content, cnt, s);
-  }
-  return ret;
+	struct NODE *ret = 0L;
+	ret = malloc(sizeof(struct NODE) + s);
+	if (ret != NULL) {
+		memset(ret, 0, sizeof(struct NODE) + s);
+		ret->content = ret + 1;
+		if (cnt != NULL)
+			memcpy(ret->content, cnt, s);
+	}
+	return ret;
 }
 
 void node_free(struct NODE *n) {
-  free(n);
+	free(n);
 }
 
 void list_append(struct LIST *l, struct NODE *n) {
-  if (l->first == NULL) {
-    l->first = l->last = n;
-  } else {
-    l->last->next = n;
-    n->prev = l->last;
-    l->last = n;
-  }
+	if (l->first == NULL) {
+		l->first = l->last = n;
+	} else {
+		l->last->next = n;
+		n->prev = l->last;
+		l->last = n;
+	}
 }

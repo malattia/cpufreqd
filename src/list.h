@@ -25,9 +25,12 @@
 #define LIST_FOREACH(lst, fun) \
                 {\
                   for (struct NODE *n=lst->first; n!=NULL; n=n->next) {\
-                    (*fun)(n);\
+                    (*fun)(n->content);\
                   }\
                 }
+
+#define LIST_FOREACH_NODE(node, list) \
+	for (struct NODE *node = (list)->first; node != NULL; node = node->next)
 
 /*
  * Doubly linked list

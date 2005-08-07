@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <unistd.h>
+#include "cpufreqd_log.h"
 #include "cpufreqd_plugin.h"
 #include "cpufreqd.h"
 

@@ -29,7 +29,6 @@
  *  list if a plugin fails to load
  */
 void load_plugin_list(struct LIST *plugins) {
-
 	struct plugin_obj *o_plugin = NULL;
 	struct NODE *n = NULL;
 	
@@ -37,8 +36,8 @@ void load_plugin_list(struct LIST *plugins) {
 	while (n != NULL) {
 		o_plugin = (struct plugin_obj*)n->content;
 		/* take care!! if statement badly indented!! */
-		if (load_plugin(o_plugin)==0 &&
-				get_cpufreqd_object(o_plugin)==0 &&
+		if (load_plugin(o_plugin) == 0 &&
+				get_cpufreqd_object(o_plugin) == 0 &&
 				initialize_plugin(o_plugin) == 0) { 
 			cpufreqd_log(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
 			n=n->next;
@@ -51,86 +50,113 @@ void load_plugin_list(struct LIST *plugins) {
 		} /* end else */
 	} /* end while */
 }
+
+/* Validate plugins after parsing the configuration, an unused
+ * plugin is unloaded and removed from the list.
+ *
+ * Returns the number of remaining plugins.
+ */
+int validate_plugins(struct LIST *plugins) {
+	struct plugin_obj *o_plugin = NULL;
+	struct NODE *n = NULL;
+	int used_plugins = 0;
+
+	n = plugins->first;
+	while (n != NULL) {
+		o_plugin = (struct plugin_obj*)n->content;
+		if (o_plugin->used != 0) {
+			used_plugins++;
+			n = n->next;
+		} else {
+			finalize_plugin((struct plugin_obj*)n->content);
+			close_plugin((struct plugin_obj*)n->content);
+			n = list_remove_node(plugins, n);
+		}
+	}
+	return used_plugins;
+}
 	
 /*  int load_plugin(struct plugin_obj *cp)
  *  Open shared libraries
  */
 int load_plugin(struct plugin_obj *cp) {
-  char libname[512];
+	char libname[512];
 
-  snprintf(libname, 512, CPUFREQD_LIBDIR"cpufreqd_%s.so", cp->name);
- 
-  cpufreqd_log(LOG_INFO, "Loading \"%s\" for plugin \"%s\".\n", libname, cp->name);
-  cp->library = dlopen(libname, RTLD_LAZY);
-  if (!cp->library) {
-    cpufreqd_log(LOG_ERR, "load_plugin(): %s\n", dlerror());
-    return -1;
-  }
+	snprintf(libname, 512, CPUFREQD_LIBDIR"cpufreqd_%s.so", cp->name);
 
-  return 0;
+	cpufreqd_log(LOG_INFO, "Loading \"%s\" for plugin \"%s\".\n", libname, cp->name);
+	cp->library = dlopen(libname, RTLD_LAZY);
+	if (!cp->library) {
+		cpufreqd_log(LOG_ERR, "load_plugin(): %s\n", dlerror());
+		return -1;
+	}
+
+	return 0;
 }
 
 /*  void close_plugin(struct plugin_obj *cp)
  *  Close shared libraries
  */
 void close_plugin(struct plugin_obj *cp) {
-  /* close library */
-  if (dlclose(cp->library) != 0) {
-	cpufreqd_log(LOG_ERR, "Error unloading plugin %s: %s\n", cp->name, dlerror());
-  }
+	/* close library */
+	if (dlclose(cp->library) != 0) {
+		cpufreqd_log(LOG_ERR, "Error unloading plugin %s: %s\n", cp->name, dlerror());
+	}
 }
 
 /*  int get_cpufreqd_object(struct plugin_obj *cp)
  *  Calls the create_plugin routine.
  */
 int get_cpufreqd_object(struct plugin_obj *cp) {
-  
-  /* pointer to an error message, if any */
-  const char* error;    
-  /* plugin ptr */
-  struct cpufreqd_plugin *(*create)(void);
 
-  cpufreqd_log(LOG_INFO, "Getting plugin object for \"%s\".\n", cp->name);
-  /* create plugin */
-  create = (struct cpufreqd_plugin * (*) (void))dlsym(cp->library, "create_plugin");
-  /* uh! the following makes gcc-3.4 happy with -pedantic... */
-  /* *(void **) (&create) = dlsym(cp->library, "create_plugin"); */
-  error = dlerror();
-  if (error) {
-    cpufreqd_log(LOG_ERR, "get_cpufreqd_object(): %s\n", error);
-    return -1;
-  }
-  cp->plugin = create();
+	/* pointer to an error message, if any */
+	const char* error;    
+	/* plugin ptr */
+	struct cpufreqd_plugin *(*create)(void);
 
-  return 0;
+	cpufreqd_log(LOG_INFO, "Getting plugin object for \"%s\".\n", cp->name);
+	/* create plugin */
+	create = (struct cpufreqd_plugin * (*) (void))dlsym(cp->library, "create_plugin");
+	/* uh! the following makes gcc-3.4 happy with -pedantic... */
+	/* *(void **) (&create) = dlsym(cp->library, "create_plugin"); */
+	error = dlerror();
+	if (error) {
+		cpufreqd_log(LOG_ERR, "get_cpufreqd_object(): %s\n", error);
+		return -1;
+	}
+	cp->plugin = create();
+
+	return 0;
 }
 
 /*  int initialize_plugin(struct plugin_obj *cp)
  *  Call plugin_init()
  */
 int initialize_plugin(struct plugin_obj *cp) {
-  int ret = 0;
-  cpufreqd_log(LOG_INFO, "Initializing plugin \"%s-%s\".\n", cp->name, cp->plugin->plugin_name);
-  /* set logger function for this plugin */
-  cp->plugin->cfdprint = &cpufreqd_log;
-  /* call init function */
-  if (cp->plugin->plugin_init != NULL) {
-     ret = (*(cp->plugin->plugin_init))();
-  }
-  return ret;
+	int ret = 0;
+	cpufreqd_log(LOG_INFO, "Initializing plugin \"%s-%s\".\n",
+			cp->name, cp->plugin->plugin_name);
+	/* set logger function for this plugin */
+	cp->plugin->cfdprint = &cpufreqd_log;
+	/* call init function */
+	if (cp->plugin->plugin_init != NULL) {
+		ret = cp->plugin->plugin_init();
+	}
+	return ret;
 }
 
 /*  int finalize_plugin(struct plugin_obj *cp)
  *  Call plugin_exit()
  */
 int finalize_plugin(struct plugin_obj *cp) {
-  if (cp != NULL) {
-    cpufreqd_log(LOG_INFO, "Finalizing plugin \"%s-%s\".\n", cp->name, cp->plugin->plugin_name);
-    /* call exit function */
-    (*(cp->plugin->plugin_exit))();
-    return -1;
-  }
-  return 0;
+	if (cp != NULL) {
+		cpufreqd_log(LOG_INFO, "Finalizing plugin \"%s-%s\".\n",
+				cp->name, cp->plugin->plugin_name);
+		/* call exit function */
+		cp->plugin->plugin_exit();
+		return -1;
+	}
+	return 0;
 }
 
 void update_plugin_states(struct LIST *plugins) {

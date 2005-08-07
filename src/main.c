@@ -17,36 +17,45 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdio.h>
-#include <unistd.h>
+#include <cpufreq.h>
 #include <errno.h>
 #include <getopt.h>
-#include <signal.h>
 #include <limits.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
 #include <stdlib.h>
-#include <cpufreq.h>
 #include <string.h>
-#include "main.h"
-#include "cpufreqd.h"
-#include "daemon_utils.h"
-#include "plugin_utils.h"
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include "config_parser.h"
-#include "cpufreqd_log.h"
 #include "cpufreq_utils.h"
+#include "cpufreqd.h"
+#include "cpufreqd_log.h"
+#include "cpufreqd_plugin.h"
+#include "cpufreqd_remote.h"
+#include "daemon_utils.h"
+#include "list.h"
+#include "main.h"
+#include "plugin_utils.h"
+#include "sock_utils.h"
 
 /* default configuration */
 struct cpufreqd_conf configuration = {
-	.config_file          = CPUFREQD_CONFDIR"cpufreqd.conf",
-	.pidfile              = CPUFREQD_STATEDIR"cpufreqd.pid",
-	.cpu_num              = 1,
-	.poll_interval        = DEFAULT_POLL,
-	.has_sysfs            = 1,
-	.no_daemon            = 0,
-	.log_level_overridden = 0,
-	.log_level            = DEFAULT_VERBOSITY,
-	.acpi_workaround      = 0,
-	.print_help           = 0,
-	.print_version        = 0
+	.config_file		= CPUFREQD_CONFDIR"cpufreqd.conf",
+	.pidfile		= CPUFREQD_STATEDIR"cpufreqd.pid",
+	.sockfile		= "/tmp/cpufreqd.sock",
+	.cpu_num		= 1,
+	.poll_interval		= DEFAULT_POLL,
+	.has_sysfs		= 1,
+	.no_daemon		= 0,
+	.log_level_overridden	= 0,
+	.log_level		= DEFAULT_VERBOSITY,
+	.enable_remote		= 0,
+	.print_help		= 0,
+	.print_version		= 0
 };
 
 static int force_reinit = 0;
@@ -55,18 +64,20 @@ static int force_exit = 0;
 /* intialize the cpufreqd_conf object 
  * by reading the configuration file
  */
-int init_configuration(void) {
+static int init_configuration(void) {
 	FILE *fp_config;
-	struct NODE *n, *np_iter, *nr_iter;
+	struct NODE *n;
 	struct profile *tmp_profile;
 	struct rule *tmp_rule;
 	char buf[256];
 
 	/* configuration file */
-	cpufreqd_log(LOG_INFO, "init_configuration(): reading configuration file %s\n", configuration.config_file);
+	cpufreqd_log(LOG_INFO, "init_configuration(): reading configuration file %s\n",
+			configuration.config_file);
 	fp_config = fopen(configuration.config_file, "r");
 	if (!fp_config) {
-		cpufreqd_log(LOG_ERR, "init_configuration(): %s: %s\n", configuration.config_file, strerror(errno));
+		cpufreqd_log(LOG_ERR, "init_configuration(): %s: %s\n",
+				configuration.config_file, strerror(errno));
 		return -1;
 	}
 
@@ -100,7 +111,8 @@ int init_configuration(void) {
 
 			n = node_new(NULL, sizeof(struct profile));
 			if (n == NULL) {
-				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make enough room for a new Profile (%s)\n",
+				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make "
+						"enough room for a new Profile (%s)\n",
 						strerror(errno));
 				fclose(fp_config);
 				return -1;
@@ -108,7 +120,8 @@ int init_configuration(void) {
 			/* create governor string */
 			tmp_profile = (struct profile *)n->content;
 			if ((tmp_profile->policy.governor = malloc(MAX_STRING_LEN*sizeof(char))) ==NULL) {
-				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make enough room for a new Profile governor (%s)\n",
+				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make enough room "
+						"for a new Profile governor (%s)\n",
 						strerror(errno));
 				node_free(n);
 				fclose(fp_config);
@@ -117,21 +130,22 @@ int init_configuration(void) {
 
 			if ( parse_config_profile(fp_config, tmp_profile) != -1) {
 				/* checks duplicate names */
-				for (np_iter=configuration.profiles.first; np_iter!=NULL; np_iter=np_iter->next) {
-					if (strcmp(((struct profile *)np_iter->content)->name, tmp_profile->name) == 0) {
-						cpufreqd_log(LOG_CRIT, 
-								"init_configuration(): [Profile] name \"%s\" already exists.\n", 
-								tmp_profile->name);
-						node_free(n);
-						fclose(fp_config);
-						return -1;
-					}
+				LIST_FOREACH_NODE(node, &configuration.profiles) {
+					struct profile *tmp = (struct profile *)node->content;
+					if (strcmp(tmp->name, tmp_profile->name) != 0)
+						continue;
+					cpufreqd_log(LOG_CRIT, 
+							"init_configuration(): [Profile] "
+							"name \"%s\" already exists.\n", 
+							tmp_profile->name);
+					node_free(n);
 				}
 				list_append(&configuration.profiles, n);
 
 			} else {
 				cpufreqd_log(LOG_CRIT, 
-						"init_configuration(): [Profile] error parsing %s, see logs for details.\n",
+						"init_configuration(): [Profile] "
+						"error parsing %s, see logs for details.\n",
 						configuration.config_file);
 				node_free(n);
 				fclose(fp_config);
@@ -151,19 +165,19 @@ int init_configuration(void) {
 				fclose(fp_config);
 				return -1;
 			}
-
 			tmp_rule = (struct rule *)n->content;
 			if ( parse_config_rule(fp_config, tmp_rule) != -1) {
-				for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {
+				
+				LIST_FOREACH_NODE(node, &configuration.rules) {
+					struct rule *tmp = (struct rule *)node->content;
 					/* check duplicate names */
-					if (strcmp(((struct rule *)nr_iter->content)->name, tmp_rule->name) == 0) {
-						cpufreqd_log(LOG_CRIT, 
-								"init_configuration(): [Rule] name \"%s\" already exists.\n", 
-								tmp_rule->name);
-						node_free(n);
-						fclose(fp_config);
-						return -1;
-					}
+					if (strcmp(tmp->name, tmp_rule->name) != 0)
+						continue;
+					
+					cpufreqd_log(LOG_ERR, 
+							"init_configuration(): [Rule] name \"%s\" already exists. Skipped\n", 
+							tmp_rule->name);
+					node_free(n);
 				}
 				/* check if there are options */
 				if (tmp_rule->entries.first == NULL) {
@@ -200,16 +214,18 @@ int init_configuration(void) {
 	 * associate rules->profiles
 	 * go through rules and associate to the proper profile
 	 */
-	for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {
-		tmp_rule = (struct rule *)nr_iter->content;
+	LIST_FOREACH_NODE(node, &configuration.rules) {
+	/*for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {*/
+		tmp_rule = (struct rule *)node->content;
 		int profile_found = 0;
 
-		for (np_iter=configuration.profiles.first; np_iter!=NULL; np_iter=np_iter->next) {
-			tmp_profile = (struct profile *)np_iter->content;
+		LIST_FOREACH_NODE(node1, &configuration.profiles) {
+		/*for (np_iter=configuration.profiles.first; np_iter!=NULL; np_iter=np_iter->next) {*/
+			tmp_profile = (struct profile *)node1->content;
 			/* go through profiles */
 			if (strcmp(tmp_rule->profile_name, tmp_profile->name)==0) {
 				/* a profile is allowed to be addressed by more than 1 rule */
-				((struct rule *)nr_iter->content)->prof = np_iter->content;
+				tmp_rule->prof = tmp_profile;
 				profile_found = 1;
 				break;
 			}
@@ -222,8 +238,8 @@ int init_configuration(void) {
 		}
 	}
 
-	for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {
-		tmp_rule = (struct rule *)nr_iter->content;
+	LIST_FOREACH_NODE(node, &configuration.rules) {
+		tmp_rule = (struct rule *)node->content;
 		cpufreqd_log(LOG_INFO, 
 				"init_configuration(): Rule \"%s\" has Profile \"%s\"\n", 
 				tmp_rule->name, tmp_rule->prof->name);
@@ -234,9 +250,8 @@ int init_configuration(void) {
 /* 
  * Frees the structures allocated.
  */
-void free_configuration(void)
+static void free_configuration(void)
 {
-	struct NODE *n_iter, *ent;
 	struct rule *tmp_rule;
 	struct rule_en *tmp_rule_en;
 	struct profile *tmp_profile;
@@ -244,11 +259,11 @@ void free_configuration(void)
 
 	/* cleanup rule entries */
 	cpufreqd_log(LOG_INFO, "free_config(): freeing rules entries.\n");
-	for (n_iter=configuration.rules.first; n_iter!=NULL; n_iter=n_iter->next) {
-		tmp_rule = (struct rule *)n_iter->content;
+	LIST_FOREACH_NODE(node, &configuration.rules) {
+		tmp_rule = (struct rule *) node->content;
 
-		for (ent=tmp_rule->entries.first; ent!=NULL; ent=ent->next) {
-			tmp_rule_en = (struct rule_en *)ent->content;
+		LIST_FOREACH_NODE(node1, &tmp_rule->entries) {
+			tmp_rule_en = (struct rule_en *) node1->content;
 			if (tmp_rule_en->keyword->free != NULL)
 				tmp_rule_en->keyword->free(tmp_rule_en->obj);
 			else 
@@ -263,8 +278,8 @@ void free_configuration(void)
 
 	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles.\n"); 
 	/* free policy governors string */
-	for (n_iter=configuration.profiles.first; n_iter!=NULL; n_iter=n_iter->next) {
-		tmp_profile = (struct profile *)n_iter->content;
+	LIST_FOREACH_NODE(node, &configuration.profiles) {
+		tmp_profile = (struct profile *)node->content;
 		free(tmp_profile->policy.governor);
 	}
 	list_free_sublist(&(configuration.profiles), configuration.profiles.first);
@@ -272,7 +287,7 @@ void free_configuration(void)
 	/* clean other values */
 	configuration.poll_interval = DEFAULT_POLL;
 	configuration.has_sysfs = 0;
-	configuration.acpi_workaround = 0;
+	configuration.enable_remote = 0;
 	configuration.cpu_min_freq = 0;
 	configuration.cpu_max_freq = 0;
 
@@ -284,18 +299,91 @@ void free_configuration(void)
 	 *  Unload plugins
 	 */
 	cpufreqd_log(LOG_INFO, "free_config(): freeing plugins.\n"); 
-	for (n_iter=configuration.plugins.first; n_iter!=NULL; n_iter=n_iter->next) {
-		o_plugin = (struct plugin_obj*)n_iter->content;
+	LIST_FOREACH_NODE(node, &configuration.plugins) {
+		o_plugin = (struct plugin_obj*) node->content;
 		finalize_plugin(o_plugin);
 		close_plugin(o_plugin);
 	}
 	list_free_sublist(&(configuration.plugins), configuration.plugins.first);
 }
 
+/*
+ * Evaluates the full rule and returns the percentage score
+ * for it.
+ */
+static unsigned int rule_score(struct rule *rule) {
+	unsigned int hits = 0;
+	struct rule_en *re = NULL;
+	
+	/* call plugin->evaluate for each rule */
+	LIST_FOREACH_NODE(node, &rule->entries) {
+		re = (struct rule_en *) node->content;
+		/* compute scores for rules and keep the highest */
+		if (re->keyword->evaluate != NULL && re->keyword->evaluate(re->obj) == MATCH) {
+			hits++;
+			cpufreqd_log(LOG_DEBUG, "Rule \"%s\": %s matches.\n", rule->name,
+					re->keyword->word);
+		}
+	} /* end foreach rule entry */
+	return hits + (100 * hits / rule->entries_count);
+}
+
+/*  struct rule *update_rule_scores(struct LIST *rules)
+ *  Updates rules score and return the one with the best
+ *  one or NULL if every rule has a 0% score.
+ */
+static struct rule *update_rule_scores(struct LIST *rule_list) {
+	struct rule *tmp_rule = NULL;
+	struct rule *ret = NULL;
+	unsigned int best_score = 0, tmp_score = 0;
+
+	LIST_FOREACH_NODE(node, rule_list) {
+		tmp_rule = (struct rule *)node->content;
+		
+		cpufreqd_log(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
+		tmp_score = rule_score(tmp_rule);
+
+		if (tmp_score > best_score) {
+			ret = tmp_rule;
+			best_score = tmp_score;
+		}
+		cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name, tmp_score);
+	} /* end foreach rule */
+	return ret;
+}
+
+/* Invoke pre_change for each rul entry
+ */
+static void rule_prechange_event(const struct rule *rule, const struct cpufreq_policy *old,
+		const struct cpufreq_policy *new) {
+	struct rule_en *re;
+	cpufreqd_log(LOG_DEBUG, "Triggering pre-change event\n");
+	LIST_FOREACH_NODE(node, &rule->entries) {
+		re = (struct rule_en *)node->content;
+		if (re->keyword->pre_change != NULL) {
+			re->keyword->pre_change(re->obj, old, new);
+		}
+	} /* end foreach rule entry */
+}
+
+/* Invoke post_change for each rul entry
+ */
+static void rule_postchange_event(const struct rule *rule, const struct cpufreq_policy *old,
+		const struct cpufreq_policy *new) {
+	struct rule_en *re;
+	cpufreqd_log(LOG_DEBUG, "Triggering post-change event\n");
+	LIST_FOREACH_NODE(node, &rule->entries) {
+		re = (struct rule_en *)node->content;
+		if (re->keyword->post_change != NULL) {
+			re->keyword->post_change(re->obj, old, new);
+		}
+	} /* end foreach rule entry */
+}
+
 /*  int read_args (int argc, char *argv[])
  *  Reads command line arguments
  */
-int read_args (int argc, char *argv[]) {
+static int read_args (int argc, char *argv[]) {
 
 	static struct option long_options[] = {
 		{ "help", 0, 0, 'h' }, 
@@ -345,7 +433,7 @@ int read_args (int argc, char *argv[]) {
 /*
  * Prints program version
  */
-void print_version(const char *me) {
+static void print_version(const char *me) {
 	printf("%s version "__CPUFREQD_VERSION__".\n", me);
 	printf("Copyright 2002,2003,2004 Mattia Dongili <malattia@gmail.com>\n"
 			"                         George Staikos <staikos@0wned.org>\n");
@@ -354,7 +442,7 @@ void print_version(const char *me) {
 /*  void print_help(const char *me)
  *  Prints program help
  */
-void print_help(const char *me) {
+static void print_help(const char *me) {
 	printf("Usage: %s [OPTION]...\n\n"
 			"  -h, --help                   display this help and exit\n"
 			"  -v, --version                display version information and exit\n"
@@ -365,23 +453,68 @@ void print_help(const char *me) {
 			"Report bugs to Mattia Dongili <malattia@gmail.com>.\n", me);
 }
 
-void term_handler(int signo) {
+static void term_handler(int signo) {
 	cpufreqd_log(LOG_NOTICE, "Caught TERM signal (%s), forcing exit.\n", strsignal(signo));
 	force_exit = 1;
 }
 
-void int_handler(int signo) {
+static void int_handler(int signo) {
 	cpufreqd_log(LOG_NOTICE, "Caught INT signal (%s), forcing exit.\n", strsignal(signo));
 	force_exit = 1;
 }
 
-void hup_handler(int signo) {
-
+static void hup_handler(int signo) {
 	cpufreqd_log(LOG_NOTICE, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
 #if 0
 	cpufreqd_log(LOG_NOTICE, "Caught HUP signal (%s), reloading configuration file.\n", strsignal(signo));
 	force_reinit = 1;
 #endif
+}
+
+static void pipe_handler(int signo) {
+  cpufreqd_log(LOG_NOTICE, "Caught PIPE signal (%s).\n", strsignal(signo));
+}
+
+static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *current) {
+	struct rule *best_rule = NULL;
+	
+	update_plugin_states(&conf->plugins);
+	best_rule = update_rule_scores(&conf->rules);
+
+	/* set the policy associated with the highest score */
+	if (best_rule == NULL) {
+		cpufreqd_log(LOG_WARNING, "No Rule matches current system status.\n");
+
+		/* rule changed */
+	} else if (current != best_rule) {
+		cpufreqd_log(LOG_DEBUG, "New Rule (\"%s\"), applying.\n", 
+				best_rule->name);
+		/* pre change event */
+		if (current != NULL) {
+			rule_prechange_event(best_rule, &current->prof->policy,
+					&best_rule->prof->policy);
+		}
+
+		/* change frequency */
+		if (current == NULL || best_rule->prof != current->prof) {
+			cpufreqd_set_profile(best_rule->prof);
+		} else {
+			cpufreqd_log(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
+					current->prof->name, best_rule->prof->name);
+		}
+
+		/* post change event */
+		if (current != NULL) {
+			rule_postchange_event(best_rule, &current->prof->policy,
+					&best_rule->prof->policy);
+		}
+
+		/* nothing new happened */
+	} else {
+		cpufreqd_log(LOG_DEBUG, "Rule unchanged (\"%s\"), doing nothing.\n", 
+				current->name);
+	}
+	return best_rule;
 }
 
 /*
@@ -390,14 +523,16 @@ void hup_handler(int signo) {
  */
 int main (int argc, char *argv[]) {
 
-	struct NODE *nd = NULL;
-	struct NODE *n1 = NULL;
 	struct sigaction signal_action;
-	struct plugin_obj *o_plugin = NULL;
-	struct rule *current_rule = NULL, *tmp_rule = NULL, *win_rule = NULL;
-	struct profile *current_profile = NULL, *tmp_profile = NULL;
-	struct rule_en *re = NULL;
-	unsigned int i = 0, tmp_score = 0;
+	struct pollfd fds;
+
+	struct rule *current_rule = NULL;
+	unsigned int i = 0;
+	int timeout = 0;
+	uint32_t command = INVALID_CMD;
+	int cpufreqd_sock = -1, peer_sock = -1; /* input pipe */
+	int cpufreqd_mode = ARG_DYNAMIC; /* operation mode (manual / dynamic) */
+	char dirname[MAX_PATH_LEN];
 	int ret = 0;
 
 	/* 
@@ -433,6 +568,7 @@ int main (int argc, char *argv[]) {
 	sigaddset(&signal_action.sa_mask, SIGTERM);
 	sigaddset(&signal_action.sa_mask, SIGINT);
 	sigaddset(&signal_action.sa_mask, SIGHUP);
+	sigaddset(&signal_action.sa_mask, SIGPIPE);
 	signal_action.sa_flags = 0;
 
 	signal_action.sa_handler = term_handler;
@@ -443,6 +579,9 @@ int main (int argc, char *argv[]) {
 
 	signal_action.sa_handler = hup_handler;
 	sigaction(SIGHUP, &signal_action, 0);
+
+	signal_action.sa_handler = pipe_handler;
+	sigaction(SIGPIPE, &signal_action, 0);
 
 	/*
 	 *  read how many cpus are available here
@@ -521,23 +660,24 @@ cpufreqd_start:
 		goto out_config_read;
 	}
 
-	/*  
-	 *  Clean up plugins if they don't have any associated rule entry
-	 */
-	nd=configuration.plugins.first;
-	while (nd != NULL) {
-		o_plugin = (struct plugin_obj*)nd->content;
-		if (o_plugin->used==0) {
-			finalize_plugin((struct plugin_obj*)nd->content);
-			close_plugin((struct plugin_obj*)nd->content);
-			nd = list_remove_node(&(configuration.plugins), nd);
+	/* setup UNIX socket if necessary */
+	if (configuration.enable_remote) {
+		dirname[0] = '\0';
+		if (create_temp_dir(dirname) == NULL) {
+			cpufreqd_log(LOG_ERR, "Couldn't create temporary directory %s\n", dirname);
+			cpufreqd_sock = -1;
+		} else if ((cpufreqd_sock = open_unix_sock(dirname)) == -1) {
+			delete_temp_dir(dirname);
+			cpufreqd_log(LOG_ERR, "Couldn't open socket, remote controls disabled\n");
 		} else {
-			nd=nd->next;
+			cpufreqd_log(LOG_INFO, "Remote controls enabled\n");
 		}
 	}
-	/* if no rules left exit.... */
-	if (configuration.plugins.first == NULL) {
-		cpufreqd_log(LOG_CRIT, "Hey! all the plugins I loaded are useless, maybe your configuration needs some rework.\n");
+
+	/* Validate plugins, if no rules left exit.... */
+	if (validate_plugins(&configuration.plugins) == 0) {
+		cpufreqd_log(LOG_CRIT, "Hey! all the plugins I loaded are useless, "
+				"maybe your configuration needs some rework.\n");
 		cpufreqd_log(LOG_CRIT, "Exiting.\n");
 		ret = 1;
 		goto out_config_read;
@@ -547,96 +687,105 @@ cpufreqd_start:
 	 *  Looooooooop
 	 */
 	while (!force_exit && !force_reinit) {
-		win_rule = NULL;
-		tmp_profile = NULL;
-		tmp_score = 0;
+		command = INVALID_CMD;
 
-		/* update plugin states */
-		for (nd=configuration.plugins.first; nd!=NULL; nd=nd->next) {
-			o_plugin = (struct plugin_obj*)nd->content;
-			if (o_plugin!=NULL && o_plugin->used>0) {
-				o_plugin->plugin->plugin_update();
-			}
-		}
-
-		/* got objects and config now test it, call plugin->eval for each rule */
-		/* O(rules*entries) */
-		for (nd=configuration.rules.first; nd!=NULL; nd=nd->next) {
-			tmp_rule = (struct rule*)nd->content;
-			/* reset the score before counting */
-			tmp_rule->score = i = 0;
-			cpufreqd_log(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
-
-			for (n1=tmp_rule->entries.first; n1!=NULL; n1=n1->next) {
-				re = (struct rule_en *)n1->content;
-				i++;
-				/* compute scores for rules and keep the highest */
-				if (re->keyword->evaluate != NULL && re->keyword->evaluate(re->obj) == MATCH) {
-					tmp_rule->score++;
-					cpufreqd_log(LOG_DEBUG, "Rule \"%s\": entry matches.\n", tmp_rule->name);
-				}
-			} /* end foreach rule entry */
-
-			/* calculate score on a percentage base 
-			 * so that a single entry rule might be the best match
+		/* if the socket opened successfully */
+		if (cpufreqd_sock != -1) {
+			/* if we have a valid peer_sock the wait for command
+			 * don't wait more tha 0.5 sec
 			 */
-			if ((tmp_rule->score + (100 * tmp_rule->score / i)) > tmp_score) {
-				win_rule = tmp_rule;
-				tmp_profile = tmp_rule->prof;
-				tmp_score = tmp_rule->score + (100 * tmp_rule->score / i);
-			}
+			if (peer_sock != -1) {
+				fds.fd = peer_sock;
+				fds.events = POLLIN | POLLRDNORM;
 
-			cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name,
-					tmp_rule->score+(100*tmp_rule->score)/i);
+				if (poll(&fds, 1, 500) != 1) {
+					cpufreqd_log(LOG_ALERT, "Wiated too long for data, aborting.\n");
 
-		} /* end foreach rule */
+				} else if (read(peer_sock, &command, sizeof(uint32_t)) == -1) {
+					cpufreqd_log(LOG_ALERT, "process_packet - read(): %s\n", strerror(errno));
 
-		/* set the policy associated with the highest score */
-		if (tmp_profile==NULL) {
-			cpufreqd_log(LOG_WARNING, "No Rule matches current system status.\n");
-		} else {
-			/* pre change event */
-			if (current_rule != win_rule) {
-				cpufreqd_log(LOG_DEBUG, "Triggering pre-change event\n");
-				for (n1=win_rule->entries.first; n1!=NULL; n1=n1->next) {
-					re = (struct rule_en *)n1->content;
-					if (re->keyword->pre_change != NULL)
-						re->keyword->pre_change(re->obj, 
-								&current_rule->prof->policy,
-								&tmp_rule->prof->policy);
-				} /* end foreach rule entry */
-			}
+				} else if (command != INVALID_CMD) {
+					cpufreqd_log(LOG_INFO, "command received: %0.4x %0.4x\n",
+							REMOTE_CMD(command), REMOTE_ARG(command));
+					switch (REMOTE_CMD(command)) {
+						case CMD_UPDATE_STATE:
+							cpufreqd_log(LOG_DEBUG, "CMD_UPDATE_STATE\n");
+							break;
+						case CMD_LIST_RULES:
+							cpufreqd_log(LOG_DEBUG, "CMD_LIST_RULES\n");
+							break;
+						case CMD_LIST_PROFILES:
+							cpufreqd_log(LOG_DEBUG, "CMD_LIST_PROFILES\n");
+							break;
+						case CMD_SET_RULE:
+							cpufreqd_log(LOG_DEBUG, "CMD_SET_RULE\n");
+							break;
+						case CMD_SET_MODE:
+							cpufreqd_log(LOG_DEBUG, "CMD_SET_MODE\n");
+							cpufreqd_mode = REMOTE_ARG(command);
+							break;
+						case CMD_SET_PROFILE:
+							cpufreqd_log(LOG_DEBUG, "CMD_SET_PROFILE\n");
+							break;
+						default:
+							cpufreqd_log(LOG_ALERT,
+									"Unable to process packet: %d\n",
+									command);
+							break;
+					}
+				}
+				close(peer_sock);
+				peer_sock = -1;
+			} /* end if poll */
 
-			/* change frequency */
-			if (tmp_profile != current_profile) {
-				cpufreqd_set_profile(tmp_profile);
+			/* do traditional loop and set timeout */
+			if (cpufreqd_mode == ARG_DYNAMIC) {
+				current_rule = cpufreqd_loop(&configuration, current_rule);
+				timeout = configuration.poll_interval * 1000;
 			} else {
-				cpufreqd_log(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
-						current_profile->name, tmp_profile->name);
+				timeout = -1;
+			}
+			
+			/* wait either for a command or for timeout to happen */
+			fds.fd = cpufreqd_sock;
+			fds.events = POLLIN | POLLRDNORM;
+			switch (poll(&fds, 1, timeout)) {
+				case 0:
+					/* timed out. check to see if things have changed */
+					break;
+				case -1:
+					cpufreqd_log(LOG_NOTICE, "poll(): %s.\n", strerror(errno));
+					break;
+				case 1:
+					/* somebody tried to contact us. see what he wants */
+					peer_sock = accept(cpufreqd_sock, NULL, 0);
+					if (peer_sock == -1) {
+						cpufreqd_log(LOG_ALERT, "Unable to accept connection: "
+								" %s\n", strerror(errno));
+					}
+					break;
+				default:
+					cpufreqd_log(LOG_ALERT, "poll(): Internal error caught.\n");
+					break;
 			}
 
-			/* post change event */
-			if (current_rule != win_rule) {
-				cpufreqd_log(LOG_DEBUG, "Triggering post-change event\n");
-				for (n1=win_rule->entries.first; n1!=NULL; n1=n1->next) {
-					re = (struct rule_en *)n1->content;
-					if (re->keyword->post_change != NULL)
-						re->keyword->post_change(re->obj, 
-								&current_rule->prof->policy,
-								&tmp_rule->prof->policy);
-				} /* end foreach rule entry */
-			}
-			current_rule = win_rule;
-			current_profile = tmp_profile;
+		/* no socket available */
+		} else {
+			current_rule = cpufreqd_loop(&configuration, current_rule);
+			sleep(configuration.poll_interval);
 		}
-
-		sleep(configuration.poll_interval);
 	}
 
 	/*
 	 * Clean pidfile
 	 */
 	clear_cpufreqd_pid(configuration.pidfile);
+
+	/* close socket */
+	if (cpufreqd_sock != -1) {
+		close_unix_sock(cpufreqd_sock);
+		delete_temp_dir(dirname);
+	}
 
 	/*
 	 *  Free configuration structures
