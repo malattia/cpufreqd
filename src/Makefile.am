@@ -1,53 +1,59 @@
-AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline -Wundef -Wbad-function-cast -Waggregate-return -std=c99 -pedantic -D_POSIX_SOURCE -D_GNU_SOURCE
+AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
+	-Wcast-qual -Wcast-align -Wwrite-strings \
+	-Wconversion -Wstrict-prototypes -Wmissing-prototypes \
+	-Wmissing-declarations -Wredundant-decls \
+	-Wnested-externs -Winline -Wundef -Wbad-function-cast \
+	-Waggregate-return \
+	-std=c99 -pedantic \
+	-D_POSIX_SOURCE -D_GNU_SOURCE
 
 AM_LDFLAGS = -module -avoid-version
 
 sbin_PROGRAMS = cpufreqd
 
 cpufreqd_SOURCES = \
-                    main.c \
-                    config_parser.c \
-										cpufreqd_log.c \
-										daemon_utils.c \
-										plugin_utils.c \
-										cpufreq_utils.c \
-                    list.c
+		main.c \
+		config_parser.c \
+		cpufreqd_log.c \
+		daemon_utils.c \
+		plugin_utils.c \
+		cpufreq_utils.c \
+		list.c
 
 lib_LTLIBRARIES = \
-									cpufreqd_programs.la \
-									cpufreqd_acpi_battery.la \
-                  cpufreqd_acpi_temperature.la \
-									cpufreqd_acpi_ac.la \
-									cpufreqd_apm.la \
-                  cpufreqd_cpu.la
+		cpufreqd_programs.la \
+		cpufreqd_acpi_battery.la \
+		cpufreqd_acpi_temperature.la \
+		cpufreqd_acpi_ac.la \
+		cpufreqd_apm.la \
+		cpufreqd_cpu.la
 
 cpufreqd_apm_la_SOURCES = \
-								cpufreqd_apm.c
+		cpufreqd_apm.c
 
 cpufreqd_acpi_ac_la_SOURCES = \
-								cpufreqd_acpi_ac.c
+		cpufreqd_acpi_ac.c
 								
 cpufreqd_acpi_temperature_la_SOURCES = \
-								cpufreqd_acpi_temperature.c
+		cpufreqd_acpi_temperature.c
 
 cpufreqd_acpi_battery_la_SOURCES = \
-								cpufreqd_acpi_battery.c
+		cpufreqd_acpi_battery.c
 
 cpufreqd_cpu_la_SOURCES = \
-								cpufreqd_cpu.c
+		cpufreqd_cpu.c
 
 cpufreqd_programs_la_SOURCES = \
-								cpufreqd_programs.c
-
+		cpufreqd_programs.c
 
 noinst_HEADERS = \
-                cpufreqd.h \
-								cpufreqd_plugin.h \
-                cpufreqd_log.h \
-                cpufreq_utils.h \
-								daemon_utils.h \
-								plugin_utils.h \
-                main.h \
-                config_parser.h \
-                list.h
+		cpufreqd.h \
+		cpufreqd_plugin.h \
+		cpufreqd_log.h \
+		cpufreq_utils.h \
+		daemon_utils.h \
+		plugin_utils.h \
+		main.h \
+		config_parser.h \
+		list.h
 
