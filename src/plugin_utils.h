@@ -33,4 +33,5 @@ void    close_plugin		(struct plugin_obj *cp);
 int     get_cpufreqd_object	(struct plugin_obj *cp);
 int     initialize_plugin	(struct plugin_obj *cp);
 int     finalize_plugin		(struct plugin_obj *cp);
+void	update_plugin_states	(struct LIST *plugins);
 

@@ -138,7 +138,7 @@ void update_plugin_states(struct LIST *plugins) {
 	struct plugin_obj *o_plugin;
 
 	/* update plugin states */
-	for (nd=plugins.first; nd!=NULL; nd=nd->next) {
+	for (nd=plugins->first; nd!=NULL; nd=nd->next) {
 		o_plugin = (struct plugin_obj*)nd->content;
 		if (o_plugin!=NULL && o_plugin->used>0) {
 			o_plugin->plugin->plugin_update();
