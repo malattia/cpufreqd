@@ -35,25 +35,18 @@
 #define CPUFREQD_STATEDIR   "/var/"
 #endif
 
-#define CPUFREQD_CONFIG   CPUFREQD_CONFDIR"cpufreqd.conf"
-#define CPUFREQD_PIDFILE  CPUFREQD_STATEDIR"run/cpufreqd.pid"
+#define CPUFREQD_CONFIG		CPUFREQD_CONFDIR"cpufreqd.conf"
+#define CPUFREQD_PIDFILE	CPUFREQD_STATEDIR"run/cpufreqd.pid"
+#define CPUFREQD_SOCKFILE	"/tmp/cpufreqd.sock"
 
-#define CPUFREQ_SYSFS_INTERFACE 	        "/sys/devices/system/cpu/cpu0/cpufreq"
-#define CPUFREQ_SYSFS_INTERFACE_POLICY    "/sys/devices/system/cpu/cpu%i/cpufreq/scaling_governor"
-#define CPUFREQ_SYSFS_INTERFACE_MAX       "/sys/devices/system/cpu/cpu%i/cpufreq/scaling_max_freq"
-#define CPUFREQ_SYSFS_INTERFACE_MIN       "/sys/devices/system/cpu/cpu%i/cpufreq/scaling_min_freq"
-#define CPUFREQ_SYSFS_INTERFACE_CPUMAX    "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
-#define CPUFREQ_SYSFS_INTERFACE_CPUMIN    "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq"
-#define CPUFREQ_PROC_INTERFACE            "/proc/cpufreq"
-#define CPUFREQ_PROC_INTERFACE_SPEED      "/proc/sys/cpu/0/speed"
-#define CPUFREQ_PROC_INTERFACE_MIN        "/proc/sys/cpu/0/speed-min"
-#define CPUFREQ_PROC_INTERFACE_MAX        "/proc/sys/cpu/0/speed-max"
+#define CPUFREQ_SYSFS_INTERFACE		"/sys/devices/system/cpu/cpu0/cpufreq"
+#define CPUFREQ_SYSFS_INTERFACE_POLICY	"/sys/devices/system/cpu/cpu%i/cpufreq/scaling_governor"
+#define CPUFREQ_SYSFS_INTERFACE_MAX	"/sys/devices/system/cpu/cpu%i/cpufreq/scaling_max_freq"
+#define CPUFREQ_SYSFS_INTERFACE_MIN	"/sys/devices/system/cpu/cpu%i/cpufreq/scaling_min_freq"
+#define CPUFREQ_SYSFS_INTERFACE_CPUMAX	"/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
+#define CPUFREQ_SYSFS_INTERFACE_CPUMIN	"/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq"
+#define CPUFREQ_PROC_INTERFACE		"/proc/cpufreq"
+#define CPUFREQ_PROC_INTERFACE_SPEED	"/proc/sys/cpu/0/speed"
+#define CPUFREQ_PROC_INTERFACE_MIN	"/proc/sys/cpu/0/speed-min"
+#define CPUFREQ_PROC_INTERFACE_MAX	"/proc/sys/cpu/0/speed-max"
 
-void    print_help            (const char *me);
-void    print_version         (const char *me);
-int     read_args             (int argc, char *argv[]);
-int     init_configuration    (void);
-void    free_configuration    (void);
-void term_handler             (int sig);
-void int_handler              (int sig);
-void hup_handler              (int sig);
