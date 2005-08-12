@@ -30,6 +30,7 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include "config_parser.h"
 #include "cpufreq_utils.h"
 #include "cpufreqd.h"
@@ -60,6 +61,8 @@ struct cpufreqd_conf configuration = {
 
 static int force_reinit = 0;
 static int force_exit = 0;
+static int timer_expired = 1; /* expired in order to run on the first loop */
+static int cpufreqd_mode = ARG_DYNAMIC; /* operation mode (manual / dynamic) */
 
 /* intialize the cpufreqd_conf object 
  * by reading the configuration file
@@ -463,6 +466,11 @@ static void int_handler(int signo) {
 	force_exit = 1;
 }
 
+static void alarm_handler(int signo) {
+	cpufreqd_log(LOG_NOTICE, "Caught ALARM signal (%s).\n", strsignal(signo));
+	timer_expired = 1;
+}
+
 static void hup_handler(int signo) {
 	cpufreqd_log(LOG_NOTICE, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
 #if 0
@@ -518,6 +526,56 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 }
 
 /*
+ * Parse and execute the client command
+ */
+static void execute_command(int sock) {
+	struct pollfd fds;
+	uint32_t command = INVALID_CMD;
+	/* we have a valid sock, wait for command
+	 * don't wait more tha 0.5 sec
+	 */
+	fds.fd = sock;
+	fds.events = POLLIN | POLLRDNORM;
+
+	if (poll(&fds, 1, 500) != 1) {
+		cpufreqd_log(LOG_ALERT, "Wiated too long for data, aborting.\n");
+
+	} else if (read(sock, &command, sizeof(uint32_t)) == -1) {
+		cpufreqd_log(LOG_ALERT, "process_packet - read(): %s\n", strerror(errno));
+
+	} else if (command != INVALID_CMD) {
+		cpufreqd_log(LOG_INFO, "command received: %0.4x %0.4x\n",
+				REMOTE_CMD(command), REMOTE_ARG(command));
+		switch (REMOTE_CMD(command)) {
+			case CMD_UPDATE_STATE:
+				cpufreqd_log(LOG_DEBUG, "CMD_UPDATE_STATE\n");
+				break;
+			case CMD_LIST_RULES:
+				cpufreqd_log(LOG_DEBUG, "CMD_LIST_RULES\n");
+				break;
+			case CMD_LIST_PROFILES:
+				cpufreqd_log(LOG_DEBUG, "CMD_LIST_PROFILES\n");
+				break;
+			case CMD_SET_RULE:
+				cpufreqd_log(LOG_DEBUG, "CMD_SET_RULE\n");
+				break;
+			case CMD_SET_MODE:
+				cpufreqd_log(LOG_DEBUG, "CMD_SET_MODE\n");
+				cpufreqd_mode = REMOTE_ARG(command);
+				break;
+			case CMD_SET_PROFILE:
+				cpufreqd_log(LOG_DEBUG, "CMD_SET_PROFILE\n");
+				break;
+			default:
+				cpufreqd_log(LOG_ALERT,
+						"Unable to process packet: %d\n",
+						command);
+				break;
+		}
+	}
+}
+
+/*
  *  main !
  *  Let's go
  */
@@ -525,20 +583,18 @@ int main (int argc, char *argv[]) {
 
 	struct sigaction signal_action;
 	struct pollfd fds;
+	struct itimerval new_timer;
 
 	struct rule *current_rule = NULL;
 	unsigned int i = 0;
-	int timeout = 0;
-	uint32_t command = INVALID_CMD;
 	int cpufreqd_sock = -1, peer_sock = -1; /* input pipe */
-	int cpufreqd_mode = ARG_DYNAMIC; /* operation mode (manual / dynamic) */
 	char dirname[MAX_PATH_LEN];
 	int ret = 0;
 
 	/* 
 	 *  check perms
 	 */
-#if 0
+#if 1
 	if (geteuid() != 0) {
 		cpufreqd_log(LOG_CRIT, "%s: must be run as root.\n", argv[0]);
 		ret = 1;
@@ -568,6 +624,7 @@ int main (int argc, char *argv[]) {
 	sigaddset(&signal_action.sa_mask, SIGTERM);
 	sigaddset(&signal_action.sa_mask, SIGINT);
 	sigaddset(&signal_action.sa_mask, SIGHUP);
+	sigaddset(&signal_action.sa_mask, SIGALRM);
 	sigaddset(&signal_action.sa_mask, SIGPIPE);
 	signal_action.sa_flags = 0;
 
@@ -579,6 +636,9 @@ int main (int argc, char *argv[]) {
 
 	signal_action.sa_handler = hup_handler;
 	sigaction(SIGHUP, &signal_action, 0);
+
+	signal_action.sa_handler = alarm_handler;
+	sigaction(SIGALRM, &signal_action, 0);
 
 	signal_action.sa_handler = pipe_handler;
 	sigaction(SIGPIPE, &signal_action, 0);
@@ -653,13 +713,6 @@ cpufreqd_start:
 		goto out_config_read;
 	}
 
-	/* write pidfile */
-	if (write_cpufreqd_pid(configuration.pidfile) < 0) {
-		cpufreqd_log(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
-		ret = 1;
-		goto out_config_read;
-	}
-
 	/* setup UNIX socket if necessary */
 	if (configuration.enable_remote) {
 		dirname[0] = '\0';
@@ -680,81 +733,54 @@ cpufreqd_start:
 				"maybe your configuration needs some rework.\n");
 		cpufreqd_log(LOG_CRIT, "Exiting.\n");
 		ret = 1;
-		goto out_config_read;
+		goto out_socket;
+	}
+
+	/* write pidfile */
+	if (write_cpufreqd_pid(configuration.pidfile) < 0) {
+		cpufreqd_log(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
+		ret = 1;
+		goto out_pid;
 	}
 
 	/*
 	 *  Looooooooop
 	 */
 	while (!force_exit && !force_reinit) {
-		command = INVALID_CMD;
+		/*
+		 * Set timer and run the system scan and rule selection
+		 * if running in DYNAMIC mode
+		 * Also check if we still need to expire the timer 
+		 * (happens in case a command has been received
+		 * before the timer expires)
+		 */
+		if (cpufreqd_mode == ARG_DYNAMIC && timer_expired) {
+			new_timer.it_interval.tv_usec = 0;
+			new_timer.it_interval.tv_sec = 0;
+			new_timer.it_value.tv_usec = 0;
+			new_timer.it_value.tv_sec = configuration.poll_interval;
+			if (setitimer(ITIMER_REAL, &new_timer, 0) < 0) {
+				cpufreqd_log(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
+				ret = 1;
+				break;
+			}
+			current_rule = cpufreqd_loop(&configuration, current_rule);
+			timer_expired = 0;
+		}
 
 		/* if the socket opened successfully */
 		if (cpufreqd_sock != -1) {
-			/* if we have a valid peer_sock the wait for command
-			 * don't wait more tha 0.5 sec
-			 */
-			if (peer_sock != -1) {
-				fds.fd = peer_sock;
-				fds.events = POLLIN | POLLRDNORM;
-
-				if (poll(&fds, 1, 500) != 1) {
-					cpufreqd_log(LOG_ALERT, "Wiated too long for data, aborting.\n");
-
-				} else if (read(peer_sock, &command, sizeof(uint32_t)) == -1) {
-					cpufreqd_log(LOG_ALERT, "process_packet - read(): %s\n", strerror(errno));
-
-				} else if (command != INVALID_CMD) {
-					cpufreqd_log(LOG_INFO, "command received: %0.4x %0.4x\n",
-							REMOTE_CMD(command), REMOTE_ARG(command));
-					switch (REMOTE_CMD(command)) {
-						case CMD_UPDATE_STATE:
-							cpufreqd_log(LOG_DEBUG, "CMD_UPDATE_STATE\n");
-							break;
-						case CMD_LIST_RULES:
-							cpufreqd_log(LOG_DEBUG, "CMD_LIST_RULES\n");
-							break;
-						case CMD_LIST_PROFILES:
-							cpufreqd_log(LOG_DEBUG, "CMD_LIST_PROFILES\n");
-							break;
-						case CMD_SET_RULE:
-							cpufreqd_log(LOG_DEBUG, "CMD_SET_RULE\n");
-							break;
-						case CMD_SET_MODE:
-							cpufreqd_log(LOG_DEBUG, "CMD_SET_MODE\n");
-							cpufreqd_mode = REMOTE_ARG(command);
-							break;
-						case CMD_SET_PROFILE:
-							cpufreqd_log(LOG_DEBUG, "CMD_SET_PROFILE\n");
-							break;
-						default:
-							cpufreqd_log(LOG_ALERT,
-									"Unable to process packet: %d\n",
-									command);
-							break;
-					}
-				}
-				close(peer_sock);
-				peer_sock = -1;
-			} /* end if poll */
-
-			/* do traditional loop and set timeout */
-			if (cpufreqd_mode == ARG_DYNAMIC) {
-				current_rule = cpufreqd_loop(&configuration, current_rule);
-				timeout = configuration.poll_interval * 1000;
-			} else {
-				timeout = -1;
-			}
-			
-			/* wait either for a command or for timeout to happen */
+			/* wait either for a command */
 			fds.fd = cpufreqd_sock;
 			fds.events = POLLIN | POLLRDNORM;
-			switch (poll(&fds, 1, timeout)) {
+			switch (poll(&fds, 1, -1)) {
 				case 0:
 					/* timed out. check to see if things have changed */
 					break;
 				case -1:
-					cpufreqd_log(LOG_NOTICE, "poll(): %s.\n", strerror(errno));
+					/* caused by SIGALARM (mostly) */
+					if (errno != EINTR)
+						cpufreqd_log(LOG_NOTICE, "poll(): %s.\n", strerror(errno));
 					break;
 				case 1:
 					/* somebody tried to contact us. see what he wants */
@@ -763,25 +789,29 @@ cpufreqd_start:
 						cpufreqd_log(LOG_ALERT, "Unable to accept connection: "
 								" %s\n", strerror(errno));
 					}
+					execute_command(peer_sock);
+					close(peer_sock);
+					peer_sock = -1;
 					break;
 				default:
 					cpufreqd_log(LOG_ALERT, "poll(): Internal error caught.\n");
 					break;
 			}
 
-		/* no socket available */
+		/* no socket available, simply pause() */
 		} else {
-			current_rule = cpufreqd_loop(&configuration, current_rule);
-			sleep(configuration.poll_interval);
+			pause();
 		}
 	}
 
 	/*
 	 * Clean pidfile
 	 */
+out_pid:
 	clear_cpufreqd_pid(configuration.pidfile);
 
 	/* close socket */
+out_socket:
 	if (cpufreqd_sock != -1) {
 		close_unix_sock(cpufreqd_sock);
 		delete_temp_dir(dirname);
