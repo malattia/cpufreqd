@@ -46,7 +46,7 @@ int write_cpufreqd_pid(const char *pidfile)
 		char oldpid[10];
 		pid = fopen(pidfile, "r");
 		/* see if there is a pid already */
-		if (fscanf(pid, "%s", oldpid) != 1) {
+		if (fscanf(pid, "%s", oldpid) == 1) {
 			FILE *fd;
 			char old_pidfile[256];
 			char old_cmdline[256];
