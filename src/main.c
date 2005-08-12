@@ -467,7 +467,7 @@ static void int_handler(int signo) {
 }
 
 static void alarm_handler(int signo) {
-	cpufreqd_log(LOG_NOTICE, "Caught ALARM signal (%s).\n", strsignal(signo));
+	cpufreqd_log(LOG_DEBUG, "Caught ALARM signal (%s).\n", strsignal(signo));
 	timer_expired = 1;
 }
 
