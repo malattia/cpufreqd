@@ -51,21 +51,21 @@ static char *clean_config_line    (char *str);
  * WARNING: it modifies the input string!
  */
 char *clean_config_line (char *str) {
-  int i = 0;
+	int i = 0;
 
-  /* remove white spaces at the beginning */
-  while (isspace(str[0])) {
-    str++;
-  }
+	/* remove white spaces at the beginning */
+	while (isspace(str[0])) {
+		str++;
+	}
 
-  /* remove end line white space */
-  i = strlen(str) - 1;
-  while (i >= 0 && isspace(str[i])) {
-    str[i] = 0;
-    i--;
-  }
+	/* remove end line white space */
+	i = strlen(str) - 1;
+	while (i >= 0 && isspace(str[i])) {
+		str[i] = 0;
+		i--;
+	}
 
-  return str;
+	return str;
 }
 
 /* char *strip_comments_line (char *str)
@@ -76,28 +76,28 @@ char *clean_config_line (char *str) {
  * WARNING: it modifies the input string!
  */
 char *strip_comments_line (char *str) {
-  int i;
+	int i;
 
-  /* remove comment */
-  for (i = strlen(str); i >= 0; i--) {
-    if (str[i] == '#') {
-      str[i] = '\0';
-    }
-  }
+	/* remove comment */
+	for (i = strlen(str); i >= 0; i--) {
+		if (str[i] == '#') {
+			str[i] = '\0';
+		}
+	}
 
-  return str;
+	return str;
 }
 
 char *read_clean_line(FILE *fp, char *buf, int n) {
-  if (fgets(buf, n, fp)) {
-    buf[n] = '\0';
-    buf = strip_comments_line(buf);
-    /* returned an empty line ? */
-    if (buf[0]) {
-      buf = clean_config_line(buf);
-    }
-  }
-  return buf;
+	if (fgets(buf, n, fp)) {
+		buf[n] = '\0';
+		buf = strip_comments_line(buf);
+		/* returned an empty line ? */
+		if (buf[0]) {
+			buf = clean_config_line(buf);
+		}
+	}
+	return buf;
 }
 
 /*

@@ -27,62 +27,62 @@
 #include "list.h"
 
 struct directive {
-  void *obj;
-  struct cpufreqd_keyword *keyword;
-  struct cpufreqd_plugin *plugin;
+	void *obj;
+	struct cpufreqd_keyword *keyword;
+	struct cpufreqd_plugin *plugin;
 };
 
 struct profile {
-  char name[MAX_STRING_LEN];
-  unsigned int cpu;
-  struct cpufreq_policy policy;
-  struct LIST directives; /* list of struct directive */
-  unsigned int directives_count;
+	char name[MAX_STRING_LEN];
+	unsigned int cpu;
+	struct cpufreq_policy policy;
+	struct LIST directives; /* list of struct directive */
+	unsigned int directives_count;
 };
 
 struct rule {
-  char name[MAX_STRING_LEN];
-  char profile_name[MAX_STRING_LEN];
-  struct LIST directives; /* list of struct directive */
-  struct profile *prof;
-  unsigned int score;
-  unsigned int directives_count;
+	char name[MAX_STRING_LEN];
+	char profile_name[MAX_STRING_LEN];
+	struct LIST directives; /* list of struct directive */
+	struct profile *prof;
+	unsigned int score;
+	unsigned int directives_count;
 };
 
 struct cpufreq_sys_info {
-  struct cpufreq_available_governors *governors;
-  struct cpufreq_available_frequencies *frequencies;
-  struct cpufreq_affected_cpus *affected_cpus;
+	struct cpufreq_available_governors *governors;
+	struct cpufreq_available_frequencies *frequencies;
+	struct cpufreq_affected_cpus *affected_cpus;
 };
 
 struct cpufreq_limits {
-  unsigned long min;
-  unsigned long max;
+	unsigned long min;
+	unsigned long max;
 };
 
 struct cpufreqd_conf {
-  
-  char config_file[MAX_PATH_LEN];
-  char pidfile[MAX_PATH_LEN];
-  char sockfile[MAX_PATH_LEN];
-  int log_level;
-  unsigned int cpu_num;
-  unsigned int enable_remote;
-  unsigned int poll_interval;
-  unsigned int has_sysfs;
-  unsigned int no_daemon;
-  unsigned int log_level_overridden;
-  unsigned int print_help;
-  unsigned int print_version;
-  unsigned long cpu_min_freq;
-  unsigned long cpu_max_freq;
-  
-  struct cpufreq_limits *limits;
-  struct cpufreq_sys_info *sys_info;
 
-  struct LIST rules; /* list of configured struct rule */
-  struct LIST profiles; /* list of configured struct profile */
-  struct LIST plugins; /* list of configured plugins */
+	char config_file[MAX_PATH_LEN];
+	char pidfile[MAX_PATH_LEN];
+	char sockfile[MAX_PATH_LEN];
+	int log_level;
+	unsigned int cpu_num;
+	unsigned int enable_remote;
+	unsigned int poll_interval;
+	unsigned int has_sysfs;
+	unsigned int no_daemon;
+	unsigned int log_level_overridden;
+	unsigned int print_help;
+	unsigned int print_version;
+	unsigned long cpu_min_freq;
+	unsigned long cpu_max_freq;
+
+	struct cpufreq_limits *limits;
+	struct cpufreq_sys_info *sys_info;
+
+	struct LIST rules; /* list of configured struct rule */
+	struct LIST profiles; /* list of configured struct profile */
+	struct LIST plugins; /* list of configured plugins */
 
 };
 
