@@ -131,21 +131,7 @@ static int init_configuration(void) {
 				return -1;
 			}
 
-			if ( parse_config_profile(fp_config, tmp_profile) != -1) {
-				/* checks duplicate names */
-				LIST_FOREACH_NODE(node, &configuration.profiles) {
-					struct profile *tmp = (struct profile *)node->content;
-					if (strcmp(tmp->name, tmp_profile->name) != 0)
-						continue;
-					cpufreqd_log(LOG_CRIT, 
-							"init_configuration(): [Profile] "
-							"name \"%s\" already exists.\n", 
-							tmp_profile->name);
-					node_free(n);
-				}
-				list_append(&configuration.profiles, n);
-
-			} else {
+			if (parse_config_profile(fp_config, tmp_profile) < 0) {
 				cpufreqd_log(LOG_CRIT, 
 						"init_configuration(): [Profile] "
 						"error parsing %s, see logs for details.\n",
@@ -154,6 +140,18 @@ static int init_configuration(void) {
 				fclose(fp_config);
 				return -1;
 			}
+			/* checks duplicate names */
+			LIST_FOREACH_NODE(node, &configuration.profiles) {
+				struct profile *tmp = (struct profile *)node->content;
+				if (strcmp(tmp->name, tmp_profile->name) != 0)
+					continue;
+				cpufreqd_log(LOG_CRIT, 
+						"init_configuration(): [Profile] "
+						"name \"%s\" already exists.\n", 
+						tmp_profile->name);
+				node_free(n);
+			}
+			list_append(&configuration.profiles, n);
 			/* avoid continuing */
 			continue;
 		}
@@ -163,42 +161,45 @@ static int init_configuration(void) {
 
 			n = node_new(NULL, sizeof(struct rule));
 			if (n == NULL) {
-				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make enough room for a new Rule (%s)\n",
+				cpufreqd_log(LOG_ERR, "init_configuration(): "
+						"cannot make enough room for a new Rule (%s)\n",
 						strerror(errno));
 				fclose(fp_config);
 				return -1;
 			}
 			tmp_rule = (struct rule *)n->content;
-			if ( parse_config_rule(fp_config, tmp_rule) != -1) {
-				
-				LIST_FOREACH_NODE(node, &configuration.rules) {
-					struct rule *tmp = (struct rule *)node->content;
-					/* check duplicate names */
-					if (strcmp(tmp->name, tmp_rule->name) != 0)
-						continue;
-					
-					cpufreqd_log(LOG_ERR, 
-							"init_configuration(): [Rule] name \"%s\" already exists. Skipped\n", 
-							tmp_rule->name);
-					node_free(n);
-				}
-				/* check if there are options */
-				if (tmp_rule->entries.first == NULL) {
-					cpufreqd_log(LOG_CRIT, 
-							"init_configuration(): [Rule] name \"%s\" has no options, discarding.\n", 
-							tmp_rule->name);
-					node_free(n);
-					continue;
-				}
-				list_append(&configuration.rules, n);
-			} else {
+			if (parse_config_rule(fp_config, tmp_rule) < 0) {
 				cpufreqd_log(LOG_CRIT, 
-						"init_configuration(): [Rule] error parsing %s, see logs for details.\n", 
+						"init_configuration(): [Rule] "
+						"error parsing %s, see logs for details.\n", 
 						configuration.config_file);
 				node_free(n);
 				fclose(fp_config);
 				return -1;
 			}
+				
+			/* check duplicate names */
+			LIST_FOREACH_NODE(node, &configuration.rules) {
+				struct rule *tmp = (struct rule *)node->content;
+				if (strcmp(tmp->name, tmp_rule->name) != 0)
+					continue;
+				
+				cpufreqd_log(LOG_ERR, 
+						"init_configuration(): [Rule] "
+						"name \"%s\" already exists. Skipped\n", 
+						tmp_rule->name);
+				node_free(n);
+			}
+			/* check if there are options */
+			if (tmp_rule->entries.first == NULL) {
+				cpufreqd_log(LOG_CRIT, 
+						"init_configuration(): [Rule] "
+						"name \"%s\" has no options, discarding.\n",
+						tmp_rule->name);
+				node_free(n);
+				continue;
+			}
+			list_append(&configuration.rules, n);
 			/* avoid continuing */
 			continue;
 		}
@@ -267,10 +268,7 @@ static void free_configuration(void)
 
 		LIST_FOREACH_NODE(node1, &tmp_rule->entries) {
 			tmp_rule_en = (struct rule_en *) node1->content;
-			if (tmp_rule_en->keyword->free != NULL)
-				tmp_rule_en->keyword->free(tmp_rule_en->obj);
-			else 
-				free(tmp_rule_en->obj);
+			free_keyword_object(tmp_rule_en->keyword, tmp_rule_en->obj);
 		}
 		list_free_sublist(&tmp_rule->entries, tmp_rule->entries.first);
 	}

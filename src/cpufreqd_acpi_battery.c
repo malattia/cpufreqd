@@ -63,7 +63,6 @@ static struct cpufreqd_keyword kw[] = {
 static struct cpufreqd_plugin acpi_battery = {
 	.plugin_name      = "acpi_battery_plugin",      /* plugin_name */
 	.keywords         = kw,                    /* config_keywords */
-	.poll_interval    = 1000,                  /* poll_interval (1 second) */
 	.plugin_init      = &acpi_battery_init,         /* plugin_init */
 	.plugin_exit      = &acpi_battery_exit,         /* plugin_exit */
 	.plugin_update    = &acpi_battery_update,       /* plugin_update */

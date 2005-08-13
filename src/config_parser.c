@@ -409,12 +409,13 @@ int parse_config_profile (FILE *config, struct profile *p) {
 #define HAS_NAME    (1<<0) 
 #define HAS_PROFILE (1<<1)
 int parse_config_rule (FILE *config, struct rule *r) {
-	int state=0, keyword_handler_found=0;
+	int state = 0, keyword_handler_found = 0;
 	char buf[MAX_STRING_LEN];
-	char *clean, *name, *value;
-	struct NODE *n, *ren;
-	struct plugin_obj *o_plugin;
-	struct cpufreqd_keyword *ckw;
+	char *clean = NULL, *name = NULL, *value = NULL;
+	struct NODE *ren = NULL;
+	struct plugin_obj *o_plugin = NULL;
+	void *obj = NULL; /* to hold the value provided by a plugin */
+	struct cpufreqd_keyword *ckw = NULL;
 
 	/* reset profile ref */
 	r->prof = 0;
@@ -450,55 +451,30 @@ int parse_config_rule (FILE *config, struct rule *r) {
 			continue;
 		}
 		
-		/* foreach plugin */
-		for (n=configuration.plugins.first; !keyword_handler_found && n!=NULL; n=n->next) {
-			o_plugin = (struct plugin_obj*)n->content;
-			if (o_plugin==NULL || o_plugin->plugin==NULL || o_plugin->plugin->keywords==NULL)
-				continue;
+		ckw = plugin_handle_keyword(&configuration.plugins, name, value, &obj);
+		/* if no plugin found read next line */
+		if (ckw != NULL) {
+			ren = node_new(NULL, sizeof(struct rule_en));
+			if (ren == NULL) {
+				/* TODO free obj */
+				free_keyword_object(ckw, obj);
+				cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] cannot "
+						"make enough room for a new entry (%s).\n",
+						strerror(errno));
+				return -1;
+			}
 
-			/* foreach keyword */
-			for(ckw=o_plugin->plugin->keywords; !keyword_handler_found && ckw->word!=NULL; ckw++) {
-
-				/* if keyword corresponds (TODO: use strncmp and bound check the string) */
-				if (strcmp(ckw->word, name) != 0)
-					continue;
-				
-				cpufreqd_log(LOG_DEBUG, "Plugin %s handles keyword %s (value=%s)\n",
-						o_plugin->plugin->plugin_name, name, value);
-
-				ren = node_new(NULL, sizeof(struct rule_en));
-				if (ren == NULL) {
-					cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] cannot "
-							"make enough room for a new entry (%s).\n",
-							strerror(errno));
-					return -1;
-				}
-
-				if (ckw->parse(value, &(((struct rule_en *)ren->content)->obj)) !=0) {
-					cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] Plugin %s "
-							"is unable to parse this value \"%s\". Discarded\n",
-							o_plugin->plugin->plugin_name, value);
-					node_free(ren);
-					continue;
-				}
-
-				/* ok, append the rule entry */
-				((struct rule_en *)ren->content)->keyword = ckw;
-				list_append(&(r->entries), ren);
-				r->entries_count++;
-
-				keyword_handler_found=1;
-				/* increase plugin use count */
-				o_plugin->used++;
-			} /* end foreach keyword */
-		} /* enf foreach plugin */
-
-		if (!keyword_handler_found)
-			cpufreqd_log(LOG_DEBUG, "[Rule]: "
-					"skipping unknown config option \"%s\"\n", name);
-		else
-			keyword_handler_found=0;
-	}
+			/* ok, append the rule entry */
+			((struct rule_en *)ren->content)->keyword = ckw;
+			((struct rule_en *)ren->content)->obj = obj;
+			list_append(&(r->entries), ren);
+			r->entries_count++;
+		}
+		/* if we reached this point than we 
+		 * have an handler for this keyword 
+		 */
+		continue;
+	} /* end while */
 
 	if (!(state & HAS_NAME)) {
 		cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] "

@@ -60,7 +60,6 @@ static struct cpufreqd_keyword kw[] = {
 static struct cpufreqd_plugin acpi_temperature = {
 	.plugin_name      = "acpi_temperature_plugin",      /* plugin_name */
 	.keywords         = kw,                             /* config_keywords */
-	.poll_interval    = 1000,                           /* poll_interval (1 second) */
 	.plugin_init      = &acpi_temperature_init,         /* plugin_init */
 	.plugin_exit      = &acpi_temperature_exit,         /* plugin_exit */
 	.plugin_update    = &acpi_temperature_update,       /* plugin_update */

@@ -86,7 +86,6 @@ static struct cpufreqd_keyword kw[] = {
 static struct cpufreqd_plugin programs = {
   .plugin_name      = "programs_plugin",      /* plugin_name */
   .keywords         = kw,                     /* config_keywords */
-  .poll_interval    = 1000,                   /* poll_interval (1 second) */
   .plugin_exit      = &programs_exit,         /* plugin_exit */
   .plugin_update    = &programs_update,       /* plugin_update */
 };

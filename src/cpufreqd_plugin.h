@@ -39,52 +39,57 @@ struct cpufreqd_plugin;
  *  plugin.
  */
 struct cpufreqd_keyword {
-  const char *word;
 
-  /* function pointer to the keyword parser. line is a config file line and obj
-   * must point to a structure that will be used by the evaulate function 
-   */
-  int (*parse) (const char *line, void **obj);
+	/* The word that is managed.
+	 *
+	 * Can't be NULL.
+	 */
+	const char *word;
 
-  /* function pointer to the evaluator. ev is the structure provided by 
-   * the parse function and that represent the system state that must eventually
-   * be matched. If the system state matches the function must return MATCH (1) 
-   * otherwise DONT_MATCH (0).
-   *
-   * Can be NULL
-   */
-  int (*evaluate) (const void *ev);
+	/* function pointer to the keyword parser. line is a config file line and obj
+	 * must point to a structure that will be used by the evaulate function 
+	 */
+	int (*parse) (const char *line, void **obj);
 
-  /* function pointer to the pre_change event. ev is the structure previously
-   * provided by the parse function, old and new are the old and new policy
-   * pointer respctively.
-   * The function is called prior to the call to set_policy() when a new Rule
-   * applies the current system state. Note however that set_policy() will not
-   * be called if the Profile doesn't change (you can tell that by comparing the
-   * old and new policy pointers, if they are the same then set_policy() won't
-   * be called).
-   *
-   * Can be NULL
-   */
-  void (*pre_change) (const void *ev, const struct cpufreq_policy *old,
-		  const struct cpufreq_policy *new);
+	/* function pointer to the evaluator. obj is the structure provided by 
+	 * the parse function and that represent the system state that must eventually
+	 * be matched. If the system state matches the function must return MATCH (1) 
+	 * otherwise DONT_MATCH (0).
+	 *
+	 * Can be NULL.
+	 */
+	int (*evaluate) (const void *obj);
 
-  /* function pointer to the post_change event. The same as pre_change applies
-   * except for the fact that everything is referred tto _after_ set_policy()
-   * has been called.
-   *
-   * Can be NULL
-   */
-  void (*post_change) (const void *ev, const struct cpufreq_policy *old,
-		  const struct cpufreq_policy *new);
+	/* function pointer to the pre_change event. obj is the structure previously
+	 * provided by the parse function, old and new are the old and new policy
+	 * pointer respctively.
+	 * The function is called prior to the call to set_policy() when a new Rule
+	 * applies the current system state. Note however that set_policy() will not
+	 * be called if the Profile doesn't change (you can tell that by comparing the
+	 * old and new policy pointers, if they are the same then set_policy() won't
+	 * be called).
+	 *
+	 * Can be NULL.
+	 */
+	void (*pre_change) (const void *obj, const struct cpufreq_policy *old,
+			const struct cpufreq_policy *new);
 
-  /* Allows the owner to define a specific function to be called when freeing
-   * malloced during the 'parse' call. Not required, if missing a libc call to
-   * 'free' is performed with the same obj argument.
-   *
-   * Can be NULL
-   */
-  void (*free) (void *obj);
+	/* function pointer to the post_change event. The same as pre_change applies
+	 * except for the fact that everything is referred tto _after_ set_policy()
+	 * has been called.
+	 *
+	 * Can be NULL.
+	 */
+	void (*post_change) (const void *obj, const struct cpufreq_policy *old,
+			const struct cpufreq_policy *new);
+
+	/* Allows the owner to define a specific function to be called when freeing
+	 * malloced during the 'parse' call. Not required, if missing a libc call to
+	 * 'free' is performed with the same obj argument.
+	 *
+	 * Can be NULL.
+	 */
+	void (*free) (void *obj);
 };
 
 /*
@@ -94,53 +99,40 @@ struct cpufreqd_keyword {
  *  cpufreqd plugins must be decalared static to avoid symbol clashes.
  */
 struct cpufreqd_plugin {
-  
-  /****************************************
-   *  PLUGIN IDENTIFICATION AND SETTINGS  *
-   ****************************************/
-  /* plugin name, must be unique (see README.plugins?) */
-  const char *plugin_name;
-  
-  /* array of keywords handled by this plugin */
-  struct cpufreqd_keyword *keywords;
 
-  /* Interval between each poll (ms) */
-  unsigned long poll_interval;
+	/****************************************
+	 *  PLUGIN IDENTIFICATION AND SETTINGS  *
+	 ****************************************/
+	/* plugin name, must be unique (see README.plugins?) */
+	const char *plugin_name;
 
-  /* NOT NECESSARY?? see plugin_event.
-   *
-   * Under wich circustances the plugin will be used */
-  /*int cpufreqd_event;*/
-  
+	/* array of keywords handled by this plugin */
+	struct cpufreqd_keyword *keywords;
 
-  /************************
-   *  FUNCTION POINTERS   *
-   ************************/
-  /* Plugin intialization */
-  int (*plugin_init) (void);
-  
-  /* Plugin cleanup */
-  int (*plugin_exit) (void);
-
-  /* Update plugin data */
-  int (*plugin_update) (void);
-
-  /* Pre rule-change */
 #if 0
-  void (*pre_rule_change) (void *obj, struct cpufreq_policy *new_policy,
-		  struct cpufreq_policy *old_policy);
+	/* Interval between each poll (ms) */
+	unsigned long poll_interval;
 #endif
-  /* Post rule-change */
-  /* Pre policy-change */
-  /* Post policy-change */
 
-  /************************
-   *  FUNCTION POINTERS   *
-   ************************/
-  /* core provided after create_plugin is called */
+	/************************
+	 *  FUNCTION POINTERS   *
+	 ************************/
+	/* Plugin intialization */
+	int (*plugin_init) (void);
 
-  /* function pointer to the main log function */
-  void (*cfdprint) (const int prio, const char *fmt, ...);
+	/* Plugin cleanup */
+	int (*plugin_exit) (void);
+
+	/* Update plugin data */
+	int (*plugin_update) (void);
+
+	/************************
+	 *  FUNCTION POINTERS   *
+	 ************************/
+	/* core provided after create_plugin is called */
+
+	/* function pointer to the main log function */
+	void (*cfdprint) (const int prio, const char *fmt, ...);
 
 };
 

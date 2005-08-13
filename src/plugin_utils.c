@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <dlfcn.h>
 #include "plugin_utils.h"
 #include "main.h"
@@ -159,6 +160,9 @@ int finalize_plugin(struct plugin_obj *cp) {
 	return 0;
 }
 
+/* void update_plugin_states(struct LIST *plugins)
+ * calls plugin_update() for every plugin in the list
+ */
 void update_plugin_states(struct LIST *plugins) {
 	struct NODE *nd;
 	struct plugin_obj *o_plugin;
@@ -170,4 +174,60 @@ void update_plugin_states(struct LIST *plugins) {
 			o_plugin->plugin->plugin_update();
 		}
 	}
+}
+
+/* 
+ * Looks for a plugin handling the key keyword, calls its parse function
+ * and assigns the obj as returned by the plugin. Returns the struct
+ * cpufreqd_keyword handling the keyword or NULL if no plugin handles the
+ * keyword or if an error occurs parsing the value.
+ * NOTE: the value of obj is significant only if the function returns non-NULL.
+ */
+struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
+		const char *key, const char *value, void **obj) {
+	struct plugin_obj *o_plugin = NULL;
+	struct cpufreqd_keyword *ckw = NULL;
+	
+	/* foreach plugin */
+	LIST_FOREACH_NODE(node, plugins) {
+		o_plugin = (struct plugin_obj*)node->content;
+		if (o_plugin==NULL || o_plugin->plugin==NULL || o_plugin->plugin->keywords==NULL)
+			continue;
+
+		/* foreach keyword */
+		for(ckw = o_plugin->plugin->keywords; ckw->word != NULL; ckw++) {
+
+			/* if keyword corresponds
+			 * (TODO: use strncmp and bound check the string?)
+			 */
+			if (strcmp(ckw->word, key) != 0)
+				continue;
+
+			cpufreqd_log(LOG_DEBUG, "Plugin %s handles keyword %s (value=%s)\n",
+					o_plugin->plugin->plugin_name, key, value);
+
+			if (ckw->parse(value, obj) != 0) {
+				cpufreqd_log(LOG_ERR, 
+						"%s: %s is unable to parse this value \"%s\". Discarded\n",
+						__func__, o_plugin->plugin->plugin_name, value);
+				return NULL;
+			}
+			/* increase plugin use count */
+			o_plugin->used++;
+			return ckw;
+		}
+	}
+	cpufreqd_log(LOG_ERR, "%s: unandled keyword \"%s\". Discarded\n", __func__, key);
+	return NULL;
+}
+
+/*
+ * Tries to free the object using the plugin provided free function.
+ * Falls back to the libc function.
+ */
+void free_keyword_object(struct cpufreqd_keyword *k, void *obj) {
+	if (k->free != NULL)
+		k->free(obj);
+	else 
+		free(obj);
 }

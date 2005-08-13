@@ -36,3 +36,8 @@ int     initialize_plugin	(struct plugin_obj *cp);
 int     finalize_plugin		(struct plugin_obj *cp);
 void	update_plugin_states	(struct LIST *plugins);
 
+struct cpufreqd_keyword *plugin_handle_keyword
+	(struct LIST *plugins, const char *key, const char *value, void **obj);
+
+void	free_keyword_object	(struct cpufreqd_keyword *k, void *obj);
+
