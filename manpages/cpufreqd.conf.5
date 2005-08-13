@@ -24,16 +24,16 @@ sections.  Each [Rule] depends on previously defined [Profile] subsections.
 Some notes to better understand how to write appropriate rules:
 
 .RS
-- the score of a rule is made up of the percentage of entries that match
-the current system state as reported by plugins + the number of matching
-entries. In this way even a single entry rule can reach 100% but more accurate
-rules are preferred.
+- the score of a rule is made up of the percentage of entries that match the
+  current system state as reported by plugins + the number of matching entries.
+  In this way even a single entry rule can reach 100% but more accurate rules
+  are preferred.
 
-- in case of 2 or more rules having the same score the first one is kept
-and applied.
+- in case of 2 or more rules having the same score the first one is kept and
+  applied.
 
 - each entry is handled by a single plugin that will determine if the state
-described matches the current state
+  described matches the current state
 
 - if no rule matches the current system status, no action is performed.
 .RE
@@ -47,7 +47,7 @@ increasing
 verbosity and look what happens
 
 - if you want a rule to be preferred over another just describe the system state
-more accurately
+  more accurately
 .RE
 
 .fi
@@ -64,15 +64,16 @@ Acceptable configuration tokens and values include:
 .SS "[General]"
 .TP
 .B "poll_interval"
-An integer larger than 0, measures the interval between system status reading in seconds. (default: 1)
+An integer larger than 0, measures the interval between system status reading in
+seconds. (default: 1)
 
 .TP
 .B "enable_plugins"
 A list of plugins separated by comma.
 
 .TP
-.B "pidfile"
-Specifies the file to write as its process identification file. (default: /var/run/cpufreqd.pid)
+.B "pidfile" Specifies the file to write as its process identification file.
+(default: /var/run/cpufreqd.pid)
 ./"
 ./".TP
 ./".B "acpi_workaround"
@@ -85,8 +86,8 @@ Specifies the file to write as its process identification file. (default: /var/r
 
 .TP
 .B "verbosity"
-Verbosity level from 0 (less verbose) to 7 (most verbose), the default value only prints 
-warning/error/critical messages. (default: 4)
+Verbosity level from 0 (less verbose) to 7 (most verbose), the default value
+only prints warning/error/critical messages. (default: 4)
 
 .sp
 .PP
@@ -132,8 +133,10 @@ Other Rule options are enabled according to the enabled plugins.
 .SH PLUGINS
 .RS
 .sp
-Plugins extend cpufreqd in order to be able to cope with the most exotic system paramters.
-Currently available plugins are listed below along with the configration directives they provide.
+Plugins extend cpufreqd in order to be able to cope with the most exotic system
+paramters.  Currently available plugins are listed below along with the
+configration
+directives they provide.
 
 .PP
 .SS "acpi_battery plugin"
@@ -162,7 +165,8 @@ thermal zones are reported a medium value is computed. Available Rule entries:
 .TP
 .B "acpi_temperature"
 The rule will have a higher score if the temperature percentage is corresponds
-to the provided values. Can be of the form %d-%d (e.g.: acpi_temperature=10-100) or %d.
+to the provided values. Can be of the form %d-%d (e.g.: acpi_temperature=10-100)
+or %d.
 
 .PP
 .SS "apm plugin"

@@ -6,7 +6,8 @@ EXTRA_DIST = cpufreqd.conf \
              NEWS \
              AUTHORS \
              TODO \
-             ChangeLog
+             ChangeLog \
+	     prepare.sh
 #             scripts/debian/cpufreqd \
 #             scripts/gentoo/cpufreqd \
 #             scripts/mandrake/cpufreqd.init.mdk \

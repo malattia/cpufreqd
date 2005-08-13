@@ -1,6 +1,18 @@
-version 2.0.0
--------------
-* fully refactored to support a better plugin infraatructure. Now plugins can
+version 2.0.0-beta3
+-------------------
+* added basic remote commands support, currently only switch
+between manual and dynamic mode
+* added PRE/POST rule change events (I'll use it to implement
+cpufreqd_exec plugin). Might also be helpful with nforce2 chipsets
+
+version 2.0.0-beta2
+-------------------
+* fixed a simple bug with empty rules
+* Valgrind is really happy! #allocs==#frees!!
+
+version 2.0.0-beta1
+-------------------
+* fully refactored to support a better plugin infratructure. Now plugins can
 be atomic wrt features and one can select single resources to monitor. More
 plugins available, see docs for more.
 

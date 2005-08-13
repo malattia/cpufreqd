@@ -20,7 +20,7 @@
 #ifndef __CPUFREQD_H__
 #define __CPUFREQD_H__
 
-#define __CPUFREQD_VERSION__	"2.0.0-beta2"
+#define __CPUFREQD_VERSION__	"2.0.0-beta3"
 
 #define DEFAULT_POLL		1
 #define DEFAULT_VERBOSITY	3
