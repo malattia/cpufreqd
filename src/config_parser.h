@@ -37,6 +37,7 @@ struct profile {
   unsigned int cpu;
   struct cpufreq_policy policy;
   struct LIST directives; /* list of struct directive */
+  unsigned int directives_count;
 };
 
 struct rule {

@@ -247,7 +247,10 @@ int parse_config_general (FILE *config) {
 #define HAS_POLICY  (1<<3)
 #define HAS_CPU     (1<<4)
 int parse_config_profile (FILE *config, struct profile *p) {
-	int state=0, min_is_percent=0, max_is_percent=0, tmp_freq=0;
+	int state = 0, min_is_percent = 0, max_is_percent = 0, tmp_freq = 0;
+	struct NODE *dir = NULL;
+	void *obj = NULL; /* to hold the value provided by a plugin */
+	struct cpufreqd_keyword *ckw = NULL;
 	char buf[MAX_STRING_LEN];
 
 	while (!feof(config)) {
@@ -336,6 +339,27 @@ int parse_config_profile (FILE *config, struct profile *p) {
 
 		}
 		
+		/* it's plugin time to tell if they like the directive */
+		ckw = plugin_handle_keyword(&configuration.plugins, name, value, &obj);
+		/* if no plugin found read next line */
+		if (ckw != NULL) {
+			dir = node_new(NULL, sizeof(struct directive));
+			if (dir == NULL) {
+				free_keyword_object(ckw, obj);
+				cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] cannot "
+						"make enough room for a new entry (%s).\n",
+						strerror(errno));
+				return -1;
+			}
+
+			/* ok, append the rule entry */
+			((struct directive *)dir->content)->keyword = ckw;
+			((struct directive *)dir->content)->obj = obj;
+			list_append(&(p->directives), dir);
+			p->directives_count++;
+			continue;
+		}
+
 		cpufreqd_log(LOG_WARNING, "WARNING: [Profile] "
 				"skipping unknown config option \"%s\"\n", name);
 	} /* end while */
@@ -366,7 +390,7 @@ int parse_config_profile (FILE *config, struct profile *p) {
 
 	/* TODO: check if the selected governor is available */
 
-
+	/* validate and normalize frequencies */
 	if (configuration.limits!=NULL) {
 		/* calculate actual frequncies if percent where given frequencies */
 		if (state & HAS_CPU) {
@@ -450,12 +474,12 @@ int parse_config_rule (FILE *config, struct rule *r) {
 			continue;
 		}
 		
+		/* it's plugin time to tell if they like the directive */
 		ckw = plugin_handle_keyword(&configuration.plugins, name, value, &obj);
 		/* if no plugin found read next line */
 		if (ckw != NULL) {
 			dir = node_new(NULL, sizeof(struct directive));
 			if (dir == NULL) {
-				/* TODO free obj */
 				free_keyword_object(ckw, obj);
 				cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] cannot "
 						"make enough room for a new entry (%s).\n",
@@ -468,11 +492,11 @@ int parse_config_rule (FILE *config, struct rule *r) {
 			((struct directive *)dir->content)->obj = obj;
 			list_append(&(r->directives), dir);
 			r->directives_count++;
+			continue;
 		}
-		/* if we reached this point than we 
-		 * have an handler for this keyword 
-		 */
-		continue;
+
+		cpufreqd_log(LOG_WARNING, "WARNING: [Rule] "
+				"skipping unknown config option \"%s\"\n", name);
 	} /* end while */
 
 	if (!(state & HAS_NAME)) {

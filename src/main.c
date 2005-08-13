@@ -257,8 +257,8 @@ static int init_configuration(void) {
 static void free_configuration(void)
 {
 	struct rule *tmp_rule;
-	struct directive *tmp_directive;
 	struct profile *tmp_profile;
+	struct directive *tmp_directive;
 	struct plugin_obj *o_plugin;
 
 	/* cleanup rule directives */
@@ -277,12 +277,18 @@ static void free_configuration(void)
 	cpufreqd_log(LOG_INFO, "free_config(): freeing rules.\n"); 
 	list_free_sublist(&(configuration.rules), configuration.rules.first);
 
-	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles.\n"); 
-	/* free policy governors string */
+	/* cleanup profile directives */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles directives.\n");
 	LIST_FOREACH_NODE(node, &configuration.profiles) {
-		tmp_profile = (struct profile *)node->content;
+		tmp_profile = (struct profile *) node->content;
 		free(tmp_profile->policy.governor);
+		LIST_FOREACH_NODE(node1, &tmp_profile->directives) {
+			tmp_directive = (struct directive *) node1->content;
+			free_keyword_object(tmp_directive->keyword, tmp_directive->obj);
+		}
+		list_free_sublist(&tmp_profile->directives, tmp_profile->directives.first);
 	}
+	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles.\n"); 
 	list_free_sublist(&(configuration.profiles), configuration.profiles.first);
 
 	/* clean other values */

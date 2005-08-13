@@ -217,7 +217,7 @@ struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
 			return ckw;
 		}
 	}
-	cpufreqd_log(LOG_ERR, "%s: unandled keyword \"%s\". Discarded\n", __func__, key);
+	cpufreqd_log(LOG_NOTICE, "%s: unandled keyword \"%s\". Discarded\n", __func__, key);
 	return NULL;
 }
 
