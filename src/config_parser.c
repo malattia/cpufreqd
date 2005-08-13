@@ -409,11 +409,10 @@ int parse_config_profile (FILE *config, struct profile *p) {
 #define HAS_NAME    (1<<0) 
 #define HAS_PROFILE (1<<1)
 int parse_config_rule (FILE *config, struct rule *r) {
-	int state = 0, keyword_handler_found = 0;
+	int state = 0;
 	char buf[MAX_STRING_LEN];
 	char *clean = NULL, *name = NULL, *value = NULL;
-	struct NODE *ren = NULL;
-	struct plugin_obj *o_plugin = NULL;
+	struct NODE *dir = NULL;
 	void *obj = NULL; /* to hold the value provided by a plugin */
 	struct cpufreqd_keyword *ckw = NULL;
 
@@ -454,8 +453,8 @@ int parse_config_rule (FILE *config, struct rule *r) {
 		ckw = plugin_handle_keyword(&configuration.plugins, name, value, &obj);
 		/* if no plugin found read next line */
 		if (ckw != NULL) {
-			ren = node_new(NULL, sizeof(struct rule_en));
-			if (ren == NULL) {
+			dir = node_new(NULL, sizeof(struct directive));
+			if (dir == NULL) {
 				/* TODO free obj */
 				free_keyword_object(ckw, obj);
 				cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] cannot "
@@ -465,10 +464,10 @@ int parse_config_rule (FILE *config, struct rule *r) {
 			}
 
 			/* ok, append the rule entry */
-			((struct rule_en *)ren->content)->keyword = ckw;
-			((struct rule_en *)ren->content)->obj = obj;
-			list_append(&(r->entries), ren);
-			r->entries_count++;
+			((struct directive *)dir->content)->keyword = ckw;
+			((struct directive *)dir->content)->obj = obj;
+			list_append(&(r->directives), dir);
+			r->directives_count++;
 		}
 		/* if we reached this point than we 
 		 * have an handler for this keyword 

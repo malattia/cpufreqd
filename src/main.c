@@ -191,7 +191,7 @@ static int init_configuration(void) {
 				node_free(n);
 			}
 			/* check if there are options */
-			if (tmp_rule->entries.first == NULL) {
+			if (tmp_rule->directives.first == NULL) {
 				cpufreqd_log(LOG_CRIT, 
 						"init_configuration(): [Rule] "
 						"name \"%s\" has no options, discarding.\n",
@@ -257,20 +257,20 @@ static int init_configuration(void) {
 static void free_configuration(void)
 {
 	struct rule *tmp_rule;
-	struct rule_en *tmp_rule_en;
+	struct directive *tmp_directive;
 	struct profile *tmp_profile;
 	struct plugin_obj *o_plugin;
 
-	/* cleanup rule entries */
-	cpufreqd_log(LOG_INFO, "free_config(): freeing rules entries.\n");
+	/* cleanup rule directives */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing rules directives.\n");
 	LIST_FOREACH_NODE(node, &configuration.rules) {
 		tmp_rule = (struct rule *) node->content;
 
-		LIST_FOREACH_NODE(node1, &tmp_rule->entries) {
-			tmp_rule_en = (struct rule_en *) node1->content;
-			free_keyword_object(tmp_rule_en->keyword, tmp_rule_en->obj);
+		LIST_FOREACH_NODE(node1, &tmp_rule->directives) {
+			tmp_directive = (struct directive *) node1->content;
+			free_keyword_object(tmp_directive->keyword, tmp_directive->obj);
 		}
-		list_free_sublist(&tmp_rule->entries, tmp_rule->entries.first);
+		list_free_sublist(&tmp_rule->directives, tmp_rule->directives.first);
 	}
 
 	/* cleanup config structs */
@@ -314,19 +314,19 @@ static void free_configuration(void)
  */
 static unsigned int rule_score(struct rule *rule) {
 	unsigned int hits = 0;
-	struct rule_en *re = NULL;
+	struct directive *d = NULL;
 	
 	/* call plugin->evaluate for each rule */
-	LIST_FOREACH_NODE(node, &rule->entries) {
-		re = (struct rule_en *) node->content;
+	LIST_FOREACH_NODE(node, &rule->directives) {
+		d = (struct directive *) node->content;
 		/* compute scores for rules and keep the highest */
-		if (re->keyword->evaluate != NULL && re->keyword->evaluate(re->obj) == MATCH) {
+		if (d->keyword->evaluate != NULL && d->keyword->evaluate(d->obj) == MATCH) {
 			hits++;
 			cpufreqd_log(LOG_DEBUG, "Rule \"%s\": %s matches.\n", rule->name,
-					re->keyword->word);
+					d->keyword->word);
 		}
 	} /* end foreach rule entry */
-	return hits + (100 * hits / rule->entries_count);
+	return hits + (100 * hits / rule->directives_count);
 }
 
 /*  struct rule *update_rule_scores(struct LIST *rules)
@@ -357,12 +357,12 @@ static struct rule *update_rule_scores(struct LIST *rule_list) {
  */
 static void rule_prechange_event(const struct rule *rule, const struct cpufreq_policy *old,
 		const struct cpufreq_policy *new) {
-	struct rule_en *re;
+	struct directive *d;
 	cpufreqd_log(LOG_DEBUG, "Triggering pre-change event\n");
-	LIST_FOREACH_NODE(node, &rule->entries) {
-		re = (struct rule_en *)node->content;
-		if (re->keyword->pre_change != NULL) {
-			re->keyword->pre_change(re->obj, old, new);
+	LIST_FOREACH_NODE(node, &rule->directives) {
+		d = (struct directive *)node->content;
+		if (d->keyword->pre_change != NULL) {
+			d->keyword->pre_change(d->obj, old, new);
 		}
 	} /* end foreach rule entry */
 }
@@ -371,12 +371,12 @@ static void rule_prechange_event(const struct rule *rule, const struct cpufreq_p
  */
 static void rule_postchange_event(const struct rule *rule, const struct cpufreq_policy *old,
 		const struct cpufreq_policy *new) {
-	struct rule_en *re;
+	struct directive *d;
 	cpufreqd_log(LOG_DEBUG, "Triggering post-change event\n");
-	LIST_FOREACH_NODE(node, &rule->entries) {
-		re = (struct rule_en *)node->content;
-		if (re->keyword->post_change != NULL) {
-			re->keyword->post_change(re->obj, old, new);
+	LIST_FOREACH_NODE(node, &rule->directives) {
+		d = (struct directive *)node->content;
+		if (d->keyword->post_change != NULL) {
+			d->keyword->post_change(d->obj, old, new);
 		}
 	} /* end foreach rule entry */
 }

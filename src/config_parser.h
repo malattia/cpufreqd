@@ -26,7 +26,7 @@
 #include "cpufreqd_plugin.h"
 #include "list.h"
 
-struct rule_en {
+struct directive {
   void *obj;
   struct cpufreqd_keyword *keyword;
   struct cpufreqd_plugin *plugin;
@@ -36,21 +36,16 @@ struct profile {
   char name[MAX_STRING_LEN];
   unsigned int cpu;
   struct cpufreq_policy policy;
-#if 0
-  char policy_name[255];
-  long int min_freq;
-  long int max_freq;
-  unsigned char sep;
-#endif
+  struct LIST directives; /* list of struct directive */
 };
 
 struct rule {
   char name[MAX_STRING_LEN];
   char profile_name[MAX_STRING_LEN];
-  struct LIST entries; /* list of struct rule_en */
+  struct LIST directives; /* list of struct directive */
   struct profile *prof;
   unsigned int score;
-  unsigned int entries_count;
+  unsigned int directives_count;
 };
 
 struct cpufreq_sys_info {
