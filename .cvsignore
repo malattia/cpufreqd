@@ -32,6 +32,10 @@ utils/config.sub
 utils/configure
 utils/Makefile
 utils/Makefile.in
+utils/cpufreqd-set
+utils/cpufreqd-get
+utils/.in
+utils/.deps
 manpages/aclocal.m4
 manpages/config.log
 manpages/config.status

@@ -6,3 +6,7 @@ config.status
 config.sub
 config.guess
 config.log
+cpufreqd-set
+cpufreqd-get
+.in
+.deps
