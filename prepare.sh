@@ -21,7 +21,7 @@ aclocal && autoconf && automake -a -c --foreign \
 		automake -a -c --foreign
 	cd ..
 ) && ( \
-	ENTER_INTO=nampages
+	ENTER_INTO=manpages
 	echo "Entering $ENTER_INTO"
 	cd $ENTER_INTO
 	WANT_AUTOMAKE="1.8" aclocal && \
