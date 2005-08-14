@@ -39,9 +39,19 @@
 #include "cpufreqd_remote.h"
 #include "daemon_utils.h"
 #include "list.h"
-#include "main.h"
 #include "plugin_utils.h"
 #include "sock_utils.h"
+
+#define TRIGGER_EVENT(event_func, directives, dir, old, new) \
+do { \
+	LIST_FOREACH_NODE(node, (directives)) { \
+		dir = (struct directive *)node->content; \
+		if (dir->keyword->event_func != NULL) { \
+			cpufreqd_log(LOG_DEBUG, "Triggering " #event_func " for %s\n", dir->keyword->word); \
+			dir->keyword->event_func(dir->obj, (old), (new)); \
+		} \
+	} \
+} while (0);
 
 /* default configuration */
 struct cpufreqd_conf configuration = {
@@ -63,256 +73,6 @@ static int force_reinit = 0;
 static int force_exit = 0;
 static int timer_expired = 1; /* expired in order to run on the first loop */
 static int cpufreqd_mode = ARG_DYNAMIC; /* operation mode (manual / dynamic) */
-
-/* intialize the cpufreqd_conf object 
- * by reading the configuration file
- */
-static int init_configuration(void) {
-	FILE *fp_config;
-	struct NODE *n;
-	struct profile *tmp_profile;
-	struct rule *tmp_rule;
-	char buf[256];
-
-	/* configuration file */
-	cpufreqd_log(LOG_INFO, "init_configuration(): reading configuration file %s\n",
-			configuration.config_file);
-	fp_config = fopen(configuration.config_file, "r");
-	if (!fp_config) {
-		cpufreqd_log(LOG_ERR, "init_configuration(): %s: %s\n",
-				configuration.config_file, strerror(errno));
-		return -1;
-	}
-
-	while (!feof(fp_config)) {
-		char *clean = 0L;
-
-		clean = read_clean_line(fp_config, buf, 256);
-
-		if (!clean[0]) /* returned an empty line */
-			continue;
-
-		/* if General scan general options */
-		if (strstr(clean,"[General]")) {
-
-			if (parse_config_general(fp_config) < 0) {
-				fclose(fp_config);
-				return -1;
-			}
-			/*
-			 *  Load plugins
-			 *  just after having read the General section
-			 *  and before the rest in order to be able to hadle
-			 *  options with them.
-			 */
-			load_plugin_list(&configuration.plugins);
-			continue;
-		}
-
-		/* if Profile scan profile options */
-		if (strstr(clean,"[Profile]")) {
-
-			n = node_new(NULL, sizeof(struct profile));
-			if (n == NULL) {
-				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make "
-						"enough room for a new Profile (%s)\n",
-						strerror(errno));
-				fclose(fp_config);
-				return -1;
-			}
-			/* create governor string */
-			tmp_profile = (struct profile *)n->content;
-			if ((tmp_profile->policy.governor = malloc(MAX_STRING_LEN*sizeof(char))) ==NULL) {
-				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make enough room "
-						"for a new Profile governor (%s)\n",
-						strerror(errno));
-				node_free(n);
-				fclose(fp_config);
-				return -1;
-			}
-
-			if (parse_config_profile(fp_config, tmp_profile) < 0) {
-				cpufreqd_log(LOG_CRIT, 
-						"init_configuration(): [Profile] "
-						"error parsing %s, see logs for details.\n",
-						configuration.config_file);
-				node_free(n);
-				fclose(fp_config);
-				return -1;
-			}
-			/* checks duplicate names */
-			LIST_FOREACH_NODE(node, &configuration.profiles) {
-				struct profile *tmp = (struct profile *)node->content;
-				if (strcmp(tmp->name, tmp_profile->name) != 0)
-					continue;
-				cpufreqd_log(LOG_CRIT, 
-						"init_configuration(): [Profile] "
-						"name \"%s\" already exists.\n", 
-						tmp_profile->name);
-				node_free(n);
-			}
-			list_append(&configuration.profiles, n);
-			/* avoid continuing */
-			continue;
-		}
-
-		/* if Rule scan rules options */
-		if (strstr(clean,"[Rule]")) {
-
-			n = node_new(NULL, sizeof(struct rule));
-			if (n == NULL) {
-				cpufreqd_log(LOG_ERR, "init_configuration(): "
-						"cannot make enough room for a new Rule (%s)\n",
-						strerror(errno));
-				fclose(fp_config);
-				return -1;
-			}
-			tmp_rule = (struct rule *)n->content;
-			if (parse_config_rule(fp_config, tmp_rule) < 0) {
-				cpufreqd_log(LOG_CRIT, 
-						"init_configuration(): [Rule] "
-						"error parsing %s, see logs for details.\n", 
-						configuration.config_file);
-				node_free(n);
-				fclose(fp_config);
-				return -1;
-			}
-				
-			/* check duplicate names */
-			LIST_FOREACH_NODE(node, &configuration.rules) {
-				struct rule *tmp = (struct rule *)node->content;
-				if (strcmp(tmp->name, tmp_rule->name) != 0)
-					continue;
-				
-				cpufreqd_log(LOG_ERR, 
-						"init_configuration(): [Rule] "
-						"name \"%s\" already exists. Skipped\n", 
-						tmp_rule->name);
-				node_free(n);
-			}
-			/* check if there are options */
-			if (tmp_rule->directives.first == NULL) {
-				cpufreqd_log(LOG_CRIT, 
-						"init_configuration(): [Rule] "
-						"name \"%s\" has no options, discarding.\n",
-						tmp_rule->name);
-				node_free(n);
-				continue;
-			}
-			list_append(&configuration.rules, n);
-			/* avoid continuing */
-			continue;
-		}
-	}
-	fclose(fp_config);
-
-	/* did I read something? 
-	 * check if I read at least one rule, otherwise exit
-	 */
-	if (configuration.rules.first == NULL) {
-		cpufreqd_log(LOG_ERR, "init_configuration(): No rules found!\n");
-		return -1;
-	}
-
-	/*
-	 * associate rules->profiles
-	 * go through rules and associate to the proper profile
-	 */
-	LIST_FOREACH_NODE(node, &configuration.rules) {
-	/*for (nr_iter=configuration.rules.first; nr_iter!=NULL; nr_iter=nr_iter->next) {*/
-		tmp_rule = (struct rule *)node->content;
-		int profile_found = 0;
-
-		LIST_FOREACH_NODE(node1, &configuration.profiles) {
-		/*for (np_iter=configuration.profiles.first; np_iter!=NULL; np_iter=np_iter->next) {*/
-			tmp_profile = (struct profile *)node1->content;
-			/* go through profiles */
-			if (strcmp(tmp_rule->profile_name, tmp_profile->name)==0) {
-				/* a profile is allowed to be addressed by more than 1 rule */
-				tmp_rule->prof = tmp_profile;
-				profile_found = 1;
-				break;
-			}
-		}
-
-		if (!profile_found) {
-			cpufreqd_log(LOG_CRIT, "init_configuration(): Syntax error: no Profile section found for Rule \"%s\" \
-					(requested Profile \"%s\")\n", tmp_rule->name, tmp_rule->profile_name);
-			return -1;
-		}
-	}
-
-	LIST_FOREACH_NODE(node, &configuration.rules) {
-		tmp_rule = (struct rule *)node->content;
-		cpufreqd_log(LOG_INFO, 
-				"init_configuration(): Rule \"%s\" has Profile \"%s\"\n", 
-				tmp_rule->name, tmp_rule->prof->name);
-	}
-	return 0;
-}
-
-/* 
- * Frees the structures allocated.
- */
-static void free_configuration(void)
-{
-	struct rule *tmp_rule;
-	struct profile *tmp_profile;
-	struct directive *tmp_directive;
-	struct plugin_obj *o_plugin;
-
-	/* cleanup rule directives */
-	cpufreqd_log(LOG_INFO, "free_config(): freeing rules directives.\n");
-	LIST_FOREACH_NODE(node, &configuration.rules) {
-		tmp_rule = (struct rule *) node->content;
-
-		LIST_FOREACH_NODE(node1, &tmp_rule->directives) {
-			tmp_directive = (struct directive *) node1->content;
-			free_keyword_object(tmp_directive->keyword, tmp_directive->obj);
-		}
-		list_free_sublist(&tmp_rule->directives, tmp_rule->directives.first);
-	}
-
-	/* cleanup config structs */
-	cpufreqd_log(LOG_INFO, "free_config(): freeing rules.\n"); 
-	list_free_sublist(&(configuration.rules), configuration.rules.first);
-
-	/* cleanup profile directives */
-	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles directives.\n");
-	LIST_FOREACH_NODE(node, &configuration.profiles) {
-		tmp_profile = (struct profile *) node->content;
-		free(tmp_profile->policy.governor);
-		LIST_FOREACH_NODE(node1, &tmp_profile->directives) {
-			tmp_directive = (struct directive *) node1->content;
-			free_keyword_object(tmp_directive->keyword, tmp_directive->obj);
-		}
-		list_free_sublist(&tmp_profile->directives, tmp_profile->directives.first);
-	}
-	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles.\n"); 
-	list_free_sublist(&(configuration.profiles), configuration.profiles.first);
-
-	/* clean other values */
-	configuration.poll_interval = DEFAULT_POLL;
-	configuration.has_sysfs = 0;
-	configuration.enable_remote = 0;
-	configuration.cpu_min_freq = 0;
-	configuration.cpu_max_freq = 0;
-
-	if (!configuration.log_level_overridden)
-		configuration.log_level = DEFAULT_VERBOSITY;
-
-	/* finalize plugins!!!! */
-	/*
-	 *  Unload plugins
-	 */
-	cpufreqd_log(LOG_INFO, "free_config(): freeing plugins.\n"); 
-	LIST_FOREACH_NODE(node, &configuration.plugins) {
-		o_plugin = (struct plugin_obj*) node->content;
-		finalize_plugin(o_plugin);
-		close_plugin(o_plugin);
-	}
-	list_free_sublist(&(configuration.plugins), configuration.plugins.first);
-}
 
 /*
  * Evaluates the full rule and returns the percentage score
@@ -359,33 +119,33 @@ static struct rule *update_rule_scores(struct LIST *rule_list) {
 	return ret;
 }
 
-/* Invoke pre_change for each rul entry
+/* 
+ * sets the policy
+ * new is never NULL
  */
-static void rule_prechange_event(const struct rule *rule, const struct cpufreq_policy *old,
-		const struct cpufreq_policy *new) {
+static void cpufreqd_set_profile (struct profile *old, struct profile *new) {
+	unsigned int i;
 	struct directive *d;
-	cpufreqd_log(LOG_DEBUG, "Triggering pre-change event\n");
-	LIST_FOREACH_NODE(node, &rule->directives) {
-		d = (struct directive *)node->content;
-		if (d->keyword->pre_change != NULL) {
-			d->keyword->pre_change(d->obj, old, new);
-		}
-	} /* end foreach rule entry */
+
+	/* profile prechange event */
+	if (new->directives.first) {
+		TRIGGER_EVENT(profile_pre_change, &new->directives, d,
+				old!=NULL? &old->policy : NULL, &new->policy);
+	}
+	/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
+	for (i=0; i<configuration.cpu_num; i++) {
+		if (cpufreq_set_policy(i, &(new->policy)) == 0)
+			cpufreqd_log(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
+		else
+			cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", new->name, i);
+	}
+	/* profile postchange event */
+	if (new->directives.first) {
+		TRIGGER_EVENT(profile_post_change, &new->directives, d,
+				old!=NULL? &old->policy : NULL, &new->policy);
+	}
 }
 
-/* Invoke post_change for each rul entry
- */
-static void rule_postchange_event(const struct rule *rule, const struct cpufreq_policy *old,
-		const struct cpufreq_policy *new) {
-	struct directive *d;
-	cpufreqd_log(LOG_DEBUG, "Triggering post-change event\n");
-	LIST_FOREACH_NODE(node, &rule->directives) {
-		d = (struct directive *)node->content;
-		if (d->keyword->post_change != NULL) {
-			d->keyword->post_change(d->obj, old, new);
-		}
-	} /* end foreach rule entry */
-}
 
 /*  int read_args (int argc, char *argv[])
  *  Reads command line arguments
@@ -413,7 +173,8 @@ static int read_args (int argc, char *argv[]) {
 			return 0;
 		case 'f':
 			if (realpath(optarg, configuration.config_file) == NULL) {
-				cpufreqd_log(LOG_ERR, "Error reading command line argument (%s: %s).\n", optarg, strerror(errno));
+				cpufreqd_log(LOG_ERR, "Error reading command line argument (%s: %s).\n",
+						optarg, strerror(errno));
 				return -1;
 			}
 			cpufreqd_log(LOG_DEBUG, "Using configuration file at %s\n", configuration.config_file);
@@ -476,7 +237,7 @@ static void alarm_handler(int signo) {
 }
 
 static void hup_handler(int signo) {
-	cpufreqd_log(LOG_NOTICE, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
+	cpufreqd_log(LOG_WARNING, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
 #if 0
 	cpufreqd_log(LOG_NOTICE, "Caught HUP signal (%s), reloading configuration file.\n", strsignal(signo));
 	force_reinit = 1;
@@ -489,6 +250,7 @@ static void pipe_handler(int signo) {
 
 static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *current) {
 	struct rule *best_rule = NULL;
+	struct directive *d;
 	
 	update_plugin_states(&conf->plugins);
 	best_rule = update_rule_scores(&conf->rules);
@@ -502,23 +264,25 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 		cpufreqd_log(LOG_DEBUG, "New Rule (\"%s\"), applying.\n", 
 				best_rule->name);
 		/* pre change event */
-		if (current != NULL) {
-			rule_prechange_event(best_rule, &current->prof->policy,
-					&best_rule->prof->policy);
+		if (current != NULL && best_rule->directives.first != NULL) {
+			TRIGGER_EVENT(rule_pre_change, &best_rule->directives, d,
+					&current->prof->policy, &best_rule->prof->policy);
 		}
 
 		/* change frequency */
-		if (current == NULL || best_rule->prof != current->prof) {
-			cpufreqd_set_profile(best_rule->prof);
+		if (current == NULL) {
+			cpufreqd_set_profile(NULL, best_rule->prof);
+		} else if (best_rule->prof != current->prof) {
+			cpufreqd_set_profile(current->prof, best_rule->prof);
 		} else {
 			cpufreqd_log(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
 					current->prof->name, best_rule->prof->name);
 		}
 
 		/* post change event */
-		if (current != NULL) {
-			rule_postchange_event(best_rule, &current->prof->policy,
-					&best_rule->prof->policy);
+		if (current != NULL && best_rule->directives.first != NULL) {
+			TRIGGER_EVENT(rule_post_change, &best_rule->directives, d,
+					&current->prof->policy, &best_rule->prof->policy);
 		}
 
 		/* nothing new happened */
@@ -697,21 +461,8 @@ int main (int argc, char *argv[]) {
 	}
 
 cpufreqd_start:
-	/*
-	 *  1- open config file
-	 *  2- start reading
-	 *  3- look for general section first
-	 *
-	 *  4- load plugins
-	 *  
-	 *  5- parse rules
-	 *  6- parse profiles
-	 *
-	 *  7- check if rules/plugins are used
-	 *
-	 *  8- go! baby, go! (loop)
-	 */
-	if (init_configuration() < 0) {
+
+	if (init_configuration(&configuration) < 0) {
 		cpufreqd_log(LOG_CRIT, "Unable to parse config file: %s\n", configuration.config_file);
 		ret = 1;
 		goto out_config_read;
@@ -774,12 +525,13 @@ cpufreqd_start:
 
 		/* if the socket opened successfully */
 		if (cpufreqd_sock != -1) {
-			/* wait either for a command */
+			/* wait for a command */
 			fds.fd = cpufreqd_sock;
 			fds.events = POLLIN | POLLRDNORM;
 			switch (poll(&fds, 1, -1)) {
 				case 0:
 					/* timed out. check to see if things have changed */
+					/* should not happen actually */
 					break;
 				case -1:
 					/* caused by SIGALARM (mostly) */
@@ -825,7 +577,7 @@ out_socket:
 	 *  Free configuration structures
 	 */
 out_config_read:
-	free_configuration();
+	free_configuration(&configuration);
 	if (force_reinit && !force_exit) {
 		force_reinit = 0;
 		cpufreqd_log(LOG_INFO, "Restarting cpufreqd\n");

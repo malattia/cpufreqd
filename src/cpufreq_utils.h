@@ -22,7 +22,6 @@
 
 #define CPUINFO_PROC  "/proc/cpuinfo"
 
-void cpufreqd_set_profile (struct profile *p);
 unsigned long normalize_frequency (struct cpufreq_limits *limits,  
                                    struct cpufreq_available_frequencies *freqs, 
                                    unsigned long user_freq);

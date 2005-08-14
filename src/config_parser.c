@@ -32,16 +32,9 @@
 #include <ctype.h>
 #include <string.h>
 #include "config_parser.h"
-#include "cpufreqd_log.h"
-#include "main.h"
-#include "plugin_utils.h"
 #include "cpufreq_utils.h"
-
-extern struct cpufreqd_conf configuration;
-
-/* local functions */
-static char *strip_comments_line  (char *str);
-static char *clean_config_line    (char *str);
+#include "cpufreqd_log.h"
+#include "plugin_utils.h"
 
 /* char *clean_config_line (char *str)
  *
@@ -50,7 +43,7 @@ static char *clean_config_line    (char *str);
  * Returns a pointer to the cleaned string.
  * WARNING: it modifies the input string!
  */
-char *clean_config_line (char *str) {
+static char *clean_config_line (char *str) {
 	int i = 0;
 
 	/* remove white spaces at the beginning */
@@ -75,7 +68,7 @@ char *clean_config_line (char *str) {
  * Returns a pointer to the cleaned string.
  * WARNING: it modifies the input string!
  */
-char *strip_comments_line (char *str) {
+static char *strip_comments_line (char *str) {
 	int i;
 
 	/* remove comment */
@@ -88,7 +81,7 @@ char *strip_comments_line (char *str) {
 	return str;
 }
 
-char *read_clean_line(FILE *fp, char *buf, int n) {
+static char *read_clean_line(FILE *fp, char *buf, int n) {
 	if (fgets(buf, n, fp)) {
 		buf[n] = '\0';
 		buf = strip_comments_line(buf);
@@ -105,7 +98,7 @@ char *read_clean_line(FILE *fp, char *buf, int n) {
  *
  * Returns -1 if required properties are missing, 0 otherwise
  */
-int parse_config_general (FILE *config) {
+static int parse_config_general (FILE *config, struct cpufreqd_conf *configuration) {
 	char buf[MAX_STRING_LEN];
 	char *clean;
 	char *name;
@@ -131,20 +124,20 @@ int parse_config_general (FILE *config) {
 
 		if (strcmp(name,"poll_interval") == 0) {
 			if (value != NULL) {
-				configuration.poll_interval = atoi (value);
+				configuration->poll_interval = atoi (value);
 			}
 			/* validate */
-			if (configuration.poll_interval < 1) {
+			if (configuration->poll_interval < 1) {
 				cpufreqd_log(LOG_WARNING, 
 						"WARNING: [General] poll_interval has invalid value, "
 						"using default.\n");
-				configuration.poll_interval = DEFAULT_POLL;
+				configuration->poll_interval = DEFAULT_POLL;
 			}
 			continue;
 		}
 
 		if (strcmp(name,"verbosity") == 0) {
-			if (configuration.log_level_overridden) {
+			if (configuration->log_level_overridden) {
 				cpufreqd_log(LOG_DEBUG, 
 						"parse_config_general(): skipping \"verbosity\", "
 						"overridden in the command line.\n");
@@ -152,16 +145,16 @@ int parse_config_general (FILE *config) {
 			}
 
 			if (value != NULL) {
-				configuration.log_level = atoi (value);
+				configuration->log_level = atoi (value);
 				/* validate */
-				if (configuration.log_level < 0 || configuration.log_level > 7) {
+				if (configuration->log_level < 0 || configuration->log_level > 7) {
 					cpufreqd_log(LOG_WARNING, 
 							"WARNING: [General] verbosity has invalid value, "
 							"using default (%d).\n", DEFAULT_VERBOSITY);
-					configuration.log_level = DEFAULT_VERBOSITY;
+					configuration->log_level = DEFAULT_VERBOSITY;
 				}
 			} else {
-				configuration.log_level = DEFAULT_VERBOSITY;
+				configuration->log_level = DEFAULT_VERBOSITY;
 				cpufreqd_log(LOG_WARNING, 
 						"WARNING: [General] verbosity has empty value, "
 						"using default (%d).\n", DEFAULT_VERBOSITY);
@@ -186,7 +179,7 @@ int parse_config_general (FILE *config) {
 				o_plugin.name[MAX_STRING_LEN-1] = '\0';
 
 				n_plugin = node_new(&o_plugin, sizeof(struct plugin_obj));
-				list_append(&(configuration.plugins), n_plugin);
+				list_append(&(configuration->plugins), n_plugin);
 				cpufreqd_log(LOG_DEBUG, "parse_config_general(): read plugin: %s\n", token);
 
 			} while ((token = strtok(NULL,",")) != NULL);
@@ -196,36 +189,36 @@ int parse_config_general (FILE *config) {
 
 		if (strcmp(name,"pidfile") == 0) {
 			if (value != NULL) {
-				strncpy(configuration.pidfile, value, MAX_PATH_LEN);
+				strncpy(configuration->pidfile, value, MAX_PATH_LEN);
 			} else {
 				cpufreqd_log(LOG_WARNING, 
 						"parse_config_general(): empty \"pidfile\", "
 						"using default %s.\n", CPUFREQD_PIDFILE);
-				strncpy(configuration.pidfile, CPUFREQD_PIDFILE, MAX_PATH_LEN);
+				strncpy(configuration->pidfile, CPUFREQD_PIDFILE, MAX_PATH_LEN);
 			}
-			configuration.pidfile[MAX_PATH_LEN-1] = '\0';
+			configuration->pidfile[MAX_PATH_LEN-1] = '\0';
 			continue;
 		}
 
 		if (strcmp(name,"socketfile") == 0) {
 			if (value != NULL) {
-				strncpy(configuration.sockfile, value, MAX_PATH_LEN);
+				strncpy(configuration->sockfile, value, MAX_PATH_LEN);
 			} else {
 				cpufreqd_log(LOG_WARNING, 
 						"parse_config_general(): empty \"socketfile\", "
 						"using default %s.\n", CPUFREQD_SOCKFILE);
-				strncpy(configuration.pidfile, CPUFREQD_SOCKFILE, MAX_PATH_LEN);
+				strncpy(configuration->pidfile, CPUFREQD_SOCKFILE, MAX_PATH_LEN);
 			}
-			configuration.sockfile[MAX_PATH_LEN-1] = '\0';
+			configuration->sockfile[MAX_PATH_LEN-1] = '\0';
 			continue;
 		}
 
 		if (strcmp(name,"enable_remote") == 0) {
 			if (value != NULL) {
-				configuration.enable_remote = atoi (value);
+				configuration->enable_remote = atoi (value);
 				cpufreqd_log(LOG_WARNING, "parse_config_general(): "
 						"Remote control %s.\n", 
-						configuration.enable_remote ? "enabled" : "disabled");
+						configuration->enable_remote ? "enabled" : "disabled");
 			}
 			continue;
 		}
@@ -246,7 +239,8 @@ int parse_config_general (FILE *config) {
 #define HAS_MAX     (1<<2)
 #define HAS_POLICY  (1<<3)
 #define HAS_CPU     (1<<4)
-int parse_config_profile (FILE *config, struct profile *p) {
+static int parse_config_profile (FILE *config, struct profile *p, struct LIST *plugins,
+		struct cpufreq_limits *limits, struct cpufreq_available_frequencies *freq) {
 	int state = 0, min_is_percent = 0, max_is_percent = 0, tmp_freq = 0;
 	struct NODE *dir = NULL;
 	void *obj = NULL; /* to hold the value provided by a plugin */
@@ -340,13 +334,13 @@ int parse_config_profile (FILE *config, struct profile *p) {
 		}
 		
 		/* it's plugin time to tell if they like the directive */
-		ckw = plugin_handle_keyword(&configuration.plugins, name, value, &obj);
+		ckw = plugin_handle_keyword(plugins, name, value, &obj);
 		/* if no plugin found read next line */
 		if (ckw != NULL) {
 			dir = node_new(NULL, sizeof(struct directive));
 			if (dir == NULL) {
 				free_keyword_object(ckw, obj);
-				cpufreqd_log(LOG_ERR, "parse_config_rule(): [Rule] cannot "
+				cpufreqd_log(LOG_ERR, "parse_config_profile(): [Profile] cannot "
 						"make enough room for a new entry (%s).\n",
 						strerror(errno));
 				return -1;
@@ -391,22 +385,25 @@ int parse_config_profile (FILE *config, struct profile *p) {
 	/* TODO: check if the selected governor is available */
 
 	/* validate and normalize frequencies */
-	if (configuration.limits!=NULL) {
+	if (limits!=NULL) {
 		/* calculate actual frequncies if percent where given frequencies */
 		if (state & HAS_CPU) {
 			if (min_is_percent)
-				p->policy.min = percent_to_absolute(configuration.limits[p->cpu].max, p->policy.min);
+				p->policy.min = percent_to_absolute(limits[p->cpu].max, p->policy.min);
 			if (max_is_percent)
-				p->policy.max = percent_to_absolute(configuration.limits[p->cpu].max, p->policy.max);
+				p->policy.max = percent_to_absolute(limits[p->cpu].max, p->policy.max);
 		} else {
 			if (min_is_percent)
-				p->policy.min = percent_to_absolute(configuration.limits[0].max, p->policy.min);
+				p->policy.min = percent_to_absolute(limits[0].max, p->policy.min);
 			if (max_is_percent)
-				p->policy.max = percent_to_absolute(configuration.limits[0].max, p->policy.max);
+				p->policy.max = percent_to_absolute(limits[0].max, p->policy.max);
 		}
-		/* normalize frequencies if such informations are available */
-		p->policy.max = normalize_frequency(configuration.limits, configuration.sys_info->frequencies, p->policy.max);
-		p->policy.min = normalize_frequency(configuration.limits, configuration.sys_info->frequencies, p->policy.min);
+		/* normalize frequencies if such informations are available 
+		 *
+		 * TODO: move this to init_configuration() ?
+		 */
+		p->policy.max = normalize_frequency(limits, freq, p->policy.max);
+		p->policy.min = normalize_frequency(limits, freq, p->policy.min);
 	} else {
 		if (min_is_percent || max_is_percent)
 			cpufreqd_log(LOG_WARNING, "Unable to calculate absolute values for profile \"%s\".\n", p->name);
@@ -432,7 +429,7 @@ int parse_config_profile (FILE *config, struct profile *p) {
  */
 #define HAS_NAME    (1<<0) 
 #define HAS_PROFILE (1<<1)
-int parse_config_rule (FILE *config, struct rule *r) {
+static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins) {
 	int state = 0;
 	char buf[MAX_STRING_LEN];
 	char *clean = NULL, *name = NULL, *value = NULL;
@@ -475,7 +472,7 @@ int parse_config_rule (FILE *config, struct rule *r) {
 		}
 		
 		/* it's plugin time to tell if they like the directive */
-		ckw = plugin_handle_keyword(&configuration.plugins, name, value, &obj);
+		ckw = plugin_handle_keyword(plugins, name, value, &obj);
 		/* if no plugin found read next line */
 		if (ckw != NULL) {
 			dir = node_new(NULL, sizeof(struct directive));
@@ -515,3 +512,252 @@ int parse_config_rule (FILE *config, struct rule *r) {
 	return 0;
 }
 
+/* intialize the cpufreqd_conf object 
+ * by reading the configuration file
+ */
+int init_configuration(struct cpufreqd_conf *configuration)
+{
+	FILE *fp_config;
+	struct NODE *n;
+	struct profile *tmp_profile;
+	struct rule *tmp_rule;
+	char buf[256];
+
+	/* configuration file */
+	cpufreqd_log(LOG_INFO, "init_configuration(): reading configuration file %s\n",
+			configuration->config_file);
+	fp_config = fopen(configuration->config_file, "r");
+	if (!fp_config) {
+		cpufreqd_log(LOG_ERR, "init_configuration(): %s: %s\n",
+				configuration->config_file, strerror(errno));
+		return -1;
+	}
+
+	while (!feof(fp_config)) {
+		char *clean = 0L;
+
+		clean = read_clean_line(fp_config, buf, 256);
+
+		if (!clean[0]) /* returned an empty line */
+			continue;
+
+		/* if General scan general options */
+		if (strstr(clean,"[General]")) {
+
+			if (parse_config_general(fp_config, configuration) < 0) {
+				fclose(fp_config);
+				return -1;
+			}
+			/*
+			 *  Load plugins
+			 *  just after having read the General section
+			 *  and before the rest in order to be able to hadle
+			 *  options with them.
+			 */
+			load_plugin_list(&configuration->plugins);
+			continue;
+		}
+
+		/* if Profile scan profile options */
+		if (strstr(clean,"[Profile]")) {
+
+			n = node_new(NULL, sizeof(struct profile));
+			if (n == NULL) {
+				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make "
+						"enough room for a new Profile (%s)\n",
+						strerror(errno));
+				fclose(fp_config);
+				return -1;
+			}
+			/* create governor string */
+			tmp_profile = (struct profile *)n->content;
+			if ((tmp_profile->policy.governor = malloc(MAX_STRING_LEN*sizeof(char))) ==NULL) {
+				cpufreqd_log(LOG_ERR, "init_configuration(): cannot make enough room "
+						"for a new Profile governor (%s)\n",
+						strerror(errno));
+				node_free(n);
+				fclose(fp_config);
+				return -1;
+			}
+
+			if (parse_config_profile(fp_config, tmp_profile, &configuration->plugins, 
+					configuration->limits, configuration->sys_info->frequencies) < 0) {
+				cpufreqd_log(LOG_CRIT, 
+						"init_configuration(): [Profile] "
+						"error parsing %s, see logs for details.\n",
+						configuration->config_file);
+				node_free(n);
+				fclose(fp_config);
+				return -1;
+			}
+			/* checks duplicate names */
+			LIST_FOREACH_NODE(node, &configuration->profiles) {
+				struct profile *tmp = (struct profile *)node->content;
+				if (strcmp(tmp->name, tmp_profile->name) != 0)
+					continue;
+				cpufreqd_log(LOG_CRIT, 
+						"init_configuration(): [Profile] "
+						"name \"%s\" already exists.\n", 
+						tmp_profile->name);
+				node_free(n);
+			}
+			list_append(&configuration->profiles, n);
+			/* avoid continuing */
+			continue;
+		}
+
+		/* if Rule scan rules options */
+		if (strstr(clean,"[Rule]")) {
+
+			n = node_new(NULL, sizeof(struct rule));
+			if (n == NULL) {
+				cpufreqd_log(LOG_ERR, "init_configuration(): "
+						"cannot make enough room for a new Rule (%s)\n",
+						strerror(errno));
+				fclose(fp_config);
+				return -1;
+			}
+			tmp_rule = (struct rule *)n->content;
+			if (parse_config_rule(fp_config, tmp_rule, &configuration->plugins) < 0) {
+				cpufreqd_log(LOG_CRIT, 
+						"init_configuration(): [Rule] "
+						"error parsing %s, see logs for details.\n", 
+						configuration->config_file);
+				node_free(n);
+				fclose(fp_config);
+				return -1;
+			}
+				
+			/* check duplicate names */
+			LIST_FOREACH_NODE(node, &configuration->rules) {
+				struct rule *tmp = (struct rule *)node->content;
+				if (strcmp(tmp->name, tmp_rule->name) != 0)
+					continue;
+				
+				cpufreqd_log(LOG_ERR, 
+						"init_configuration(): [Rule] "
+						"name \"%s\" already exists. Skipped\n", 
+						tmp_rule->name);
+				node_free(n);
+			}
+			/* check if there are options */
+			if (tmp_rule->directives.first == NULL) {
+				cpufreqd_log(LOG_CRIT, 
+						"init_configuration(): [Rule] "
+						"name \"%s\" has no options, discarding.\n",
+						tmp_rule->name);
+				node_free(n);
+				continue;
+			}
+			list_append(&configuration->rules, n);
+			/* avoid continuing */
+			continue;
+		}
+	}
+	fclose(fp_config);
+
+	/* did I read something? 
+	 * check if I read at least one rule, otherwise exit
+	 */
+	if (configuration->rules.first == NULL) {
+		cpufreqd_log(LOG_ERR, "init_configuration(): No rules found!\n");
+		return -1;
+	}
+
+	/*
+	 * associate rules->profiles
+	 * go through rules and associate to the proper profile
+	 */
+	LIST_FOREACH_NODE(node, &configuration->rules) {
+		tmp_rule = (struct rule *)node->content;
+		int profile_found = 0;
+
+		LIST_FOREACH_NODE(node1, &configuration->profiles) {
+			tmp_profile = (struct profile *)node1->content;
+			/* go through profiles */
+			if (strcmp(tmp_rule->profile_name, tmp_profile->name)==0) {
+				/* a profile is allowed to be addressed by more than 1 rule */
+				tmp_rule->prof = tmp_profile;
+				profile_found = 1;
+				break;
+			}
+		}
+
+		if (!profile_found) {
+			cpufreqd_log(LOG_CRIT, "init_configuration(): Syntax error: no Profile section found for Rule \"%s\" \
+					(requested Profile \"%s\")\n", tmp_rule->name, tmp_rule->profile_name);
+			return -1;
+		}
+	}
+
+	LIST_FOREACH_NODE(node, &configuration->rules) {
+		tmp_rule = (struct rule *)node->content;
+		cpufreqd_log(LOG_INFO, 
+				"init_configuration(): Rule \"%s\" has Profile \"%s\"\n", 
+				tmp_rule->name, tmp_rule->prof->name);
+	}
+	return 0;
+}
+
+/* 
+ * Frees the structures allocated.
+ */
+void free_configuration(struct cpufreqd_conf *configuration)
+{
+	struct rule *tmp_rule;
+	struct profile *tmp_profile;
+	struct directive *tmp_directive;
+	struct plugin_obj *o_plugin;
+
+	/* cleanup rule directives */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing rules directives.\n");
+	LIST_FOREACH_NODE(node, &configuration->rules) {
+		tmp_rule = (struct rule *) node->content;
+
+		LIST_FOREACH_NODE(node1, &tmp_rule->directives) {
+			tmp_directive = (struct directive *) node1->content;
+			free_keyword_object(tmp_directive->keyword, tmp_directive->obj);
+		}
+		list_free_sublist(&tmp_rule->directives, tmp_rule->directives.first);
+	}
+
+	/* cleanup config structs */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing rules.\n"); 
+	list_free_sublist(&(configuration->rules), configuration->rules.first);
+
+	/* cleanup profile directives */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles directives.\n");
+	LIST_FOREACH_NODE(node, &configuration->profiles) {
+		tmp_profile = (struct profile *) node->content;
+		free(tmp_profile->policy.governor);
+		LIST_FOREACH_NODE(node1, &tmp_profile->directives) {
+			tmp_directive = (struct directive *) node1->content;
+			free_keyword_object(tmp_directive->keyword, tmp_directive->obj);
+		}
+		list_free_sublist(&tmp_profile->directives, tmp_profile->directives.first);
+	}
+	cpufreqd_log(LOG_INFO, "free_config(): freeing profiles.\n"); 
+	list_free_sublist(&(configuration->profiles), configuration->profiles.first);
+
+	/* clean other values */
+	configuration->poll_interval = DEFAULT_POLL;
+	configuration->has_sysfs = 0;
+	configuration->enable_remote = 0;
+	configuration->cpu_min_freq = 0;
+	configuration->cpu_max_freq = 0;
+
+	if (!configuration->log_level_overridden)
+		configuration->log_level = DEFAULT_VERBOSITY;
+
+	/* finalize plugins!!!! */
+	/*
+	 *  Unload plugins
+	 */
+	cpufreqd_log(LOG_INFO, "free_config(): freeing plugins.\n"); 
+	LIST_FOREACH_NODE(node, &configuration->plugins) {
+		o_plugin = (struct plugin_obj*) node->content;
+		finalize_plugin(o_plugin);
+		close_plugin(o_plugin);
+	}
+	list_free_sublist(&(configuration->plugins), configuration->plugins.first);
+}

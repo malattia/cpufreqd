@@ -104,7 +104,8 @@ static int acpi_temperature_init(void)
 			snprintf(atz_list[n].name, 32, "%s", namelist[n]->d_name);
 			snprintf(atz_list[n].zone_path, 64, "%s%s/",
 					ACPI_TEMPERATURE_DIR, namelist[n]->d_name);
-			acpi_temperature.cfdprint(LOG_INFO, 
+			/*acpi_temperature.cfdprint(LOG_INFO, */
+			cpufreqd_log(LOG_INFO, 
 					"acpi_temperature_init() - TEMP path: %s name: %s\n",
 					atz_list[n].zone_path, atz_list[n].name);
 			free(namelist[n]);

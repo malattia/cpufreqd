@@ -21,7 +21,6 @@
 #include <string.h>
 #include <dlfcn.h>
 #include "plugin_utils.h"
-#include "main.h"
 #include "cpufreqd_log.h"
 #include "cpufreqd.h"
 
@@ -150,7 +149,7 @@ int initialize_plugin(struct plugin_obj *cp) {
  *  Call plugin_exit()
  */
 int finalize_plugin(struct plugin_obj *cp) {
-	if (cp != NULL) {
+	if (cp != NULL && cp->plugin->plugin_exit != NULL) {
 		cpufreqd_log(LOG_INFO, "Finalizing plugin \"%s-%s\".\n",
 				cp->name, cp->plugin->plugin_name);
 		/* call exit function */
@@ -164,13 +163,13 @@ int finalize_plugin(struct plugin_obj *cp) {
  * calls plugin_update() for every plugin in the list
  */
 void update_plugin_states(struct LIST *plugins) {
-	struct NODE *nd;
 	struct plugin_obj *o_plugin;
 
 	/* update plugin states */
-	for (nd=plugins->first; nd!=NULL; nd=nd->next) {
-		o_plugin = (struct plugin_obj*)nd->content;
-		if (o_plugin!=NULL && o_plugin->used>0) {
+	LIST_FOREACH_NODE(node, plugins) {
+		o_plugin = (struct plugin_obj*)node->content;
+		if (o_plugin != NULL && o_plugin->used > 0 && 
+				o_plugin->plugin->plugin_update != NULL) {
 			o_plugin->plugin->plugin_update();
 		}
 	}

@@ -7,7 +7,7 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-std=c99 -pedantic \
 	-D_POSIX_SOURCE -D_GNU_SOURCE
 
-AM_LDFLAGS = -module -avoid-version
+AM_LDFLAGS = -module -avoid-version -export-dynamic
 
 sbin_PROGRAMS = cpufreqd
 
@@ -26,8 +26,12 @@ lib_LTLIBRARIES = \
 		cpufreqd_acpi_battery.la \
 		cpufreqd_acpi_temperature.la \
 		cpufreqd_acpi_ac.la \
+		cpufreqd_nforce2.la \
 		cpufreqd_apm.la \
 		cpufreqd_cpu.la
+
+cpufreqd_nforce2_la_SOURCES = \
+		cpufreqd_nforce2.c
 
 cpufreqd_apm_la_SOURCES = \
 		cpufreqd_apm.c

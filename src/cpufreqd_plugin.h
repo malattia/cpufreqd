@@ -60,9 +60,29 @@ struct cpufreqd_keyword {
 	 */
 	int (*evaluate) (const void *obj);
 
-	/* function pointer to the pre_change event. obj is the structure previously
-	 * provided by the parse function, old and new are the old and new policy
-	 * pointer respctively.
+	/* function pointer to the profile_pre_change event. obj is the structure
+	 * previously provided by the parse function, old and new are the old
+	 * and new policy pointer respctively.
+	 * The function is called prior to the call to set_policy() when a new
+	 * Profile is going to be set.
+	 *
+	 * Can be NULL.
+	 */
+	void (*profile_pre_change) (void *obj, const struct cpufreq_policy *old,
+			const struct cpufreq_policy *new);
+
+	/* function pointer to the profile_post_change event. The same as
+	 * profile_pre_change applies except for the fact that everything is
+	 * referred tto _after_ set_policy() has been called.
+	 *
+	 * Can be NULL.
+	 */
+	void (*profile_post_change) (void *obj, const struct cpufreq_policy *old,
+			const struct cpufreq_policy *new);
+
+	/* function pointer to the rule_pre_change event. obj is the structure
+	 * previously provided by the parse function, old and new are the old
+	 * and new policy pointer respctively.
 	 * The function is called prior to the call to set_policy() when a new Rule
 	 * applies the current system state. Note however that set_policy() will not
 	 * be called if the Profile doesn't change (you can tell that by comparing the
@@ -71,17 +91,18 @@ struct cpufreqd_keyword {
 	 *
 	 * Can be NULL.
 	 */
-	void (*pre_change) (const void *obj, const struct cpufreq_policy *old,
+	void (*rule_pre_change) (void *obj, const struct cpufreq_policy *old,
 			const struct cpufreq_policy *new);
 
-	/* function pointer to the post_change event. The same as pre_change applies
-	 * except for the fact that everything is referred tto _after_ set_policy()
-	 * has been called.
+	/* function pointer to the rule_post_change event. The same as
+	 * rule_pre_change applies except for the fact that everything is
+	 * referred tto _after_ set_policy() has been called.
 	 *
 	 * Can be NULL.
 	 */
-	void (*post_change) (const void *obj, const struct cpufreq_policy *old,
+	void (*rule_post_change) (void *obj, const struct cpufreq_policy *old,
 			const struct cpufreq_policy *new);
+
 
 	/* Allows the owner to define a specific function to be called when freeing
 	 * malloced during the 'parse' call. Not required, if missing a libc call to

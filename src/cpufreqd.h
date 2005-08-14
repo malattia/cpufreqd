@@ -20,7 +20,28 @@
 #ifndef __CPUFREQD_H__
 #define __CPUFREQD_H__
 
-#define __CPUFREQD_VERSION__	"2.0.0-beta3"
+#define __CPUFREQD_VERSION__	"2.0.0-beta4"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifndef CPUFREQD_CONFDIR
+#define CPUFREQD_CONFDIR  "/etc/"
+#endif
+
+#ifndef CPUFREQD_LIBDIR
+#define CPUFREQD_LIBDIR   "/usr/lib/cpufreqd/"
+#endif
+
+#ifndef CPUFREQD_STATEDIR
+#define CPUFREQD_STATEDIR   "/var/"
+#endif
+
+#define CPUFREQD_CONFIG		CPUFREQD_CONFDIR"cpufreqd.conf"
+#define CPUFREQD_PIDFILE	CPUFREQD_STATEDIR"run/cpufreqd.pid"
+#define CPUFREQD_SOCKFILE	"/tmp/cpufreqd.sock"
+
 
 #define DEFAULT_POLL		1
 #define DEFAULT_VERBOSITY	3

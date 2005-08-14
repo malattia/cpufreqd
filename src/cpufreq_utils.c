@@ -25,20 +25,6 @@
 #include "cpufreqd_log.h"
 #include "cpufreq_utils.h"
 
-extern struct cpufreqd_conf configuration;
-
-/* sets the input policy */
-void cpufreqd_set_profile (struct profile *p) {
-	unsigned int i;
-	/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
-	for (i=0; i<configuration.cpu_num; i++) {
-		if (cpufreq_set_policy(i, &(p->policy)) == 0)
-			cpufreqd_log(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", p->name, i);
-		else
-			cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", p->name, i);
-	}
-}
-
 /* normalizes the user supplied frequency to a cpufreq available freq 
  * ROUNDS ALWAYS UP (except if the values is over the limits)!!
  */
@@ -102,7 +88,7 @@ unsigned long get_min_available_freq(struct cpufreq_available_frequencies *freqs
 	return min;
 }
 
-/* int get_cpu_num(general *configuration)
+/* int get_cpu_num(void)
  *
  * Gets the number of installed CPUs from procfs
  * and sets cpu_num appropriately.
