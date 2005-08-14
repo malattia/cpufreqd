@@ -29,9 +29,9 @@
 #define KVER_24 1
 
 struct cpu_interval {
-  int min;
-  int max;
-  float nice_scale;
+	int min;
+	int max;
+	float nice_scale;
 };
 
 static int cpufreqd_cpu_init(void);
@@ -45,61 +45,61 @@ static unsigned int c_user_old, c_nice_old, c_sys_old, c_time_old;
 static unsigned int delta_time, kernel_version;
 
 static struct cpufreqd_keyword kw[] = {
-  { .word = "cpu", .parse = &cpu_parse, .evaluate = &cpu_evaluate },
-  { .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
+	{ .word = "cpu", .parse = &cpu_parse, .evaluate = &cpu_evaluate },
+	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
 };
 
 static struct cpufreqd_plugin cpu_plugin = {
-  .plugin_name      = "cpu_plugin",		/* plugin_name */
-  .keywords         = kw,			/* config_keywords */
-  .plugin_init      = &cpufreqd_cpu_init,	/* plugin_init */
-  .plugin_exit      = &cpufreqd_cpu_exit,	/* plugin_exit */
-  .plugin_update    = &get_cpu			/* plugin_update */
+	.plugin_name      = "cpu_plugin",		/* plugin_name */
+	.keywords         = kw,			/* config_keywords */
+	.plugin_init      = &cpufreqd_cpu_init,	/* plugin_init */
+	.plugin_exit      = &cpufreqd_cpu_exit,	/* plugin_exit */
+	.plugin_update    = &get_cpu			/* plugin_update */
 };
 
 /*
  *  Reads kernel version for use when parsing /proc/stat output
  */
 static int get_kversion(void) {
-  FILE *fp;
-  char kver[256];
-  int f = 0;
-  
-  fp = fopen ("/proc/version", "r");
-  if (!fp) {
-    cpufreqd_log(LOG_ERR, "get_kversion(): %s: %s\n", "/proc/version", strerror(errno));
-    return -1;
-  }
-  do {
-    f = fscanf (fp, "Linux version %s", kver);
-  } while (f != 1);
-  fclose(fp);
-  kver[255] = '\0';
+	FILE *fp;
+	char kver[256];
+	int f = 0;
 
-  cpufreqd_log(LOG_INFO, "get_kversion(): read kernel version %s.\n", kver);
-  
-  if (strstr(kver, "2.6") == kver) {
-    cpufreqd_log(LOG_DEBUG, "get_kversion(): kernel version is 2.6.\n");
-    return KVER_26;
-  } else if (strstr(kver, "2.4") == kver) {
-    cpufreqd_log(LOG_DEBUG, "get_kversion(): kernel version is 2.4.\n");
-    return KVER_24;
-  } else {
-    cpufreqd_log(LOG_WARNING, "Unknown kernel version let's try to continue assuming a 2.6 kernel.\n");
-    return KVER_26;
-  }
+	fp = fopen ("/proc/version", "r");
+	if (!fp) {
+		cpufreqd_log(LOG_ERR, "get_kversion(): %s: %s\n", "/proc/version", strerror(errno));
+		return -1;
+	}
+	do {
+		f = fscanf (fp, "Linux version %s", kver);
+	} while (f != 1);
+	fclose(fp);
+	kver[255] = '\0';
+
+	cpufreqd_log(LOG_INFO, "get_kversion(): read kernel version %s.\n", kver);
+
+	if (strstr(kver, "2.6") == kver) {
+		cpufreqd_log(LOG_DEBUG, "get_kversion(): kernel version is 2.6.\n");
+		return KVER_26;
+	} else if (strstr(kver, "2.4") == kver) {
+		cpufreqd_log(LOG_DEBUG, "get_kversion(): kernel version is 2.4.\n");
+		return KVER_24;
+	} else {
+		cpufreqd_log(LOG_WARNING, "Unknown kernel version let's try to continue assuming a 2.6 kernel.\n");
+		return KVER_26;
+	}
 
 }
 
 static int cpufreqd_cpu_init(void) {
-  cpufreqd_log(LOG_INFO, "%s - init() called\n", cpu_plugin.plugin_name);
-  kernel_version = get_kversion();
-  return 0;
+	cpufreqd_log(LOG_INFO, "%s - init() called\n", cpu_plugin.plugin_name);
+	kernel_version = get_kversion();
+	return 0;
 }
 
 static int cpufreqd_cpu_exit(void) {
-  cpufreqd_log(LOG_INFO, "%s - exit() called\n", cpu_plugin.plugin_name);
-  return 0;
+	cpufreqd_log(LOG_INFO, "%s - exit() called\n", cpu_plugin.plugin_name);
+	return 0;
 }
 
 static int cpu_parse(const char *ev, void **obj)
@@ -138,81 +138,82 @@ static int cpu_parse(const char *ev, void **obj)
 }
 
 static int cpu_evaluate(const void *s) {
-  int cpu_percent = 0;
+	int cpu_percent = 0;
 	unsigned int weighted_activity_old = 0;
 	unsigned long int delta_activity = 0, weighted_activity = 0;
 
-  const struct cpu_interval *c = (const struct cpu_interval *) s;
+	const struct cpu_interval *c = (const struct cpu_interval *) s;
 
-  weighted_activity = c_user + c_nice / c->nice_scale + c_sys;
+	weighted_activity = c_user + c_nice / c->nice_scale + c_sys;
 	weighted_activity_old = c_user_old + c_nice_old / c->nice_scale + c_sys_old;
-  delta_activity = weighted_activity - weighted_activity_old;
-  
-  cpufreqd_log(LOG_DEBUG,
-         "cpu_evaluate(): CPU delta_activity=%d delta_time=%d weighted_activity=%d.\n",
-         delta_activity, delta_time, weighted_activity);
+	delta_activity = weighted_activity - weighted_activity_old;
 
-  if ( delta_activity > delta_time || delta_time <= 0) {
-    cpu_percent = 100;
-  } else {
-    cpu_percent = delta_activity * 100 / delta_time;
-  }
-  
-  cpufreqd_log(LOG_DEBUG, "cpu_evaluate(): CPU usage = %d.\n", cpu_percent);
-  cpufreqd_log(LOG_DEBUG, "%s - cpu_evaluate() called with min=%d max=%d\n", 
-      cpu_plugin.plugin_name, c->min, c->max);
+	cpufreqd_log(LOG_DEBUG,
+			"cpu_evaluate(): CPU delta_activity=%d delta_time=%d weighted_activity=%d.\n",
+			delta_activity, delta_time, weighted_activity);
 
-  return (cpu_percent >= c->min && cpu_percent <= c->max) ? MATCH : DONT_MATCH;
+	if ( delta_activity > delta_time || delta_time <= 0) {
+		cpu_percent = 100;
+	} else {
+		cpu_percent = delta_activity * 100 / delta_time;
+	}
+
+	cpufreqd_log(LOG_DEBUG, "cpu_evaluate(): CPU usage = %d.\n", cpu_percent);
+	cpufreqd_log(LOG_DEBUG, "%s - cpu_evaluate() called with min=%d max=%d\n", 
+			cpu_plugin.plugin_name, c->min, c->max);
+
+	return (cpu_percent >= c->min && cpu_percent <= c->max) ? MATCH : DONT_MATCH;
 }
 
 static int get_cpu(void) {
-  
-  FILE* fp;
-  int f;
-  unsigned long int c_idle=0, c_iowait=0, c_irq=0, c_softirq=0; /* for linux 2.6 only */
 
-  cpufreqd_log(LOG_DEBUG, "%s - update() called\n", cpu_plugin.plugin_name);
+	FILE* fp;
+	int f;
+	unsigned long int c_idle=0, c_iowait=0, c_irq=0, c_softirq=0; /* for linux 2.6 only */
 
-  c_user_old = c_user;
-  c_nice_old = c_nice;
-  c_sys_old = c_sys;
-  c_time_old = c_time;
-  
-  /* read raw jiffies... */
-  fp = fopen ("/proc/stat", "r");
-  if (!fp) {
-    cpufreqd_log(LOG_ERR, "get_cpu(): %s: %s\n", "/proc/stat", strerror(errno));
-    return -1;
-  }
-  do {
-    f = fscanf (fp,
-                "cpu  %u %u %u %lu %lu %lu %lu",
-                &c_user, &c_nice, &c_sys, &c_idle, &c_iowait, &c_irq, &c_softirq);
+	cpufreqd_log(LOG_DEBUG, "%s - update() called\n", cpu_plugin.plugin_name);
 
-  } while ((f!=4 && kernel_version==KVER_24) || (f!=7 && kernel_version==KVER_26));
-  fclose(fp);
+	c_user_old = c_user;
+	c_nice_old = c_nice;
+	c_sys_old = c_sys;
+	c_time_old = c_time;
 
-  cpufreqd_log(LOG_INFO,
-         "get_cpu(): CPU c_user=%d c_nice=%d c_sys=%d c_idle=%d c_iowait=%d c_irq=%d c_softirq=%d.\n",
-         c_user, c_nice, c_sys, c_idle, c_iowait, c_irq, c_softirq);
-  
-  /* calculate total jiffies */
-  c_sys += c_irq + c_softirq;
-  c_idle += c_iowait;
-  c_time = c_user + c_nice + c_sys + c_idle;
-  /* calculate delta time */
-  delta_time = c_time - c_time_old;
-  
-  /*
-  weighted_activity = c_user + c_nice / 3 + c_sys;
-  delta_activity = weighted_activity - old_weighted_activity;
-  old_weighted_activity = weighted_activity;
-  */
+	/* read raw jiffies... */
+	fp = fopen ("/proc/stat", "r");
+	if (!fp) {
+		cpufreqd_log(LOG_ERR, "get_cpu(): %s: %s\n", "/proc/stat", strerror(errno));
+		return -1;
+	}
+	do {
+		f = fscanf (fp,
+				"cpu  %u %u %u %lu %lu %lu %lu",
+				&c_user, &c_nice, &c_sys, &c_idle, &c_iowait, &c_irq, &c_softirq);
 
-  return 0;
+	} while ((f!=4 && kernel_version==KVER_24) || (f!=7 && kernel_version==KVER_26));
+	fclose(fp);
+
+	cpufreqd_log(LOG_INFO,
+			"get_cpu(): CPU c_user=%d c_nice=%d c_sys=%d c_idle=%d "
+			"c_iowait=%d c_irq=%d c_softirq=%d.\n",
+			c_user, c_nice, c_sys, c_idle, c_iowait, c_irq, c_softirq);
+
+	/* calculate total jiffies */
+	c_sys += c_irq + c_softirq;
+	c_idle += c_iowait;
+	c_time = c_user + c_nice + c_sys + c_idle;
+	/* calculate delta time */
+	delta_time = c_time - c_time_old;
+
+	/*
+	   weighted_activity = c_user + c_nice / 3 + c_sys;
+	   delta_activity = weighted_activity - old_weighted_activity;
+	   old_weighted_activity = weighted_activity;
+	   */
+
+	return 0;
 }
 
 /* MUST DEFINE THIS ONE */
 struct cpufreqd_plugin *create_plugin (void) {
-  return &cpu_plugin;
+	return &cpu_plugin;
 }

@@ -11,6 +11,8 @@ cpufreqd_acpi_ac.lo
 cpufreqd_acpi_ac.la
 cpufreqd_apm.lo
 cpufreqd_apm.la
+cpufreqd_nforce2.lo
+cpufreqd_nforce2.la
 cpufreqd
 config.h
 Makefile
