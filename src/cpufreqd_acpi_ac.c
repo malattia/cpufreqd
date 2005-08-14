@@ -50,12 +50,11 @@ static struct cpufreqd_keyword kw[] = {
 };
 
 static struct cpufreqd_plugin acpi_ac = {
-  .plugin_name      = "acpi_ac_plugin",      /* plugin_name */
-  .keywords         = kw,                    /* config_keywords */
-  .plugin_init      = &acpi_ac_init,         /* plugin_init */
-  .plugin_exit      = &acpi_ac_exit,         /* plugin_exit */
-  .plugin_update    = &acpi_ac_update,       /* plugin_update */
-  .cfdprint         = NULL
+  .plugin_name      = "acpi_ac_plugin",		/* plugin_name */
+  .keywords         = kw,			/* config_keywords */
+  .plugin_init      = &acpi_ac_init,		/* plugin_init */
+  .plugin_exit      = &acpi_ac_exit,		/* plugin_exit */
+  .plugin_update    = &acpi_ac_update		/* plugin_update */
 };
 
 static int no_dots(const struct dirent *d) {
@@ -77,19 +76,19 @@ static int acpi_ac_init(void) {
     *ac_filelist = malloc(n * 64 * sizeof(char));
     while (n--) {
       snprintf(ac_filelist[n], 64, "%s%s%s", ACPI_AC_DIR, namelist[n]->d_name, ACPI_AC_FILE);
-      acpi_ac.cfdprint(LOG_INFO, "%s - AC path: %s\n", acpi_ac.plugin_name, ac_filelist[n]);
+      cpufreqd_log(LOG_INFO, "%s - AC path: %s\n", acpi_ac.plugin_name, ac_filelist[n]);
       free(namelist[n]);
     } 
     free(namelist);
 
   } else if (n < 0) {
-    acpi_ac.cfdprint(LOG_DEBUG, "acpi_ac_init(): no acpi_ac module compiled or inserted? (%s: %s)\n", 
+    cpufreqd_log(LOG_DEBUG, "acpi_ac_init(): no acpi_ac module compiled or inserted? (%s: %s)\n", 
           ACPI_AC_DIR, strerror(errno));
-    acpi_ac.cfdprint(LOG_ERR, "%s: exiting.\n");
+    cpufreqd_log(LOG_ERR, "%s: exiting.\n");
     return -1;
     
   } else {
-    acpi_ac.cfdprint(LOG_NOTICE, "acpi_ac_init(): no ac adapters found, not a laptop?\n");
+    cpufreqd_log(LOG_NOTICE, "acpi_ac_init(): no ac adapters found, not a laptop?\n");
     return -1;
   }
   return 0;
@@ -98,7 +97,7 @@ static int acpi_ac_init(void) {
 static int acpi_ac_exit(void) {
   if (ac_filelist != NULL)
     free(*ac_filelist);
-  acpi_ac.cfdprint(LOG_INFO, "%s - exited.\n", acpi_ac.plugin_name);
+  cpufreqd_log(LOG_INFO, "%s - exited.\n", acpi_ac.plugin_name);
   return 0;
 }
 
@@ -112,22 +111,22 @@ static int acpi_ac_update(void) {
   FILE *fp = NULL;
   
   ac_state = UNPLUGGED;
-  acpi_ac.cfdprint(LOG_DEBUG, "%s - update() called\n", acpi_ac.plugin_name);
+  cpufreqd_log(LOG_DEBUG, "%s - update() called\n", acpi_ac.plugin_name);
   for (i=0; i<ac_dir_num; i++) {
     fp = fopen(ac_filelist[i], "r");
     if (!fp) {
-      acpi_ac.cfdprint(LOG_ERR, "acpi_ac_update(): %s: %s\n",
+      cpufreqd_log(LOG_ERR, "acpi_ac_update(): %s: %s\n",
          ac_filelist[i], strerror(errno));
       return -1;
     }
     fscanf(fp, ACPI_AC_FORMAT, temp);
     fclose(fp);
     
-    acpi_ac.cfdprint(LOG_DEBUG, "acpi_ac_update(): read %s\n", temp);
+    cpufreqd_log(LOG_DEBUG, "acpi_ac_update(): read %s\n", temp);
     ac_state |= (strncmp(temp, "on-line", 7)==0 ? PLUGGED : UNPLUGGED);
   }
   
-  acpi_ac.cfdprint(LOG_INFO, "acpi_ac_update(): ac_adapter is %s\n",
+  cpufreqd_log(LOG_INFO, "acpi_ac_update(): ac_adapter is %s\n",
       ac_state==PLUGGED ? "on-line" : "off-line");
   return 0;
 }
@@ -138,7 +137,7 @@ static int acpi_ac_update(void) {
 static int acpi_ac_parse(const char *ev, void **obj) {
   int *ret = malloc(sizeof(int));
   if (ret == NULL) {
-    acpi_ac.cfdprint(LOG_ERR, 
+    cpufreqd_log(LOG_ERR, 
         "%s - acpi_ac_parse() couldn't make enough room for ac_status (%s)\n",
         strerror(errno));
     return -1;
@@ -146,7 +145,7 @@ static int acpi_ac_parse(const char *ev, void **obj) {
   
   *ret = 0;
   
-  acpi_ac.cfdprint(LOG_DEBUG, "%s - acpi_ac_parse() called with: %s\n",
+  cpufreqd_log(LOG_DEBUG, "%s - acpi_ac_parse() called with: %s\n",
       acpi_ac.plugin_name, ev);
   
   if (strncmp(ev, "on", 2) == 0) {
@@ -154,12 +153,12 @@ static int acpi_ac_parse(const char *ev, void **obj) {
   } else if (strncmp(ev, "off", 3) == 0) {
     *ret = UNPLUGGED;
   } else {
-    acpi_ac.cfdprint(LOG_ERR, "%s - acpi_ac_parse() couldn't parse %s\n", ev);
+    cpufreqd_log(LOG_ERR, "%s - acpi_ac_parse() couldn't parse %s\n", ev);
     free(ret);
     return -1;
   }
   
-  acpi_ac.cfdprint(LOG_INFO, "%s - acpi_ac_parse() parsed: %s\n",
+  cpufreqd_log(LOG_INFO, "%s - acpi_ac_parse() parsed: %s\n",
       acpi_ac.plugin_name, *ret==PLUGGED ? "on" : "off");
 
   *obj = ret;
@@ -172,7 +171,7 @@ static int acpi_ac_parse(const char *ev, void **obj) {
 static int acpi_ac_evaluate(const void *s) {
   const int *ac = (const int *)s;
   
-  acpi_ac.cfdprint(LOG_DEBUG, "%s - evaluate() called: %s [%s]\n",
+  cpufreqd_log(LOG_DEBUG, "%s - evaluate() called: %s [%s]\n",
       acpi_ac.plugin_name, *ac==PLUGGED ? "on" : "off", ac_state==PLUGGED ? "on" : "off");
 
   return (*ac == ac_state) ? MATCH : DONT_MATCH;

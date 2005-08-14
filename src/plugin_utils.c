@@ -136,8 +136,6 @@ int initialize_plugin(struct plugin_obj *cp) {
 	int ret = 0;
 	cpufreqd_log(LOG_INFO, "Initializing plugin \"%s-%s\".\n",
 			cp->name, cp->plugin->plugin_name);
-	/* set logger function for this plugin */
-	cp->plugin->cfdprint = &cpufreqd_log;
 	/* call init function */
 	if (cp->plugin->plugin_init != NULL) {
 		ret = cp->plugin->plugin_init();

@@ -60,7 +60,6 @@ noinst_HEADERS = \
 		plugin_utils.h \
 		cpufreqd_remote.h \
 		sock_utils.h \
-		main.h \
 		config_parser.h \
 		list.h
 

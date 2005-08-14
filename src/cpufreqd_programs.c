@@ -49,23 +49,6 @@ struct TNODE {
 typedef struct TNODE TNODE;
 typedef TNODE TREE;
 
-#if 0
-static void insert_tnode(TREE **t, const char *c);
-static TNODE * find_tnode(TREE *t, const char *c);
-static TNODE * new_tnode(void);
-static void free_tnode(TNODE *n);
-static void free_tree(TREE *t);
-static void preorder_visit(TREE *t, void (*cb)(TNODE *n));
-static void debug_tnode(TNODE *n);
-static TNODE *predecessor(TNODE *n);
-#endif
-#if 0
-static TNODE *successor(TNODE *n);
-#endif
-static void sweep_unused_node(TNODE *n);
-
-static int numeric_entry(const struct dirent *d);
-
 static int programs_exit(void);
 static int programs_parse(const char *ev, void **obj);
 static void programs_free(void *obj);
@@ -138,7 +121,7 @@ static void insert_tnode(TREE **t, const char *c) {
     *t = new_tnode();
     memcpy((*t)->name, c, PRG_LENGTH);
     (*t)->used = 1;
-    programs.cfdprint(LOG_DEBUG, "insert_tnode(): new node (%s)\n", c);
+    cpufreqd_log(LOG_DEBUG, "insert_tnode(): new node (%s)\n", c);
     return;
   }
   
@@ -290,7 +273,7 @@ static TNODE * find_tnode(TREE *t, const char *c) {
 #ifdef DEBUG_TREE
 static void debug_tnode(TNODE *n) {
   if (n != NULL) {
-    programs.cfdprint(LOG_DEBUG, "%s [u:%d] [h:%d]\n", n->name, n->used, n->height);
+    cpufreqd_log(LOG_DEBUG, "%s [u:%d] [h:%d]\n", n->name, n->used, n->height);
   }
 }
 
@@ -303,7 +286,7 @@ static void print_tree(TNODE *n) {
     }
     tab[i]='\\';
     tab[i+1]='\0';
-    programs.cfdprint(LOG_DEBUG, "%s%s \t%s - [h:%d]\n",
+    cpufreqd_log(LOG_DEBUG, "%s%s \t%s - [h:%d]\n",
         tab, n->name, n->parent!=NULL?n->parent->name:"nobody", n->height);
   }
 }
@@ -339,7 +322,7 @@ static int programs_update(void) {
   n = scandir("/proc", &namelist, numeric_entry, NULL);
   
   if (n < 0) {
-    programs.cfdprint(LOG_ERR, "get_running_programs() - scandir: %s\n", strerror(errno));
+    cpufreqd_log(LOG_ERR, "get_running_programs() - scandir: %s\n", strerror(errno));
   
   } else {
     
@@ -354,7 +337,7 @@ static int programs_update(void) {
          * user cannot read thie link or
          * has disappeared while scanning, don't worry */
 #if 0
-        programs.cfdprint(LOG_DEBUG, "programs_update(): %s: %s\n",
+        cpufreqd_log(LOG_DEBUG, "programs_update(): %s: %s\n",
             file, strerror(errno));
 #endif
         continue;
@@ -370,7 +353,7 @@ static int programs_update(void) {
     }
   }
   free(namelist);
-  programs.cfdprint(LOG_INFO, "get_running_programs(): read %d processes\n", ret);
+  cpufreqd_log(LOG_INFO, "get_running_programs(): read %d processes\n", ret);
   preorder_visit(running_programs, &sweep_unused_node);
 #ifdef DEBUG_TREE
   preorder_visit(running_programs, &debug_tnode);
@@ -380,7 +363,7 @@ static int programs_update(void) {
 }
 
 static int programs_exit(void) {
-  programs.cfdprint(LOG_INFO, "%s - exit() called\n", programs.plugin_name);
+  cpufreqd_log(LOG_INFO, "%s - exit() called\n", programs.plugin_name);
   free_tree(running_programs);
   return 0;
 }
@@ -390,7 +373,7 @@ static int programs_parse(const char *ev, void **obj) {
   char *t_prog;
   TREE *ret=NULL;
 
-  programs.cfdprint(LOG_DEBUG, "programs_parse(): called with entries %s.\n", ev);
+  cpufreqd_log(LOG_DEBUG, "programs_parse(): called with entries %s.\n", ev);
   strncpy(str_copy, ev, 5*PRG_LENGTH);
   
   t_prog = strtok(str_copy,",");
@@ -399,7 +382,7 @@ static int programs_parse(const char *ev, void **obj) {
       continue;
     
     insert_tnode(&ret, t_prog);
-    programs.cfdprint(LOG_DEBUG, "parse_config_rule(): read program: %s\n", t_prog);
+    cpufreqd_log(LOG_DEBUG, "parse_config_rule(): read program: %s\n", t_prog);
   } while ((t_prog = strtok(NULL,",")) != NULL);
   
   *obj = ret;
@@ -411,7 +394,7 @@ static void programs_free(void *obj) {
 }
 
 static int find_program(const TNODE *l) {
-  programs.cfdprint(LOG_DEBUG, "%s find_program(): tree ptr %p\n",
+  cpufreqd_log(LOG_DEBUG, "%s find_program(): tree ptr %p\n",
       programs.plugin_name, l);
   return (find_tnode(running_programs, l->name)!=NULL) ? MATCH :
            (l->right!=NULL && find_program(l->right)==MATCH) ? MATCH :
@@ -419,7 +402,7 @@ static int find_program(const TNODE *l) {
 }
 
 static int programs_evaluate(const void *s) {
-  programs.cfdprint(LOG_DEBUG, "%s evaluate(): tree ptr %p\n",
+  cpufreqd_log(LOG_DEBUG, "%s evaluate(): tree ptr %p\n",
       programs.plugin_name, s);
   return find_program((const TNODE *) s);
 }

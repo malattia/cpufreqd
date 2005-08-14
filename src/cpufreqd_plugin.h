@@ -147,14 +147,6 @@ struct cpufreqd_plugin {
 	/* Update plugin data */
 	int (*plugin_update) (void);
 
-	/************************
-	 *  FUNCTION POINTERS   *
-	 ************************/
-	/* core provided after create_plugin is called */
-
-	/* function pointer to the main log function */
-	void (*cfdprint) (const int prio, const char *fmt, ...);
-
 };
 
 /*
