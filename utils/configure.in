@@ -1,0 +1,35 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT([cpufreqd],[2.0.0-beta3],[malattia@gmail.com], [cpufreqd])
+AC_CANONICAL_TARGET([])
+
+AM_INIT_AUTOMAKE(1.8 dist-bzip2 foreign)
+
+AC_CONFIG_SRCDIR([setspeed.c])
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+
+# Checks for header files.
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+
+AC_CHECK_HEADERS([fcntl.h dirent.h sys/types.h sys/stat.h sys/socket.h sys/un.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+AC_FUNC_STAT
+AC_CHECK_FUNCS([memset strerror scandir socket connect perror])
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
+
+echo "
+utils configuration:
+--------------------------------------------------
+Compiler          :  ${CC}
+--------------------------------------------------
+"

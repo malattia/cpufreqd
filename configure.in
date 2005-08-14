@@ -4,7 +4,7 @@ AC_CANONICAL_TARGET([])
 
 AM_INIT_AUTOMAKE(1.6 dist-bzip2 foreign)
 
-AC_CONFIG_SUBDIRS(src manpages)
+AC_CONFIG_SUBDIRS(src utils manpages)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

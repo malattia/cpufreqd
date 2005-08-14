@@ -24,6 +24,14 @@ libtool
 Makefile
 Makefile.handwritten
 Makefile.in
+utils/aclocal.m4
+utils/config.log
+utils/config.status
+utils/config.guess
+utils/config.sub
+utils/configure
+utils/Makefile
+utils/Makefile.in
 manpages/aclocal.m4
 manpages/config.log
 manpages/config.status
