@@ -63,7 +63,7 @@ static TREE *running_programs = 0L;
 
 static struct cpufreqd_keyword kw[] = {
 	{ .word = "programs", .parse = &programs_parse,   .evaluate = &programs_evaluate, .free=programs_free },
-	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
+	{ .word = NULL },
 };
 
 static struct cpufreqd_plugin programs = {

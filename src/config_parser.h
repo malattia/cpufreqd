@@ -82,18 +82,9 @@ struct cpufreqd_conf {
 
 	struct LIST rules; /* list of configured struct rule */
 	struct LIST profiles; /* list of configured struct profile */
-	struct LIST plugins; /* list of configured plugins */
+	struct LIST plugins; /* list of configured plugins struct o_plugin */
 
 };
-
-
-/* Configuration functions */
-#if 0
-int parse_config_profile (FILE *config, struct profile *p);
-int parse_config_rule    (FILE *config, struct rule *r);
-int parse_config_general (FILE *config);
-char *read_clean_line    (FILE *fp, char *buf, int n);
-#endif
 
 int	init_configuration	(struct cpufreqd_conf *config);
 void	free_configuration	(struct cpufreqd_conf *config);

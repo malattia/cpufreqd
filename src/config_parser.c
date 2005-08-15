@@ -473,7 +473,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 		
 		/* it's plugin time to tell if they like the directive */
 		ckw = plugin_handle_keyword(plugins, name, value, &obj);
-		/* if no plugin found read next line */
+		/* if plugin found append to the list */
 		if (ckw != NULL) {
 			dir = node_new(NULL, sizeof(struct directive));
 			if (dir == NULL) {
@@ -512,15 +512,76 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 	return 0;
 }
 
+/* Handles the configuration section for a given plugin
+ */
+static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
+	char endtag[MAX_STRING_LEN];
+	char buf[MAX_STRING_LEN];
+	char *clean = NULL, *name = NULL, *value = NULL;
+
+	snprintf(endtag, MAX_STRING_LEN, "[/%s]", plugin->plugin->plugin_name);
+
+	while (!feof(config)) {
+		
+		clean = read_clean_line(config, buf, MAX_STRING_LEN);
+
+		if (!clean[0]) /* returned an empty line */
+			continue;
+
+		if (strncasecmp(endtag, clean, MAX_STRING_LEN) == 0)
+			break;
+		
+		name = strtok(clean, "=");
+		value = strtok(NULL, "");
+
+		if (plugin->plugin->plugin_conf(name, value) != 0) {
+			cpufreqd_log(LOG_WARNING, "plugin \"%s\" can't handle %s.\n",
+					plugin->plugin->plugin_name, name);
+		}
+	}
+}
+
+static void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugin_obj *plugin) {
+	struct rule *tmp_rule = NULL;
+	struct profile *tmp_profile = NULL;
+	
+	/* discard plugin related rule directives */
+	LIST_FOREACH_NODE(node, &configuration->rules) {
+		tmp_rule = (struct rule *)node->content;
+		LIST_FOREACH_NODE(node1, &tmp_rule->directives) {
+			struct directive *d = (struct directive *)node1->content;
+			if (d->plugin == plugin->plugin) {
+				free_keyword_object(d->keyword, d->obj);
+				tmp_rule->directives_count--;
+				list_remove_node(&tmp_rule->directives, node1);
+			}
+		}
+	}
+
+	/* same for profiles */
+	LIST_FOREACH_NODE(node, &configuration->profiles) {
+		tmp_profile = (struct profile *)node->content;
+		LIST_FOREACH_NODE(node1, &tmp_profile->directives) {
+			struct directive *d = (struct directive *)node1->content;
+			if (d->plugin == plugin->plugin) {
+				free_keyword_object(d->keyword, d->obj);
+				tmp_profile->directives_count--;
+				list_remove_node(&tmp_profile->directives, node1);
+			}
+		}
+	}
+}
+
 /* intialize the cpufreqd_conf object 
  * by reading the configuration file
  */
 int init_configuration(struct cpufreqd_conf *configuration)
 {
-	FILE *fp_config;
-	struct NODE *n;
-	struct profile *tmp_profile;
-	struct rule *tmp_rule;
+	FILE *fp_config = NULL;
+	struct NODE *n = NULL;
+	struct profile *tmp_profile = NULL;
+	struct rule *tmp_rule = NULL;
+	struct plugin_obj *plugin = NULL;
 	char buf[256];
 
 	/* configuration file */
@@ -653,7 +714,31 @@ int init_configuration(struct cpufreqd_conf *configuration)
 			/* avoid continuing */
 			continue;
 		}
-	}
+
+		/* try match a plugin name (case insensitive) */
+		if ((plugin = plugin_handle_section(clean, &configuration->plugins)) != NULL) {
+			configure_plugin(fp_config, plugin);
+			/* call plugin_post_conf and discard it if it fails */
+			if (plugin->plugin->plugin_post_conf != NULL &&
+					plugin->plugin->plugin_post_conf() != 0) {
+				cpufreqd_log(LOG_ERR, "Unable to configure plugin %s, removing\n",
+						plugin->plugin->plugin_name);
+				deconfigure_plugin(configuration, plugin);
+				/* mark unused, will be removed later */
+				plugin->used = 0;
+				finalize_plugin(plugin);
+				close_plugin(plugin);
+				LIST_FOREACH_NODE(node, &configuration->plugins) {
+					if ((struct plugin_obj *)node->content == plugin) {
+						list_remove_node(&configuration->plugins, node);
+					}
+				}
+			}
+			continue;
+		}
+		cpufreqd_log(LOG_WARNING, "Unknown %s: nobody handles it.\n", clean);
+		
+	} /* end while */
 	fclose(fp_config);
 
 	/* did I read something? 
@@ -684,8 +769,10 @@ int init_configuration(struct cpufreqd_conf *configuration)
 		}
 
 		if (!profile_found) {
-			cpufreqd_log(LOG_CRIT, "init_configuration(): Syntax error: no Profile section found for Rule \"%s\" \
-					(requested Profile \"%s\")\n", tmp_rule->name, tmp_rule->profile_name);
+			cpufreqd_log(LOG_CRIT, "init_configuration()-Syntax error: "
+					"no Profile section found for Rule \"%s\" "
+					"(requested Profile \"%s\")\n", 
+					tmp_rule->name, tmp_rule->profile_name);
 			return -1;
 		}
 	}

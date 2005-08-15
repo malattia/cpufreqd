@@ -20,12 +20,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "cpufreqd_log.h"
 #include "cpufreqd_plugin.h"
+
+static char vcore_path[MAX_PATH_LEN];
+static int vcore_default;
 
 static int vcore_parse(const char *ev, void **obj);
 static void vcore_change(void *obj, const struct cpufreq_policy *old, 
 		const struct cpufreq_policy *new);
+static int nforce2_conf(const char *key, const char *value);
+static int nforce2_post_conf(void);
 
 static struct cpufreqd_keyword kw[] = {
 	{	.word = "vcore", 
@@ -37,16 +45,44 @@ static struct cpufreqd_keyword kw[] = {
 	{ .word = "nv_core", .parse = &nv_core_parse, .pre_change = nv_core_change, .post_change = nv_core_change },
 	{ .word = "nv_mem", .parse = &nv_mem_parse, .pre_change = nv_mem_change,  .post_change = nv_mem_change },
 	*/
-	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
+	{ .word = NULL }
 };
 
 static struct cpufreqd_plugin nforce2 = {
-	.plugin_name      = "nforce2",	/* plugin_name */
-	.keywords         = kw,		/* config_keywords */
-	.plugin_init      = NULL,	/* plugin_init */
-	.plugin_exit      = NULL,	/* plugin_exit */
-	.plugin_update    = NULL,	/* plugin_update */
+	.plugin_name	= "nforce2",
+	.keywords	= kw,
+	.plugin_init	= NULL,
+	.plugin_exit	= NULL,
+	.plugin_update	= NULL,
+	.plugin_conf	= nforce2_conf,
+	.plugin_post_conf= nforce2_post_conf,
 };
+
+static int nforce2_post_conf(void) {
+	struct stat sb;
+
+	/* check if old pidfile is still there */
+	if (stat(vcore_path, &sb) != 0)
+		return -1;
+	return 0;
+}
+
+static int nforce2_conf(const char *key, const char *value) {
+
+	if (strncmp(key, "vcore_path", 10) == 0 && value !=NULL) {
+		snprintf(vcore_path, MAX_PATH_LEN, "%s", value);
+		cpufreqd_log(LOG_DEBUG, "%s: vcore_path is %s\n",
+				__func__, vcore_path);
+		return 0;
+	}
+	else if (strncmp(key, "vcore_default", 13) == 0 && value !=NULL) {
+		vcore_default = atoi(value);
+		cpufreqd_log(LOG_DEBUG, "%s: vcore_default is %d\n",
+				__func__, vcore_default);
+		return 0;
+	}
+	return -1;
+}
 
 /*
  * Parses entries of the form %d (millivolt)

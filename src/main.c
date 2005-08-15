@@ -468,6 +468,12 @@ cpufreqd_start:
 		goto out_config_read;
 	}
 
+	/* initialize plugins, if something goes wrong unload with all its
+	 * dependencies (rules and profiles)
+	 *
+	 * ??
+	 */
+	
 	/* setup UNIX socket if necessary */
 	if (configuration.enable_remote) {
 		dirname[0] = '\0';

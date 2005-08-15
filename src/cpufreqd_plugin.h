@@ -21,6 +21,7 @@
 #define __CPUFREQD_PLUGIN_H__
 
 #include <cpufreq.h>
+#include "cpufreqd.h"
 
 #define MATCH       1
 #define DONT_MATCH  0
@@ -35,8 +36,9 @@ struct cpufreqd_plugin;
  *  be called during the main loop that will evaluate the current
  *  system state (as read by the same plugin) against it.
  *
- *  At least one out of evaluate, pre_change, post_change MUST be defined by the
- *  plugin.
+ *  At least one out of evaluate, profile_pre_change, profile_post_change,
+ *  rule_pre_change, rule_post_change MUST be defined for a single keyword.
+ *  Otherwise it doesn't make sense...
  */
 struct cpufreqd_keyword {
 
@@ -46,8 +48,11 @@ struct cpufreqd_keyword {
 	 */
 	const char *word;
 
-	/* function pointer to the keyword parser. line is a config file line and obj
-	 * must point to a structure that will be used by the evaulate function 
+	/* function pointer to the keyword parser. line is a config file _value_ 
+	 * (as in key=value) and obj must be assigned a structure that will be
+	 * used by the evaulate functioned 
+	 *
+	 * Must be non-NULL.
 	 */
 	int (*parse) (const char *line, void **obj);
 
@@ -130,11 +135,6 @@ struct cpufreqd_plugin {
 	/* array of keywords handled by this plugin */
 	struct cpufreqd_keyword *keywords;
 
-#if 0
-	/* Interval between each poll (ms) */
-	unsigned long poll_interval;
-#endif
-
 	/************************
 	 *  FUNCTION POINTERS   *
 	 ************************/
@@ -146,6 +146,16 @@ struct cpufreqd_plugin {
 
 	/* Update plugin data */
 	int (*plugin_update) (void);
+
+	/* Plugin configuration */
+	int (*plugin_conf) (const char *key, const char *value);
+
+	/* Plugin post configuration 
+	 * This will be called after the configuration of the plugin 
+	 * is performed, that is IFF a section with the plugin name
+	 * as been found and parsed succesfully.
+	 */
+	int (*plugin_post_conf) (void);
 
 };
 

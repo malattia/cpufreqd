@@ -174,6 +174,32 @@ void update_plugin_states(struct LIST *plugins) {
 }
 
 /* 
+ * Looks for a plugin named as the Section just found (and stored in name).
+ * The search is case insensitive.
+ * Returns the plugin_obj of the corresponding plugin or NULL if none found.
+ */
+struct plugin_obj *plugin_handle_section(const char *name, struct LIST *plugins) {
+	char starttag[MAX_STRING_LEN];
+	struct plugin_obj *o_plugin = NULL;
+	
+	/* foreach plugin */
+	LIST_FOREACH_NODE(node, plugins) {
+		o_plugin = (struct plugin_obj*)node->content;
+		if (o_plugin == NULL || o_plugin->plugin == NULL ||
+				o_plugin->plugin->plugin_conf == NULL)
+			continue;
+		
+		snprintf(starttag, MAX_STRING_LEN, "[%s]", o_plugin->plugin->plugin_name);
+		if (strncasecmp(name, starttag, MAX_STRING_LEN) == 0) {
+			cpufreqd_log(LOG_INFO, "Found Section for \"%s\".\n",
+					o_plugin->plugin->plugin_name);
+			return o_plugin;
+		}
+	}
+	return NULL;
+}
+
+/* 
  * Looks for a plugin handling the key keyword, calls its parse function
  * and assigns the obj as returned by the plugin. Returns the struct
  * cpufreqd_keyword handling the keyword or NULL if no plugin handles the
@@ -188,16 +214,16 @@ struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
 	/* foreach plugin */
 	LIST_FOREACH_NODE(node, plugins) {
 		o_plugin = (struct plugin_obj*)node->content;
-		if (o_plugin==NULL || o_plugin->plugin==NULL || o_plugin->plugin->keywords==NULL)
+		if (o_plugin == NULL || o_plugin->plugin == NULL || 
+				o_plugin->plugin->keywords == NULL)
 			continue;
 
 		/* foreach keyword */
 		for(ckw = o_plugin->plugin->keywords; ckw->word != NULL; ckw++) {
 
 			/* if keyword corresponds
-			 * (TODO: use strncmp and bound check the string?)
 			 */
-			if (strcmp(ckw->word, key) != 0)
+			if (strncmp(ckw->word, key, MAX_STRING_LEN) != 0)
 				continue;
 
 			cpufreqd_log(LOG_DEBUG, "Plugin %s handles keyword %s (value=%s)\n",
