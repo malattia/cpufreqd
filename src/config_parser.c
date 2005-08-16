@@ -54,7 +54,7 @@ static char *clean_config_line (char *str) {
 	/* remove end line white space */
 	i = strlen(str) - 1;
 	while (i >= 0 && isspace(str[i])) {
-		str[i] = 0;
+		str[i] = '\0';
 		i--;
 	}
 
@@ -69,18 +69,20 @@ static char *clean_config_line (char *str) {
  * WARNING: it modifies the input string!
  */
 static char *strip_comments_line (char *str) {
-	int i;
-
-	/* remove comment */
-	for (i = strlen(str); i >= 0; i--) {
-		if (str[i] == '#') {
-			str[i] = '\0';
+	char *ch = str;
+	while (ch[0]) {
+		if (ch[0] == '#') {
+			ch[0] = '\0';
+			break;
 		}
+		ch++;
 	}
-
 	return str;
 }
 
+/* read a line frome the file descriptor and clean the 
+ * line removing comments and trimming the string
+ */
 static char *read_clean_line(FILE *fp, char *buf, int n) {
 	if (fgets(buf, n, fp)) {
 		buf[n] = '\0';
@@ -442,6 +444,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 
 	while (!feof(config)) {
 
+		buf[0] = '\0';
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
 		if (!clean[0]) /* returned an empty line */
@@ -582,6 +585,7 @@ int init_configuration(struct cpufreqd_conf *configuration)
 	struct profile *tmp_profile = NULL;
 	struct rule *tmp_rule = NULL;
 	struct plugin_obj *plugin = NULL;
+	char *clean = NULL;
 	char buf[256];
 
 	/* configuration file */
@@ -595,8 +599,8 @@ int init_configuration(struct cpufreqd_conf *configuration)
 	}
 
 	while (!feof(fp_config)) {
-		char *clean = 0L;
-
+		
+		buf[0] = '\0';
 		clean = read_clean_line(fp_config, buf, 256);
 
 		if (!clean[0]) /* returned an empty line */

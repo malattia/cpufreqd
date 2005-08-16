@@ -134,8 +134,10 @@ static void cpufreqd_set_profile (struct profile *old, struct profile *new) {
 	}
 	/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
 	for (i=0; i<configuration.cpu_num; i++) {
-		if (cpufreq_set_policy(i, &(new->policy)) == 0)
+		if (cpufreq_set_policy(i, &(new->policy)) == 0) {
 			cpufreqd_log(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
+			/* TODO: double check if everything is OK (configurable) */
+		}
 		else
 			cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", new->name, i);
 	}
