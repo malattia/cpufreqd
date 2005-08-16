@@ -27,7 +27,6 @@
 #include "cpufreqd_log.h"
 #include "cpufreqd_plugin.h"
 
-
 static char vcore_path[MAX_PATH_LEN];
 static int vcore_default;
 
@@ -69,7 +68,7 @@ static int limit_vcore(int read_vcore)
 		return read_vcore;
 	} else {
 		int limited_vcore = (read_vcore < min_vcore) ? min_vcore : max_vcore;
-		cpufreqd_log(LOG_WARNING, "Desired Vcore %i out of range, setting to %i",
+		cpufreqd_log(LOG_WARNING, "Desired Vcore %i out of range, setting to %i\n",
 				read_vcore, limited_vcore);
 		
 		return limited_vcore;
@@ -96,7 +95,7 @@ static int nforce2_post_conf(void) {
 
 	/* check vcore_path */
 	if (stat(vcore_path, &sb) != 0) {
-		cpufreqd_log(LOG_WARNING, "%s: Unable to find %s\n",
+		cpufreqd_log(LOG_CRIT, "%s: Unable to find %s\n",
 				__func__, vcore_path);
 		return -1;
 	}
