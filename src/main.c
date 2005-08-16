@@ -503,7 +503,7 @@ cpufreqd_start:
 	if (write_cpufreqd_pid(configuration.pidfile) < 0) {
 		cpufreqd_log(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
 		ret = 1;
-		goto out_pid;
+		goto out_socket;
 	}
 
 	/*
@@ -571,7 +571,6 @@ cpufreqd_start:
 	/*
 	 * Clean pidfile
 	 */
-out_pid:
 	clear_cpufreqd_pid(configuration.pidfile);
 
 	/* close socket */
