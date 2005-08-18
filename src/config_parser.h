@@ -64,10 +64,10 @@ struct cpufreqd_conf {
 
 	char config_file[MAX_PATH_LEN];
 	char pidfile[MAX_PATH_LEN];
-	char sockfile[MAX_PATH_LEN];
 	int log_level;
 	unsigned int cpu_num;
 	unsigned int enable_remote;
+	unsigned int double_check;
 	unsigned int poll_interval;
 	unsigned int has_sysfs;
 	unsigned int no_daemon;

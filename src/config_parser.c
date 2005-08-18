@@ -202,19 +202,15 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 			continue;
 		}
 
-		if (strcmp(name,"socketfile") == 0) {
+		if (strcmp(name,"double_check") == 0) {
 			if (value != NULL) {
-				strncpy(configuration->sockfile, value, MAX_PATH_LEN);
-			} else {
-				cpufreqd_log(LOG_WARNING, 
-						"parse_config_general(): empty \"socketfile\", "
-						"using default %s.\n", CPUFREQD_SOCKFILE);
-				strncpy(configuration->pidfile, CPUFREQD_SOCKFILE, MAX_PATH_LEN);
+				configuration->double_check = atoi (value);
+				cpufreqd_log(LOG_WARNING, "parse_config_general(): "
+						"double check profiles %s.\n", 
+						configuration->double_check ? "enabled" : "disabled");
 			}
-			configuration->sockfile[MAX_PATH_LEN-1] = '\0';
 			continue;
 		}
-
 		if (strcmp(name,"enable_remote") == 0) {
 			if (value != NULL) {
 				configuration->enable_remote = atoi (value);

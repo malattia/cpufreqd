@@ -57,7 +57,6 @@ do { \
 struct cpufreqd_conf configuration = {
 	.config_file		= CPUFREQD_CONFDIR"cpufreqd.conf",
 	.pidfile		= CPUFREQD_STATEDIR"cpufreqd.pid",
-	.sockfile		= "/tmp/cpufreqd.sock",
 	.cpu_num		= 1,
 	.poll_interval		= DEFAULT_POLL,
 	.has_sysfs		= 1,
@@ -65,6 +64,7 @@ struct cpufreqd_conf configuration = {
 	.log_level_overridden	= 0,
 	.log_level		= DEFAULT_VERBOSITY,
 	.enable_remote		= 0,
+	.double_check		= 0,
 	.print_help		= 0,
 	.print_version		= 0
 };
@@ -122,8 +122,11 @@ static struct rule *update_rule_scores(struct LIST *rule_list) {
 /* 
  * sets the policy
  * new is never NULL
+ *
+ * Returns always 0 (success) except if double checking is enabled and setting
+ * the policy fails in which case -1 is returned.
  */
-static void cpufreqd_set_profile (struct profile *old, struct profile *new) {
+static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 	unsigned int i;
 	struct directive *d;
 
@@ -137,6 +140,25 @@ static void cpufreqd_set_profile (struct profile *old, struct profile *new) {
 		if (cpufreq_set_policy(i, &(new->policy)) == 0) {
 			cpufreqd_log(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
 			/* TODO: double check if everything is OK (configurable) */
+			if (configuration.double_check) {
+				struct cpufreq_policy *check = NULL;
+				check = cpufreq_get_policy(i);
+				if (check->max != new->policy.max || check->min != new->policy.min ||
+						strcmp(check->governor, new->policy.governor) != 0) {
+					cpufreqd_log(LOG_ERR, "I haven't been able to set the "
+							"chosen prolicy for CPU%d.\n", i);
+					cpufreqd_log(LOG_ERR, "I set %d-%d-%s\n",
+							new->policy.max, new->policy.min, new->policy.governor);
+					cpufreqd_log(LOG_ERR, "System says %d-%d-%s\n",
+							check->max, check->min, check->governor);
+					return -1;
+				} else {
+					cpufreqd_log(LOG_INFO, "Policy correctly set %d-%d-%s\n",
+							new->policy.max, new->policy.min, new->policy.governor);
+				}
+				cpufreq_put_policy(check);
+						
+			}
 		}
 		else
 			cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", new->name, i);
@@ -146,6 +168,7 @@ static void cpufreqd_set_profile (struct profile *old, struct profile *new) {
 		TRIGGER_EVENT(profile_post_change, &new->directives, d,
 				old!=NULL? &old->policy : NULL, &new->policy);
 	}
+	return 0;
 }
 
 
