@@ -17,16 +17,14 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdlib.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <errno.h>
-#include "cpufreqd_log.h"
 #include "cpufreqd_plugin.h"
-#include "cpufreqd.h"
 
 #define APM_PROC_FILE "/proc/apm"
 #define PLUGGED   1

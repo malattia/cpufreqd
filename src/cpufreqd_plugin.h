@@ -22,6 +22,7 @@
 
 #include <cpufreq.h>
 #include "cpufreqd.h"
+#include "cpufreqd_log.h"
 
 #define MATCH       1
 #define DONT_MATCH  0

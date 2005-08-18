@@ -18,11 +18,10 @@
  */
 
 #include <stdarg.h>
-#include <syslog.h>
 #include <stdio.h>
+#include <syslog.h>
 
 #include "config_parser.h"
-#include "cpufreqd.h"
 #include "cpufreqd_log.h"
 
 extern struct cpufreqd_conf configuration; /* defined in cpufreqd.h and declared in main.c */

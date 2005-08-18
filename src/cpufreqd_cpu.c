@@ -17,13 +17,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <errno.h>
-#include "cpufreqd_log.h"
 #include "cpufreqd_plugin.h"
-#include "cpufreqd.h"
 
 #define KVER_26 0
 #define KVER_24 1

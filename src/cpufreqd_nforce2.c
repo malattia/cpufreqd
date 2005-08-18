@@ -24,7 +24,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "cpufreqd_log.h"
 #include "cpufreqd_plugin.h"
 
 static char vcore_path[MAX_PATH_LEN];
