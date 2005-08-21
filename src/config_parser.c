@@ -221,7 +221,7 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 			continue;
 		}
 
-		cpufreqd_log(LOG_WARNING, "WARNING: [General] skipping unknown config option \"%s\"\n", name);
+		cpufreqd_log(LOG_WARNING, "WARNING: [General] skipping config option \"%s\"\n", name);
 	} /* end while */
 
 	return 0;
@@ -353,7 +353,7 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 		}
 
 		cpufreqd_log(LOG_WARNING, "WARNING: [Profile] "
-				"skipping unknown config option \"%s\"\n", name);
+				"skipping config option \"%s\"\n", name);
 	} /* end while */
 
 	if (!(state & HAS_NAME)) {
@@ -492,7 +492,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 		}
 
 		cpufreqd_log(LOG_WARNING, "WARNING: [Rule] "
-				"skipping unknown config option \"%s\"\n", name);
+				"skipping config option \"%s\"\n", name);
 	} /* end while */
 
 	if (!(state & HAS_NAME)) {
