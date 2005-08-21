@@ -9,19 +9,20 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include "cpufreqd_remote.h"
 
 int main(void)
 {
 	int sock;
 	struct dirent **namelist = NULL;
 	struct sockaddr_un sck;
-	struct pollfd fds;
-	unsigned int cmd = 0x01000000; /* get cmd */
-	char buff[4096] = {0}, name[256] = {0}, policy[255] = {0};
-	char mode, *input;
-	int cpu, min, max;
+	unsigned int cmd = 0;
+	char buf[4096] = {0}, name[256] = {0}, policy[255] = {0};
+	char *in;
+	int min, max, active, n;
+	/*
 	int ndx = 0, count, n;
-
+	*/
 	sck.sun_family = AF_UNIX;
 	/* get path */
 	n = scandir("/tmp", &namelist, NULL, NULL);
@@ -45,33 +46,20 @@ int main(void)
 		return -1;
 	}
 
+	cmd = MAKE_COMMAND(CMD_LIST_PROFILES, 0);
+	
 	if (write(sock, &cmd, 4) != 4)
 		perror("write()");
 
-	fds.fd = sock;
-	fds.events = POLLIN;
-
-	if (poll(&fds, 1, 2000) == 1) {
-		read(sock, buff, 4096);
-		input = buff;
-
-
-		sscanf(input, "%c/", &mode);
-		printf("Operation mode:\t%s\n\n", (mode == 'd') ? "dynamic" : "manual");
-		input += 2;
-
-		while (1) {
-			if (sscanf(input, "%d/%[^/]/%[^/]/%d/%d/", &cpu, name, policy, &min, &max) != 5)
-				break;
-
-			printf("Name (#%d):\t%s (cpu%d)\n", ndx++, name, cpu);
-			printf("Policy:\t\t%s\n", policy);
+	n = 0;
+	while (read(sock, buf, 4096)) {
+		in = buf;
+		while (sscanf(in, "%d/%[^/]/%d/%d/%[^\n]\n", &active, name, &min, &max, policy) == 5) {
+			printf("\nName (#%d):\t%s %s\n", n++, name, active ? "*" : "");
+			printf("Governor:\t%s\n", policy);
 			printf("Min freq:\t%d\n", min);
-			printf("Max freq:\t%d\n\n", max);
-
-			count = 0;
-			while (count++ < 5)
-				input = strchr(input, '/') + 1;
+			printf("Max freq:\t%d\n", max);
+			in = strchr(in, '\n') + 1;
 		}
 	}
 

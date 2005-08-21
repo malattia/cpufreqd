@@ -69,6 +69,8 @@ struct cpufreqd_conf configuration = {
 	.print_version		= 0
 };
 
+static struct rule *current_rule;
+static struct profile *current_profile;
 static int force_reinit = 0;
 static int force_exit = 0;
 static int timer_expired = 1; /* expired in order to run on the first loop */
@@ -168,6 +170,7 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 		TRIGGER_EVENT(profile_post_change, &new->directives, d,
 				old!=NULL? &old->policy : NULL, &new->policy);
 	}
+	current_profile = new;
 	return 0;
 }
 
@@ -321,8 +324,11 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 /*
  * Parse and execute the client command
  */
-static void execute_command(int sock) {
+static void execute_command(int sock, struct cpufreqd_conf *conf) {
 	struct pollfd fds;
+	char buf[MAX_STRING_LEN];
+	unsigned int buflen = 0, counter = 0;
+	struct profile *p;
 	uint32_t command = INVALID_CMD;
 	/* we have a valid sock, wait for command
 	 * don't wait more tha 0.5 sec
@@ -331,7 +337,7 @@ static void execute_command(int sock) {
 	fds.events = POLLIN | POLLRDNORM;
 
 	if (poll(&fds, 1, 500) != 1) {
-		cpufreqd_log(LOG_ALERT, "Wiated too long for data, aborting.\n");
+		cpufreqd_log(LOG_ALERT, "Waited too long for data, aborting.\n");
 
 	} else if (read(sock, &command, sizeof(uint32_t)) == -1) {
 		cpufreqd_log(LOG_ALERT, "process_packet - read(): %s\n", strerror(errno));
@@ -348,6 +354,15 @@ static void execute_command(int sock) {
 				break;
 			case CMD_LIST_PROFILES:
 				cpufreqd_log(LOG_DEBUG, "CMD_LIST_PROFILES\n");
+				LIST_FOREACH_NODE(node, &conf->profiles) {
+					p = (struct profile *) node->content;
+					buflen = snprintf(buf, MAX_STRING_LEN, "%d/%s/%lu/%lu/%s\n",
+							p == current_profile ? 1 : 0,
+							p->name,
+							p->policy.min, p->policy.max,
+							p->policy.governor);
+					write(sock, buf, buflen);
+				}
 				break;
 			case CMD_SET_RULE:
 				cpufreqd_log(LOG_DEBUG, "CMD_SET_RULE\n");
@@ -358,6 +373,24 @@ static void execute_command(int sock) {
 				break;
 			case CMD_SET_PROFILE:
 				cpufreqd_log(LOG_DEBUG, "CMD_SET_PROFILE\n");
+				if (cpufreqd_mode == ARG_DYNAMIC) {
+					cpufreqd_log(LOG_ERR, "Couldn't set profile while running "
+							"in DYNAMIC mode.\n");
+					break;
+				}
+				LIST_FOREACH_NODE(node, &conf->profiles) {
+					p = (struct profile *) node->content;
+					counter++;
+					if (counter == REMOTE_ARG(command)) {
+						cpufreqd_set_profile(NULL, p);
+						counter = 0;
+						break;
+					}
+				}
+				if (counter > 0) {
+					cpufreqd_log(LOG_ERR, "Couldn't find profile %d\n",
+							REMOTE_ARG(command));
+				}
 				break;
 			default:
 				cpufreqd_log(LOG_ALERT,
@@ -378,7 +411,6 @@ int main (int argc, char *argv[]) {
 	struct pollfd fds;
 	struct itimerval new_timer;
 
-	struct rule *current_rule = NULL;
 	unsigned int i = 0;
 	int cpufreqd_sock = -1, peer_sock = -1; /* input pipe */
 	char dirname[MAX_PATH_LEN];
@@ -576,7 +608,7 @@ cpufreqd_start:
 						cpufreqd_log(LOG_ALERT, "Unable to accept connection: "
 								" %s\n", strerror(errno));
 					}
-					execute_command(peer_sock);
+					execute_command(peer_sock, &configuration);
 					close(peer_sock);
 					peer_sock = -1;
 					break;

@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 	
 
 	if (argc != 2) {
-		printf("usage: %s [manual | dynamic]\n", argv[0]);
+		printf("usage: %s [manual | dynamic | <profile#>]\n", argv[0]);
 		return 1;
 	}
 	
@@ -47,8 +47,11 @@ int main(int argc, char *argv[])
 	else if (!strcmp(argv[1], "manual"))
 		cmd = MAKE_COMMAND(CMD_SET_MODE, ARG_MANUAL);
 	else {
-		fprintf (stderr, "Unknown command %s\n", argv[1]);
-		return EINVAL;
+		if (sscanf(argv[1], "%d", &n) != 1) {
+			fprintf (stderr, "Unknown command %s\n", argv[1]);
+			return EINVAL;
+		}
+		cmd = MAKE_COMMAND(CMD_SET_PROFILE, n);
 	}
 
 	fprintf(stdout,  "command: %.8x %.4x %.4x\n", cmd, REMOTE_CMD(cmd), REMOTE_ARG(cmd));
