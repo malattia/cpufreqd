@@ -348,9 +348,11 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 		switch (REMOTE_CMD(command)) {
 			case CMD_UPDATE_STATE:
 				cpufreqd_log(LOG_DEBUG, "CMD_UPDATE_STATE\n");
+				cpufreqd_log(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
 				break;
 			case CMD_LIST_RULES:
 				cpufreqd_log(LOG_DEBUG, "CMD_LIST_RULES\n");
+				cpufreqd_log(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
 				break;
 			case CMD_LIST_PROFILES:
 				cpufreqd_log(LOG_DEBUG, "CMD_LIST_PROFILES\n");
@@ -366,6 +368,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 				break;
 			case CMD_SET_RULE:
 				cpufreqd_log(LOG_DEBUG, "CMD_SET_RULE\n");
+				cpufreqd_log(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
 				break;
 			case CMD_SET_MODE:
 				cpufreqd_log(LOG_DEBUG, "CMD_SET_MODE\n");
@@ -378,11 +381,21 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 							"in DYNAMIC mode.\n");
 					break;
 				}
+				if (!REMOTE_ARG(command)) {
+					cpufreqd_log(LOG_ERR, "Invalid argument %0.4x\n",
+							REMOTE_ARG(command));
+					break;
+				}
 				LIST_FOREACH_NODE(node, &conf->profiles) {
 					p = (struct profile *) node->content;
 					counter++;
 					if (counter == REMOTE_ARG(command)) {
 						cpufreqd_set_profile(NULL, p);
+						/* reset the current rule to let
+						 * the cpufreqd_loop set the correct
+						 * on if going back to dynamic mode
+						 */
+						current_rule = NULL;
 						counter = 0;
 						break;
 					}

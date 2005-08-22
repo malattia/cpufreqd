@@ -7,16 +7,24 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/un.h>
 #include "cpufreqd_remote.h"
+
+static int cpufreqd_dirs(const struct dirent *d) {
+	return (strncmp(d->d_name, "cpufreqd-", 9) == 0);
+}
 
 int main(int argc, char *argv[])
 {
 	int sock;
 	struct dirent **namelist = NULL;
 	struct sockaddr_un sck;
-	int n = 0;
+	struct timeval tv[2], curtv = { 0L, 0L };
+	long int n = 0;
 	unsigned int cmd = 0;
+	char *endptr = NULL;
+	char buf[108];
 	
 
 	if (argc != 2) {
@@ -25,19 +33,32 @@ int main(int argc, char *argv[])
 	}
 	
 	sck.sun_family = AF_UNIX;
+	sck.sun_path[0] = '\0';
 	/* get path */
-	n = scandir("/tmp", &namelist, NULL, NULL);
+	n = scandir("/tmp", &namelist, &cpufreqd_dirs, NULL);
 	if (n > 0) { 
 		while (n--) {
-			if (strncmp(namelist[n]->d_name, "cpufreqd-", 9) == 0) {
-				snprintf(sck.sun_path, 512, "/tmp/%s/cpufreqd", namelist[n]->d_name);
-				cmd = 1;
-			}
+			snprintf(buf, 108, "/tmp/%s/cpufreqd", namelist[n]->d_name);
 			free(namelist[n]);
+			if (utimes(buf, tv) != 0) {
+				fprintf(stderr, "%s: %s\n", buf, strerror(errno));
+				continue;
+			}
+			if (curtv.tv_sec == 0 || curtv.tv_sec > tv[1].tv_sec || 
+					(curtv.tv_sec == tv[1].tv_sec && curtv.tv_usec > tv[1].tv_usec)) {
+				curtv.tv_sec = tv[1].tv_sec;
+				curtv.tv_usec = tv[1].tv_usec;
+				strncpy(sck.sun_path, buf, 108);
+			}
 		}
+		free(namelist);
+	} else {
+		fprintf(stderr, "No cpufreqd socket found\n");
+		return ENOENT;
 	}
-	if (cmd == 0) {
-		return EINVAL;
+	if (!sck.sun_path) {
+		fprintf(stderr, "No cpufreqd socket found\n");
+		return ENOENT;
 	}
 	fprintf(stdout, "socket I'll try to connect: %s\n", sck.sun_path);
 
@@ -47,8 +68,18 @@ int main(int argc, char *argv[])
 	else if (!strcmp(argv[1], "manual"))
 		cmd = MAKE_COMMAND(CMD_SET_MODE, ARG_MANUAL);
 	else {
-		if (sscanf(argv[1], "%d", &n) != 1) {
-			fprintf (stderr, "Unknown command %s\n", argv[1]);
+		n = strtol(argv[1], &endptr, 10);
+		if (errno == ERANGE) {
+			fprintf (stderr, "Overflow in long int %ld (%s)\n", n, argv[1]);
+			return errno;
+		}
+		if (n >> 16) {
+			fprintf (stderr, "Profile number out of range. Must be 0 < %s > %d\n",
+					argv[1], 0xffff);
+			return EINVAL;
+		}
+		if (endptr[0] != '\0') {
+			fprintf (stderr, "Unknown argument %s\n", argv[1]);
 			return EINVAL;
 		}
 		cmd = MAKE_COMMAND(CMD_SET_PROFILE, n);
