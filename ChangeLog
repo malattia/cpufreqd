@@ -1,3 +1,15 @@
+version 2.0.0-beta4
+-------------------
+* more remote commands supported
+* nforce2-atxp1 supported bi nforce2 plugin
+* reworked main loop to use SIGALARM
+* moved a bunch of code into functions to improve readability
+* included 2 sample remote clients in utils/ with manpages
+* various corrections to manpages
+* complete event infrastructure, now plugins can hook into
+profiles as well as have their own configuration section
+* fixed a bunch of bugs and errors
+
 version 2.0.0-beta3
 -------------------
 * added basic remote commands support, currently only switch
