@@ -16,7 +16,7 @@ static int cpufreqd_dirs(const struct dirent *d) {
 	return (strncmp(d->d_name, "cpufreqd-", 9) == 0);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	int sock;
 	struct dirent **namelist = NULL;
