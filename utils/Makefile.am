@@ -8,7 +8,7 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-D_POSIX_SOURCE -D_GNU_SOURCE \
 	-I../src
 
-sbin_PROGRAMS = cpufreqd-set cpufreqd-get
+bin_PROGRAMS = cpufreqd-set cpufreqd-get
 
 cpufreqd_set_SOURCES = setspeed.c
 

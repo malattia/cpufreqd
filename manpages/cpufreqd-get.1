@@ -1,0 +1,52 @@
+.\" Copyright 2005, Mattia Dongili (malattia@gmail.com)
+.\"
+.\" This file may be used subject to the terms and conditions of the
+.\" GNU General Public License Version 2, or any later version
+.\" at your option, as published by the Free Software Foundation.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details."
+.TH "cpufreqd-get" "1" "2.0.0" "Mattia Dongili" ""
+
+.SH "NAME"
+.LP 
+cpufreqd\-get \- Issues "get" commands to cpufreqd.
+.SH "SYNTAX"
+.LP 
+cpufreqd\-get
+
+.SH "DESCRIPTION"
+.LP 
+cpufreqd\-get issues a command to cpufreqd and reads the returned output.
+At the moment the only supported command is the "LIST_PROFILES", useful
+for usage with cpufreqd\-set.
+Currently no arguments are allowed to this command.
+
+.SH "COMMANDS"
+.LP 
+.B "LIST_PROFILES"
+.LP 
+cpufreqd\-get
+.nf
+.ne 7
+Name (#1):      High Speed 1 *
+Governor:       performance
+Min freq:       997500
+Max freq:       997500
+
+Name (#2):      Low Speed 1
+Governor:       powersave
+Min freq:       731500
+Max freq:       731500
+.fi
+
+Near the name (between the parenthesis) you can find the index number to use
+when setting a specific profile with cpufreqd\-set.
+
+.SH "AUTHORS"
+.LP 
+Mattia Dongili <malattia@gmail.com>
+.SH "SEE ALSO"
+.LP 
+cpufreqd\-set(1), cpufreqd(8), cpufreqd.conf(5)

@@ -29,6 +29,12 @@ int main(void)
 	/*
 	int ndx = 0, count, n;
 	*/
+
+	if (argc > 1) {
+		fprintf(stdout, "%s: No arguments allowed\n", argv[0]);
+		return 1;
+	}
+	
 	sck.sun_family = AF_UNIX;
 	sck.sun_path[0] = '\0';
 	/* get path */
@@ -66,7 +72,7 @@ int main(void)
 
 	if (connect(sock, (struct sockaddr *)&sck, sizeof(sck)) == -1) {
 		perror("connect()");
-		return -1;
+		return 1;
 	}
 
 	cmd = MAKE_COMMAND(CMD_LIST_PROFILES, 0);

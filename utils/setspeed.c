@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 		n = strtol(argv[1], &endptr, 10);
 		if (errno == ERANGE) {
 			fprintf (stderr, "Overflow in long int %ld (%s)\n", n, argv[1]);
-			return errno;
+			return ERANGE;
 		}
 		if (n >> 16) {
 			fprintf (stderr, "Profile number out of range. Must be 0 < %s > %d\n",

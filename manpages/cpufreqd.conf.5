@@ -59,11 +59,10 @@ describing the system state more accurately (e.g.: "AC\-off but running mplayer"
 or "AC\-on but temperature too hot").
 
 .fi
-.sp
 .PP
 Note that no white space is allowed between name and value pairs.
 Characters after a '#' are considered comments and ignored.
-.sp
+
 .SH "SECTIONS"
 .PP
 Acceptable configuration tokens and values include:
@@ -107,7 +106,6 @@ re-reading the corresponding kernel attributes.
 Verbosity level from 0 (less verbose) to 7 (most verbose), the default value
 only prints warning/error/critical messages. (default: 4)
 
-.sp
 .PP
 .SS "[Profile]"
 
@@ -136,7 +134,6 @@ before running cpufreqd. [REQUIRED]
 .B "other plugin entries"
 Other Profile options are enabled according to the enabled plugins.
 
-.sp
 .PP
 .SS "[Rule]"
 
@@ -153,8 +150,7 @@ A character string that must match a [Profile] section name property. [REQUIRED]
 Other Rule options are enabled according to the enabled plugins.
 
 .SH PLUGINS
-.RS
-.sp
+.PP
 Plugins extend cpufreqd in order to be able to cope with the most exotic system
 paramters.  Currently available plugins are listed below along with the
 configration directives they provide and their configuration section description
@@ -253,7 +249,6 @@ applied. Due to safety reasons range is limited from 1200 to 1850.
 
 
 .SH EXAMPLE
-.sp
 .nf
 .ne 7
 # cpufreqd.conf sample
@@ -357,7 +352,6 @@ applied. Due to safety reasons range is limited from 1200 to 1850.
   profile=hi
 [/Rule]
 .fi
-.sp
 
 .SH SEE ALSO
 .BR cpufreqd (8), cpufreqd-set (1), cpufreqd-get (1)
