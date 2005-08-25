@@ -254,102 +254,102 @@ applied. Due to safety reasons range is limited from 1200 to 1850.
 # cpufreqd.conf sample
 # this is a comment
 [General]
-  pidfile=/var/run/cpufreqd.pid
-  poll_interval=2
-  enable_plugins=acpi_battery,acpi_ac,acpi_temperature,programs,cpu
-  verbosity=5 #(if you want a minimal logging)
+pidfile=/var/run/cpufreqd.pid
+poll_interval=2
+enable_plugins=acpi_battery, acpi_ac, acpi_temperature, programs, cpu
+verbosity=5 #(if you want a minimal logging)
 [/General]
 
 [Profile]
-  name=hi
-  minfreq=100%
-  maxfreq=100%
-  policy=performance
+name=hi
+minfreq=100%
+maxfreq=100%
+policy=performance
 [/Profile]
 
 [Profile]
-  name=medium
-  minfreq=66%
-  maxfreq=66%
-  policy=performance
+name=medium
+minfreq=66%
+maxfreq=66%
+policy=performance
 [/Profile]
 
 [Profile]
-  name=lo
-  minfreq=33%
-  maxfreq=33%
-  policy=performance
+name=lo
+minfreq=33%
+maxfreq=33%
+policy=performance
 [/Profile]
 
 [Profile]
-  name=ondemand_hi
-  minfreq=0%
-  maxfreq=100%
-  policy=ondemand
+name=ondemand_hi
+minfreq=0%
+maxfreq=100%
+policy=ondemand
 [/Profile]
 
 [Profile]
-  name=ondemand_lo
-  minfreq=0%
-  maxfreq=66%
-  policy=ondemand
+name=ondemand_lo
+minfreq=0%
+maxfreq=66%
+policy=ondemand
 [/Profile]
 
 # full power when AC
 # max score 101%
 [Rule] 
-  name=AC_on
-  ac=on
-  profile=hi
+name=AC_on
+ac=on
+profile=hi
 [/Rule]
 
 # conservative mode when not AC
 # max score 101%
 [Rule]
-  name=AC_off
-  ac=off
-  profile=ondemand_hi
+name=AC_off
+ac=off
+profile=ondemand_hi
 [/Rule]
 
 # low battery
 # max score 102%
 [Rule]
-  name=lo_battery
-  ac=off
-  battery_interval=0-40
-  profile=ondemand_lo
+name=lo_battery
+ac=off
+battery_interval=0-40
+profile=ondemand_lo
 [/Rule]
 
 # need big power (not if battery very low)
 # max score 103%
 [Rule]
-  name=hi_cpu
-  ac=off
-  battery_interval=40-100
-  cpu_interval=70-100
-  profile=hi
+name=hi_cpu
+ac=off
+battery_interval=40-100
+cpu_interval=70-100
+profile=hi
 [/Rule]
 
 # slow down a little if overheated
 # max score 103%
 [Rule] 
-  name=overheat
-  acpi_temperature=55-100
-  cpu_interval=0-100
-  battery_interval=40-100
-  profile=medium
+name=overheat
+acpi_temperature=55-100
+cpu_interval=0-100
+battery_interval=40-100
+profile=medium
 [/Rule]
 
 # full power when watching DVDs and not AC
 # can reach a 105% score
 [Rule]
-  name=dvd_watching
-  ac=off
-  battery_interval=0-100
-  acpi_temperature=0-100
-  cpu_interval=0-100
-  programs=xine,mplayer
-  profile=hi
+name=dvd_watching
+ac=off
+battery_interval=0-100
+acpi_temperature=0-100
+cpu_interval=0-100
+programs=xine,mplayer
+profile=hi
 [/Rule]
 .fi
 
