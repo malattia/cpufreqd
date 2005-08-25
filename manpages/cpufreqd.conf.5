@@ -79,7 +79,8 @@ seconds. (default: 1)
 A list of plugins separated by comma.
 
 .TP
-.B "pidfile" Specifies the file to write as its process identification file.
+.B "pidfile"
+Specifies the file to write as its process identification file.
 (default: /var/run/cpufreqd.pid)
 ./"
 ./".TP
@@ -114,7 +115,8 @@ only prints warning/error/critical messages. (default: 4)
 An arbitrary and unique name for your profile. [REQUIRED]
 
 .TP
-.B "minfreq" An integer value representing the minimum frequency to set in
+.B "minfreq"
+An integer value representing the minimum frequency to set in
 /proc/cpufreq. This value can be both a percentage of the CPU full capacity or
 frequency in kHz.
 
@@ -126,7 +128,7 @@ both a percentage of the CPU full capacity or frequency in kHz.
 .TP
 .B "policy"
 Can be any of the available governor's name as shown in
-/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors, this means
+/sys/devices/.../cpufreq/scaling_available_governors, this means
 that if you compiled governors as modules in your kernel, you need to load them
 before running cpufreqd. [REQUIRED]
 
