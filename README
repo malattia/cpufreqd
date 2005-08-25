@@ -1,4 +1,32 @@
-cpufreqd-2.0.0
+cpufreqd-2.0.0-beta4
+====================
+
+************
+*   NOTE   *
+************
+
+This is a beta release! Things may not work as you expect, use this software at
+your own risk.
+After this scary disclaimer let me tell you that the status of cpufreqd is not
+that bad actually. Valgrind seems pretty happy with it, so no memory leaks and
+my laptop and desktop PC are pretty happy and running quite cool in this hot
+italian summer :)
+Note however that I had a couple of reports of cpufreqd not changing frequency
+actually but I've not been able to reproduce that yet, I'd be really happy if
+somebody experiencing this problem could put some light to it.
+To be sure you don't have this problem use the "double_check" option in
+cpufreqd.conf, it will make cpufreqd check that the requested policy has really
+been set.
+
+Also, cpufreqd now depends on libcpufreq from cpufrequtils, get it here[1] and
+install it before building cpufreqd if you don't have that on your system
+already.
+It also contains 2 useful utilities that can be really helpful to  check that
+cpufreqd is behaving correctly.
+
+[1] http://www.kernel.org/pub/linux/utils/kernel/cpufreq/cpufrequtils.html
+
+***********
 
 Please report any bug and suggestion to <malattia@gmail.com>.
 
