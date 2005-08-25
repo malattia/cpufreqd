@@ -1,21 +1,14 @@
-
-- configuration for each plugin (a section each)
-
 - make cpufreqd really SMP aware: 
     each rule could address more than one policy telling a policy for each addressed cpu
       or
     policy is relative to one or more cpus
   CONS: complex configurations
 
-- execute program after policy
-
-- merge the manual-patch throught unix socket
+- execute program after policy (will do in a plugin)
 
 - implement a delayed profile change or anyway smooth transitions by interpolation (possible?)
 
-- parameter to choose _how_much_important_ are the niced processes
-
-- rewrite manpages (!)
-
 - write an autocpu rule/plugin
+
+- more plugins
 
