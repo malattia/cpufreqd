@@ -43,7 +43,7 @@ static unsigned int c_user_old, c_nice_old, c_sys_old, c_time_old;
 static unsigned int delta_time, kernel_version;
 
 static struct cpufreqd_keyword kw[] = {
-	{ .word = "cpu_inteval", .parse = &cpu_parse, .evaluate = &cpu_evaluate },
+	{ .word = "cpu_interval", .parse = &cpu_parse, .evaluate = &cpu_evaluate },
 	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
 };
 
