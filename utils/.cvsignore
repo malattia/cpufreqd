@@ -1,3 +1,6 @@
+config.h
+config.h.in
+stamp-h1
 Makefile.in
 aclocal.m4
 configure
@@ -8,5 +11,4 @@ config.guess
 config.log
 cpufreqd-set
 cpufreqd-get
-.in
 .deps

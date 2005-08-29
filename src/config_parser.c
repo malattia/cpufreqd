@@ -718,7 +718,9 @@ int init_configuration(struct cpufreqd_conf *configuration)
 		/* try match a plugin name (case insensitive) */
 		if ((plugin = plugin_handle_section(clean, &configuration->plugins)) != NULL) {
 			configure_plugin(fp_config, plugin);
-			/* call plugin_post_conf and discard it if it fails */
+			/* call plugin_post_conf IFF it is defined 
+			 * and discard it if it fails 
+			 */
 			if (plugin->plugin->plugin_post_conf != NULL &&
 					plugin->plugin->plugin_post_conf() != 0) {
 				cpufreqd_log(LOG_ERR, "Unable to configure plugin %s, removing\n",
@@ -729,8 +731,9 @@ int init_configuration(struct cpufreqd_conf *configuration)
 				finalize_plugin(plugin);
 				close_plugin(plugin);
 				LIST_FOREACH_NODE(node, &configuration->plugins) {
-					if ((struct plugin_obj *)node->content == plugin) {
+					if ((struct plugin_obj *) node->content == plugin) {
 						list_remove_node(&configuration->plugins, node);
+						break;
 					}
 				}
 			}

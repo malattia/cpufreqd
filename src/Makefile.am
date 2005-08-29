@@ -5,9 +5,10 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-Wnested-externs -Winline -Wundef -Wbad-function-cast \
 	-Waggregate-return \
 	-std=c99 -pedantic \
-	-D_POSIX_SOURCE -D_GNU_SOURCE
+	-D_POSIX_SOURCE -D_GNU_SOURCE \
+	@ADD_CFLAGS@
 
-AM_LDFLAGS = -module -avoid-version -export-dynamic
+AM_LDFLAGS = -module -avoid-version -export-dynamic @ADD_LDFLAGS@
 
 sbin_PROGRAMS = cpufreqd
 
@@ -21,7 +22,7 @@ cpufreqd_SOURCES = \
 		cpufreq_utils.c \
 		list.c
 
-lib_LTLIBRARIES = \
+BUILD_PLUGINS = \
 		cpufreqd_programs.la \
 		cpufreqd_acpi_battery.la \
 		cpufreqd_acpi_temperature.la \
@@ -29,6 +30,11 @@ lib_LTLIBRARIES = \
 		cpufreqd_nforce2.la \
 		cpufreqd_apm.la \
 		cpufreqd_cpu.la
+
+if SENSORS_SUPPORT
+BUILD_PLUGINS += cpufreqd_sensors.la
+endif
+lib_LTLIBRARIES = $(BUILD_PLUGINS)
 
 cpufreqd_nforce2_la_SOURCES = \
 		cpufreqd_nforce2.c
@@ -50,6 +56,11 @@ cpufreqd_cpu_la_SOURCES = \
 
 cpufreqd_programs_la_SOURCES = \
 		cpufreqd_programs.c
+
+if SENSORS_SUPPORT
+cpufreqd_sensors_la_SOURCES = \
+		cpufreqd_sensors.c
+endif
 
 noinst_HEADERS = \
 		cpufreqd.h \

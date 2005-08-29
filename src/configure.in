@@ -25,6 +25,55 @@ AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS([fcntl.h limits.h syslog.h unistd.h getopt.h errno.h sys/types.h sys/stat.h signal.h ctype.h dlfcn.h libgen.h cpufreq.h])
 
+# SENSORS support
+AC_ARG_WITH([sensors],
+	[  --with-sensors\[=PATH\]        sensors support - will provide an additional cpufreqd plugin, needs libsensors [default=autodetected]],
+	[sensors_with=$withval],
+	[sensors_with=yes]
+	)
+
+if test "x$sensors_with" != xno; then
+	if test "x$sensors_with" != xyes; then
+		CFLAGS="$CFLAGS -I${sensors_with}/include"
+		LDFLAGS="$LDFLAGS -L${sensors_with}/lib -lsensors"
+	else
+		sensors_with="/usr"
+		LDFLAGS="$LDFLAGS -lsensors"
+	fi
+
+	AC_CHECK_HEADER([sensors/sensors.h], [
+		AC_CHECK_LIB([sensors], [sensors_init], [
+			AC_DEFINE(SENSORS_SUPPORT, , [Define this to compile sensors support])
+			if test "x$sensors_with" != x__default__; then
+				ADD_CFLAGS="$ADD_CFLAGS -I${sensors_with}/include"
+				ADD_LDFLAGS="$ADD_LDFLAGS -L${sensors_with}/lib -lsensors"
+			else
+				ADD_LDFLAGS="$ADD_LDFLAGS -lsensors"
+			fi
+			sensors_support=success
+			],
+			[sensors_support=failed])
+		],
+		[sensors_support=failed]
+	)
+fi
+
+if test "x$sensors_support" == xfailed; then
+	echo '***************************************************'
+	echo '***      ERROR WHILE CONFIGURING CPUFREQD       ***'
+	echo '***************************************************'
+	AC_MSG_ERROR([Failed to find requested libsensors development files in ${sensors_with}])
+fi
+AM_CONDITIONAL(SENSORS_SUPPORT, test x"${sensors_support}" = xsuccess)
+
+DISABLED_PLUGINS=
+ENABLED_PLUGINS=" acpi_battery acpi_ac acpi_temperature apm cpu nforce2 programs"
+if test x"${sensors_support}" = xsuccess; then
+	ENABLED_PLUGINS="$ENABLED_PLUGINS sensors"
+else
+	DISABLED_PLUGINS="$DISABLED_PLUGINS sensors"
+fi
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
@@ -63,12 +112,17 @@ AC_FUNC_STAT
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([memset realpath strerror strstr])
 
+AC_SUBST(ADD_CFLAGS)
+AC_SUBST(ADD_LDFLAGS)
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
 echo "
 cpufreqd configuration:
 --------------------------------------------------
-Compiler          :  ${CC}
+Compiler:		${CC}
+Enabled plugins:	${ENABLED_PLUGINS}
+Disabled plugins:	${DISABLED_PLUGINS}
 --------------------------------------------------
 "
