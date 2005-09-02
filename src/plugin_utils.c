@@ -40,7 +40,7 @@ void load_plugin_list(struct LIST *plugins) {
 				get_cpufreqd_object(o_plugin) == 0 &&
 				initialize_plugin(o_plugin) == 0) { 
 			cpufreqd_log(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
-			n=n->next;
+			n = n->next;
 
 		} else {
 			cpufreqd_log(LOG_INFO, "plugin failed to load: %s\n", o_plugin->name);
@@ -117,8 +117,6 @@ int get_cpufreqd_object(struct plugin_obj *cp) {
 	cpufreqd_log(LOG_INFO, "Getting plugin object for \"%s\".\n", cp->name);
 	/* create plugin */
 	create = (struct cpufreqd_plugin * (*) (void))dlsym(cp->library, "create_plugin");
-	/* uh! the following makes gcc-3.4 happy with -pedantic... */
-	/* *(void **) (&create) = dlsym(cp->library, "create_plugin"); */
 	error = dlerror();
 	if (error) {
 		cpufreqd_log(LOG_ERR, "get_cpufreqd_object(): %s\n", error);
@@ -204,22 +202,24 @@ struct plugin_obj *plugin_handle_section(const char *name, struct LIST *plugins)
  * and assigns the obj as returned by the plugin. Returns the struct
  * cpufreqd_keyword handling the keyword or NULL if no plugin handles the
  * keyword or if an error occurs parsing the value.
- * NOTE: the value of obj is significant only if the function returns non-NULL.
+ * NOTE: the value of obj and plugin is significant only if the function
+ * returns non-NULL.
  */
 struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
-		const char *key, const char *value, void **obj) {
-	struct plugin_obj *o_plugin = NULL;
+		const char *key, const char *value, void **obj,
+		struct cpufreqd_plugin **plugin) {
 	struct cpufreqd_keyword *ckw = NULL;
+	struct plugin_obj *o_plug = NULL;
 	
 	/* foreach plugin */
 	LIST_FOREACH_NODE(node, plugins) {
-		o_plugin = (struct plugin_obj*)node->content;
-		if (o_plugin == NULL || o_plugin->plugin == NULL || 
-				o_plugin->plugin->keywords == NULL)
+		o_plug = (struct plugin_obj*)node->content;
+		if (o_plug == NULL || o_plug->plugin == NULL || 
+				o_plug->plugin->keywords == NULL)
 			continue;
 
 		/* foreach keyword */
-		for(ckw = o_plugin->plugin->keywords; ckw->word != NULL; ckw++) {
+		for(ckw = o_plug->plugin->keywords; ckw->word != NULL; ckw++) {
 
 			/* if keyword corresponds
 			 */
@@ -227,16 +227,17 @@ struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
 				continue;
 
 			cpufreqd_log(LOG_DEBUG, "Plugin %s handles keyword %s (value=%s)\n",
-					o_plugin->plugin->plugin_name, key, value);
+					o_plug->plugin->plugin_name, key, value);
 
 			if (ckw->parse(value, obj) != 0) {
 				cpufreqd_log(LOG_ERR, 
 						"%s: %s is unable to parse this value \"%s\". Discarded\n",
-						__func__, o_plugin->plugin->plugin_name, value);
+						__func__, o_plug->plugin->plugin_name, value);
 				return NULL;
 			}
 			/* increase plugin use count */
-			o_plugin->used++;
+			o_plug->used++;
+			*plugin = o_plug->plugin;
 			return ckw;
 		}
 	}

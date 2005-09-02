@@ -85,7 +85,7 @@ static char *strip_comments_line (char *str) {
  */
 static char *read_clean_line(FILE *fp, char *buf, int n) {
 	if (fgets(buf, n, fp)) {
-		buf[n] = '\0';
+		buf[n-1] = '\0';
 		buf = strip_comments_line(buf);
 		/* returned an empty line ? */
 		if (buf[0]) {
@@ -243,6 +243,7 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 	struct NODE *dir = NULL;
 	void *obj = NULL; /* to hold the value provided by a plugin */
 	struct cpufreqd_keyword *ckw = NULL;
+	struct cpufreqd_plugin *plugin = NULL;
 	char buf[MAX_STRING_LEN];
 
 	while (!feof(config)) {
@@ -332,7 +333,7 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 		}
 		
 		/* it's plugin time to tell if they like the directive */
-		ckw = plugin_handle_keyword(plugins, name, value, &obj);
+		ckw = plugin_handle_keyword(plugins, name, value, &obj, &plugin);
 		/* if no plugin found read next line */
 		if (ckw != NULL) {
 			dir = node_new(NULL, sizeof(struct directive));
@@ -343,10 +344,10 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 						strerror(errno));
 				return -1;
 			}
-
-			/* ok, append the rule entry */
 			((struct directive *)dir->content)->keyword = ckw;
 			((struct directive *)dir->content)->obj = obj;
+			((struct directive *)dir->content)->plugin = plugin;
+			/* ok, append the rule entry */
 			list_append(&(p->directives), dir);
 			p->directives_count++;
 			continue;
@@ -434,6 +435,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 	struct NODE *dir = NULL;
 	void *obj = NULL; /* to hold the value provided by a plugin */
 	struct cpufreqd_keyword *ckw = NULL;
+	struct cpufreqd_plugin *plugin = NULL;
 
 	/* reset profile ref */
 	r->prof = 0;
@@ -471,7 +473,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 		}
 		
 		/* it's plugin time to tell if they like the directive */
-		ckw = plugin_handle_keyword(plugins, name, value, &obj);
+		ckw = plugin_handle_keyword(plugins, name, value, &obj, &plugin);
 		/* if plugin found append to the list */
 		if (ckw != NULL) {
 			dir = node_new(NULL, sizeof(struct directive));
@@ -482,10 +484,10 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 						strerror(errno));
 				return -1;
 			}
-
-			/* ok, append the rule entry */
 			((struct directive *)dir->content)->keyword = ckw;
 			((struct directive *)dir->content)->obj = obj;
+			((struct directive *)dir->content)->plugin = plugin;
+			/* ok, append the rule entry */
 			list_append(&(r->directives), dir);
 			r->directives_count++;
 			continue;
@@ -540,33 +542,46 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 	}
 }
 
-static void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugin_obj *plugin) {
+void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugin_obj *plugin);
+void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugin_obj *plugin) {
 	struct rule *tmp_rule = NULL;
 	struct profile *tmp_profile = NULL;
+	struct directive *d = NULL;
+	struct NODE *node1 = NULL;
 	
 	/* discard plugin related rule directives */
 	LIST_FOREACH_NODE(node, &configuration->rules) {
 		tmp_rule = (struct rule *)node->content;
-		LIST_FOREACH_NODE(node1, &tmp_rule->directives) {
-			struct directive *d = (struct directive *)node1->content;
+		node1 = tmp_rule->directives.first;
+		while (node1 != NULL) {
+			d = (struct directive *)node1->content;
 			if (d->plugin == plugin->plugin) {
+				cpufreqd_log(LOG_DEBUG, "%s: removing %s Rule directive %s\n",
+						__func__, tmp_rule->name,
+						d->keyword->word);
 				free_keyword_object(d->keyword, d->obj);
 				tmp_rule->directives_count--;
-				list_remove_node(&tmp_rule->directives, node1);
-			}
+				node1 = list_remove_node(&tmp_rule->directives, node1);
+			} else
+				node1 = node1->next;
 		}
 	}
 
 	/* same for profiles */
 	LIST_FOREACH_NODE(node, &configuration->profiles) {
 		tmp_profile = (struct profile *)node->content;
-		LIST_FOREACH_NODE(node1, &tmp_profile->directives) {
-			struct directive *d = (struct directive *)node1->content;
+		node1 = tmp_profile->directives.first;
+		while (node1 != NULL) {
+			d = (struct directive *)node1->content;
 			if (d->plugin == plugin->plugin) {
+				cpufreqd_log(LOG_DEBUG, "%s: removing %s Profile directive %s\n",
+						__func__, tmp_profile->name,
+						d->keyword->word);
 				free_keyword_object(d->keyword, d->obj);
 				tmp_profile->directives_count--;
-				list_remove_node(&tmp_profile->directives, node1);
-			}
+				node1 = list_remove_node(&tmp_profile->directives, node1);
+			} else
+				node1 = node1->next;
 		}
 	}
 }
@@ -718,25 +733,6 @@ int init_configuration(struct cpufreqd_conf *configuration)
 		/* try match a plugin name (case insensitive) */
 		if ((plugin = plugin_handle_section(clean, &configuration->plugins)) != NULL) {
 			configure_plugin(fp_config, plugin);
-			/* call plugin_post_conf IFF it is defined 
-			 * and discard it if it fails 
-			 */
-			if (plugin->plugin->plugin_post_conf != NULL &&
-					plugin->plugin->plugin_post_conf() != 0) {
-				cpufreqd_log(LOG_ERR, "Unable to configure plugin %s, removing\n",
-						plugin->plugin->plugin_name);
-				deconfigure_plugin(configuration, plugin);
-				/* mark unused, will be removed later */
-				plugin->used = 0;
-				finalize_plugin(plugin);
-				close_plugin(plugin);
-				LIST_FOREACH_NODE(node, &configuration->plugins) {
-					if ((struct plugin_obj *) node->content == plugin) {
-						list_remove_node(&configuration->plugins, node);
-						break;
-					}
-				}
-			}
 			continue;
 		}
 		cpufreqd_log(LOG_WARNING, "Unknown %s: nobody handles it.\n", clean);
@@ -751,7 +747,23 @@ int init_configuration(struct cpufreqd_conf *configuration)
 		cpufreqd_log(LOG_ERR, "init_configuration(): No rules found!\n");
 		return -1;
 	}
+	
+	/* plugin POST CONFIGURATION */
+	LIST_FOREACH_NODE(node, &configuration->plugins) {
+		plugin = (struct plugin_obj *) node->content;
+		/* try to post-configure the plugin */
+		if (plugin->plugin->plugin_post_conf != NULL &&
+				plugin->plugin->plugin_post_conf() != 0) {
+			cpufreqd_log(LOG_ERR, "Unable to configure plugin %s, removing\n",
+					plugin->plugin->plugin_name);
 
+			deconfigure_plugin(configuration, plugin);
+			/* mark unused, will be removed later */
+			plugin->used = 0;
+		}
+	}
+
+	
 	/*
 	 * associate rules->profiles
 	 * go through rules and associate to the proper profile

@@ -44,8 +44,8 @@
 
 #define TRIGGER_EVENT(event_func, directives, dir, old, new) \
 do { \
-	LIST_FOREACH_NODE(node, (directives)) { \
-		dir = (struct directive *)node->content; \
+	LIST_FOREACH_NODE(__node, (directives)) { \
+		dir = (struct directive *)__node->content; \
 		if (dir->keyword->event_func != NULL) { \
 			cpufreqd_log(LOG_DEBUG, "Triggering " #event_func " for %s\n", dir->keyword->word); \
 			dir->keyword->event_func(dir->obj, (old), (new)); \

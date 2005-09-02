@@ -112,7 +112,7 @@ static int sensors_exit(void) {
 static int sensors_conf(const char *key, const char *value) {
 
 	if (strncmp(key, "sensors_conf", 11) == 0) {
-		snprintf(sensors_conffile, MAX_PATH_LEN, "%s/sensors.conf", value);
+		snprintf(sensors_conffile, MAX_PATH_LEN, "%s", value);
 		return 0;
 	}
 
@@ -162,6 +162,9 @@ static int sensors_get(void) {
 }
 
 static int sensor_parse(const char *ev, void **obj) {
+
+	
+	
 	return -1;
 }
 static int sensor_evaluate(const void *s) {

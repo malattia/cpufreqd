@@ -59,17 +59,25 @@ struct LIST *list_new(void) {
 struct NODE *list_remove_node(struct LIST *l, struct NODE *nd) {
 	struct NODE *ret = NULL;
 	if (nd != NULL) {
+		ret = nd->next;
+		/* detach the node */
 		if (nd->prev != NULL) {
 			nd->prev->next = nd->next;
-		} else {
-			l->first = nd->next;
 		}
 		if (nd->next != NULL) {
 			nd->next->prev = nd->prev;
-			ret = nd->next;
-		} else {
-			l->last = nd->prev;
 		}
+		/* fix the beginning of 
+		 * the list if necessary
+		 */
+		if (l->first == nd)
+			l->first = nd->next;
+		/* fix the end of 
+		 * the list if necessary
+		 */
+		if (l->last == nd)
+			l->last = nd->prev;
+		/* free unused memory */
 		node_free(nd);
 	}
 	return ret;
