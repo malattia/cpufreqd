@@ -20,7 +20,8 @@ int main(int argc, char *argv[])
 	int sock;
 	struct dirent **namelist = NULL;
 	struct sockaddr_un sck;
-	struct timeval tv[2], curtv = { 0L, 0L };
+	struct stat st;
+	time_t last_mtime = 0;
 	long int n = 0;
 	unsigned int cmd = 0;
 	char *endptr = NULL;
@@ -38,17 +39,21 @@ int main(int argc, char *argv[])
 	n = scandir("/tmp", &namelist, &cpufreqd_dirs, NULL);
 	if (n > 0) { 
 		while (n--) {
-			snprintf(buf, 108, "/tmp/%s/cpufreqd", namelist[n]->d_name);
+			snprintf(buf, 108, "/tmp/%s", namelist[n]->d_name);
 			free(namelist[n]);
-			if (utimes(buf, tv) != 0) {
+			if (stat(buf, &st) != 0) {
 				fprintf(stderr, "%s: %s\n", buf, strerror(errno));
 				continue;
 			}
-			if (curtv.tv_sec == 0 || curtv.tv_sec > tv[1].tv_sec || 
-					(curtv.tv_sec == tv[1].tv_sec && curtv.tv_usec > tv[1].tv_usec)) {
-				curtv.tv_sec = tv[1].tv_sec;
-				curtv.tv_usec = tv[1].tv_usec;
-				strncpy(sck.sun_path, buf, 108);
+			/*
+			fprintf(stdout, "%s %lu %lu %lu\n", buf, st.st_ctime, st.st_atime, st.st_mtime);
+			*/
+			if (last_mtime == 0 || last_mtime < st.st_mtime) {
+				last_mtime = st.st_mtime;
+				snprintf(sck.sun_path, 108,"%s/cpufreqd", buf);
+				/*
+				fprintf(stdout, "--> %s\n", buf);
+				*/
 			}
 		}
 		free(namelist);
