@@ -246,18 +246,6 @@ static int sensor_parse(const char *ev, void **obj) {
 		/* validate feature name */
 		if ((ret->monitor = validate_feature_name(ret->name)) != NULL) {
 			clog(LOG_INFO, "parsed %s %.3f-%.3f\n", ret->name, ret->min, ret->max);
-<<<<<<< cpufreqd_sensors.c
-			/* append monitor to the list */
-			if (!list) {
-				monitor_list = ret->monitor;
-			} else {
-				while (list->next) {
-					list = list->next;
-				}
-				list->next = ret->monitor;
-			}
-=======
->>>>>>> 1.6
 			*obj = ret;
 		}
 		else {
