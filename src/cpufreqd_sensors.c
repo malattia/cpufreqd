@@ -25,16 +25,17 @@
 
 /* to hold monitored feature list and avoid reading all sensors */
 struct sensors_monitor {
-	sensors_chip_name *chip;
-	sensors_feature_data *feat;
+	const sensors_chip_name *chip;
+	const sensors_feature_data *feat;
 	double value;
 	struct sensors_monitor *next;
 };
 static struct sensors_monitor *monitor_list;
 
 /* object returned by parse_config pointer */
-struct sensors_object {
+struct sensor_object {
 	struct sensors_monitor *monitor;
+	char name[MAX_STRING_LEN];
 	double min;
 	double max;
 };
@@ -55,8 +56,8 @@ static int sensors_post_conf(void) {
 
 	/* open configured sensors config file */
 	if (sensors_conffile[0] && (config = fopen(sensors_conffile, "r")) == NULL) {
-		cpufreqd_log(LOG_NOTICE, "%s: error opening configured sensors.conf: %s\n",
-				__func__, strerror(errno));
+		clog(LOG_NOTICE, "error opening configured sensors.conf: %s\n",
+				strerror(errno));
 		return -1;
 	}
 	
@@ -69,21 +70,22 @@ static int sensors_post_conf(void) {
 
 	/* did we succeed opening a config file? */
 	if(config == NULL) {
-		cpufreqd_log(LOG_ERR, "%s: no sensors.conf found, "
-				"sensors disabled!\n", __func__);
+		clog(LOG_ERR, "no sensors.conf found, sensors disabled!\n");
 		return -1;
 	}
 
-	cpufreqd_log(LOG_NOTICE, "%s: using %s\n", __func__, sensors_conffile);
+	clog(LOG_NOTICE, "using %s\n", sensors_conffile);
 
 	if(sensors_init(config)) {
-		cpufreqd_log(LOG_ERR, "%s: sensors_init() failed, "
-				"sensosrs disabled!\n", __func__);
+		clog(LOG_ERR, "sensors_init() failed, sensosrs disabled!\n");
 		fclose(config);
 		return -1;
 	}
 	fclose(config);
 	init_success = 1;
+
+	/* read all features name for later validation of directives */
+	
 	return 0;
 }
 
@@ -91,16 +93,16 @@ static int sensors_post_conf(void) {
  * cleanup senesors if init was successful
  */
 static int sensors_exit(void) {
-	struct sensors_monitor *sm = NULL;
+	struct sensors_monitor *released = NULL;
 
 	if (init_success)
 		sensors_cleanup();
 
 	/* free monitored features list */
 	while (monitor_list != NULL) {
-		sm = monitor_list;
+		released = monitor_list;
 		monitor_list = monitor_list->next;
-		free(sm);
+		free(released);
 	}
 	
 	return 0;
@@ -113,6 +115,7 @@ static int sensors_conf(const char *key, const char *value) {
 
 	if (strncmp(key, "sensors_conf", 11) == 0) {
 		snprintf(sensors_conffile, MAX_PATH_LEN, "%s", value);
+		clog(LOG_DEBUG, "configuration file is %s\n", sensors_conffile);
 		return 0;
 	}
 
@@ -120,26 +123,32 @@ static int sensors_conf(const char *key, const char *value) {
 	return -1;
 }
 
-/* void get_sensors(general *configuration)
+/* void get_sensors(void)
  *
- * Internal function to fill sensors and sensor_names
+ * Internal function to fill the list to-be-monitored features
  * with data.
- *
- * Returns nothing, but sets configuration->have_sensors
  */
 static int sensors_get(void) {
 
+	struct sensors_monitor *list = monitor_list;
+
+	while (list) {
+		sensors_get_feature(*(list->chip), list->feat->number, &list->value);
+		clog(LOG_DEBUG, "%s: %.3f\n", list->feat->name, list->value);
+	}
+	
+#if 0
 	/* get all sensors from first chip */
 	const sensors_chip_name *chip;
 	const sensors_feature_data *feat;
-	int i = 0, nr=0, nr1=0, nr2=0;
 	double res;
+	int i = 0, nr=0, nr1=0, nr2=0;
 
-	cpufreqd_log(LOG_DEBUG, "get_sensors(): getting sensors names\n");
+	clog(LOG_DEBUG, "getting sensors names\n");
 	while ( (chip = sensors_get_detected_chips(&nr)) != NULL) {
 		nr1 = nr2 = 0;
 		
-		cpufreqd_log(LOG_DEBUG, "get_sensors(): chip#%d - prefix=%s, bus=%x, addr=%x, busname=%s\n",
+		clog(LOG_DEBUG, "chip#%d - prefix=%s, bus=%x, addr=%x, busname=%s\n",
 				nr, chip->prefix, chip->bus, chip->addr, chip->busname);
 
 		/* until our buffer is full */
@@ -147,28 +156,109 @@ static int sensors_get(void) {
 
 			/* sensor? */
 			if(feat->mapping != SENSORS_NO_MAPPING) {
-				/*cpufreqd_log(LOG_DEBUG, "SENSORS_NO_MAPPING %s\n", feat->name);*/
+				/*clog(LOG_DEBUG, "SENSORS_NO_MAPPING %s\n", feat->name);*/
 				continue;
 			}
 
 			sensors_get_feature(*chip, feat->number, &res);
-			cpufreqd_log(LOG_DEBUG, "%s: %f\n", feat->name, res);
+			clog(LOG_DEBUG, "%s: %f\n", feat->name, res);
 			i++;
 		}
 	}
-
-	cpufreqd_log(LOG_DEBUG, "get_sensors(): read %d features\n", i);
+	clog(LOG_DEBUG, "read %d features\n", i);
+#endif
 	return 0;
 }
 
-static int sensor_parse(const char *ev, void **obj) {
+/* this function can be pretty expensive (CPU time)?? */
+static struct sensors_monitor * validate_feature_name(const char *name) {
 
+	/* get all sensors from first chip */
+	const sensors_chip_name *chip;
+	const sensors_feature_data *feat;
+	int nr = 0, nr1 = 0, nr2 = 0;
+	struct sensors_monitor *list = monitor_list;
+
+	/* first look if such a name is already cached */
+	while (list) {
+		if (strncmp(list->feat->name, name, MAX_STRING_LEN) == 0) {
+			return list;
+		}
+		list = list->next;
+	}
 	
-	
-	return -1;
+	/* scan the full thing */
+	while ( (chip = sensors_get_detected_chips(&nr)) != NULL) {
+		nr1 = nr2 = 0;
+		while ((feat = sensors_get_all_features(*chip, &nr1, &nr2)) != NULL) {
+			/* sensor? */
+			if(feat->mapping != SENSORS_NO_MAPPING) {
+				continue;
+
+			/* is it? */
+			} else if (strncmp(feat->name, name, MAX_STRING_LEN) != 0) {
+				continue;
+
+			/* cache it */
+			} else if ((list = calloc(1, sizeof(struct sensors_monitor))) != NULL) {
+				clog(LOG_DEBUG, "Creating new sensors_monitor for %s\n",
+						name);
+				list->chip = chip;
+				list->feat = feat;
+				return list;
+			/* got somethign wrong... */
+			} else {
+				clog(LOG_ERR, "Couldn't create new sensor monitor for %s (%s)\n",
+						name, strerror(errno));
+				break;
+			}
+		}
+	}
+	return NULL;
 }
+
+static int sensor_parse(const char *ev, void **obj) {
+	struct sensors_monitor *list = monitor_list;
+	struct sensor_object *ret = calloc(1, sizeof(struct sensor_object));
+	if (ret == NULL) {
+		clog(LOG_ERR, "couldn't make enough room for a sensor_object (%s)\n",
+				strerror(errno));
+		return -1;
+	}
+
+	clog(LOG_DEBUG, "called with %s\n", ev);
+
+	/* try to parse the %[a-zA-Z0-9]:%d-%d format first */
+	if (sscanf(ev, "%32[^:]:%f-%f", ret->name, (float *)&ret->min, (float *)&ret->max) == 3) {
+		/* validate feature name */
+		if ((ret->monitor = validate_feature_name(ret->name)) != NULL) {
+			clog(LOG_INFO, "parsed %s %.3f-%.3f\n", ret->name, ret->min, ret->max);
+			/* append monitor to the list */
+			while (list->next)
+				list = list->next;
+			list->next = ret->monitor;
+			*obj = ret;
+		}
+		else {
+			clog(LOG_ERR, "feature \"%s\" does not exist, try 'sensors -u' "
+					"to see a full list ov available feature names.\n");
+			free(ret);
+		}
+	} else {
+		free(ret);
+		return -1;
+	}
+
+	return 0;
+}
+
 static int sensor_evaluate(const void *s) {
-	return DONT_MATCH;
+	const struct sensor_object *so = (const struct sensor_object *) s;
+
+	clog(LOG_DEBUG, "called %.3f-%.3f [%s:%.3f]\n", so->min, so->max,
+			so->name, so->monitor->value);
+
+	return (so->monitor->value >= so->min && so->monitor->value <= so->max) ? MATCH : DONT_MATCH;
 }
 
 
