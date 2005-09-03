@@ -27,9 +27,6 @@ int main(int argc, char *argv[])
 	char buf[4096] = {0}, name[256] = {0}, policy[255] = {0};
 	char *in;
 	int min, max, active, n;
-	/*
-	int ndx = 0, count, n;
-	*/
 
 	if (argc > 1) {
 		fprintf(stdout, "%s: No arguments allowed\n", argv[0]);
@@ -48,15 +45,15 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "%s: %s\n", buf, strerror(errno));
 				continue;
 			}
-			/*
+#if 0
 			fprintf(stdout, "%s %lu %lu %lu\n", buf, st.st_ctime, st.st_atime, st.st_mtime);
-			*/
+#endif
 			if (last_mtime == 0 || last_mtime < st.st_mtime) {
 				last_mtime = st.st_mtime;
 				snprintf(sck.sun_path, 108,"%s/cpufreqd", buf);
-				/*
+#if 0
 				fprintf(stdout, "--> %s\n", buf);
-				*/
+#endif
 			}
 		}
 		free(namelist);
