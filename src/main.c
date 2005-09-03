@@ -526,7 +526,7 @@ int main (int argc, char *argv[]) {
 	 *  daemonize if necessary
 	 */
 	if (configuration.no_daemon==0 && daemonize()!=0) {
-		cpufreqd_log(LOG_CRIT, "Unable to go background, exiting.\n");
+		clog(LOG_CRIT, "Unable to go background, exiting.\n");
 		ret = 1;
 		goto out_limits;
 	}
@@ -534,7 +534,7 @@ int main (int argc, char *argv[]) {
 cpufreqd_start:
 
 	if (init_configuration(&configuration) < 0) {
-		cpufreqd_log(LOG_CRIT, "Unable to parse config file: %s\n", configuration.config_file);
+		clog(LOG_CRIT, "Unable to parse config file: %s\n", configuration.config_file);
 		ret = 1;
 		goto out_config_read;
 	}
@@ -549,13 +549,13 @@ cpufreqd_start:
 	if (configuration.enable_remote) {
 		dirname[0] = '\0';
 		if (create_temp_dir(dirname) == NULL) {
-			cpufreqd_log(LOG_ERR, "Couldn't create temporary directory %s\n", dirname);
+			clog(LOG_ERR, "Couldn't create temporary directory %s\n", dirname);
 			cpufreqd_sock = -1;
 		} else if ((cpufreqd_sock = open_unix_sock(dirname)) == -1) {
 			delete_temp_dir(dirname);
-			cpufreqd_log(LOG_ERR, "Couldn't open socket, remote controls disabled\n");
+			clog(LOG_ERR, "Couldn't open socket, remote controls disabled\n");
 		} else {
-			cpufreqd_log(LOG_INFO, "Remote controls enabled\n");
+			clog(LOG_INFO, "Remote controls enabled\n");
 		}
 	}
 
@@ -570,7 +570,7 @@ cpufreqd_start:
 
 	/* write pidfile */
 	if (write_cpufreqd_pid(configuration.pidfile) < 0) {
-		cpufreqd_log(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
+		clog(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
 		ret = 1;
 		goto out_socket;
 	}
