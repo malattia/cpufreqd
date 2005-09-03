@@ -29,35 +29,6 @@
 static char vcore_path[MAX_PATH_LEN];
 static int vcore_default;
 
-static int vcore_parse(const char *ev, void **obj);
-static void vcore_pre_change(void *obj, const struct cpufreq_policy *old,
-		const struct cpufreq_policy *new);
-static void vcore_post_change(void *obj, const struct cpufreq_policy *old,
-		const struct cpufreq_policy *new);
-
-static int nforce2_conf(const char *key, const char *value);
-static int nforce2_post_conf(void);
-static int nforce2_exit(void);
-
-static struct cpufreqd_keyword kw[] = {
-	{	.word = "vcore",
-		.parse = &vcore_parse,
-		.profile_pre_change = &vcore_pre_change,
-		.profile_post_change = &vcore_post_change
-	},
-	{ .word = NULL }
-};
-
-static struct cpufreqd_plugin nforce2 = {
-	.plugin_name	= "nforce2_atxp1",
-	.keywords	= kw,
-	.plugin_init	= NULL,
-	.plugin_exit	= nforce2_exit,
-	.plugin_update	= NULL,
-	.plugin_conf	= nforce2_conf,
-	.plugin_post_conf= nforce2_post_conf,
-};
-
 static const int min_vcore = 1200;
 static const int max_vcore = 1850;
 
@@ -67,7 +38,7 @@ static int limit_vcore(int read_vcore)
 		return read_vcore;
 	} else {
 		int limited_vcore = (read_vcore < min_vcore) ? min_vcore : max_vcore;
-		cpufreqd_log(LOG_WARNING, "Desired Vcore %i out of range, setting to %i\n",
+		clog(LOG_WARNING, "Desired Vcore %i out of range, setting to %i\n",
 				read_vcore, limited_vcore);
 		
 		return limited_vcore;
@@ -79,12 +50,12 @@ static inline void set_vcore(int vcore)
 	if (vcore) {
 		FILE *fp = fopen(vcore_path, "w");
 		if (!fp) {
-			cpufreqd_log(LOG_ERR, "Could not write Vcore %i to vcore_path (%s)!\n",
+			clog(LOG_ERR, "Could not write Vcore %i to vcore_path (%s)!\n",
 					vcore, vcore_path);
 		} else {
 			fprintf(fp, "%i", vcore);
 			fclose(fp);
-			cpufreqd_log(LOG_DEBUG, "Vcore %i set\n", vcore);
+			clog(LOG_DEBUG, "Vcore %i set\n", vcore);
 		}
 	}
 }
@@ -94,8 +65,7 @@ static int nforce2_post_conf(void) {
 
 	/* check vcore_path */
 	if (stat(vcore_path, &sb) != 0) {
-		cpufreqd_log(LOG_CRIT, "%s: Unable to find %s\n",
-				__func__, vcore_path);
+		clog(LOG_CRIT, "Unable to find %s\n", vcore_path);
 		return -1;
 	}
 	return 0;
@@ -105,14 +75,12 @@ static int nforce2_conf(const char *key, const char *value) {
 
 	if (strncmp(key, "vcore_path", 10) == 0 && value !=NULL) {
 		snprintf(vcore_path, MAX_PATH_LEN, "%s", value);
-		cpufreqd_log(LOG_DEBUG, "%s: vcore_path is %s\n",
-				__func__, vcore_path);
+		clog(LOG_DEBUG, "vcore_path is %s\n", vcore_path);
 		return 0;
 	}
 	else if (strncmp(key, "vcore_default", 13) == 0 && value !=NULL) {
 		vcore_default = limit_vcore(atoi(value));
-		cpufreqd_log(LOG_DEBUG, "%s: vcore_default is %d\n",
-				__func__, vcore_default);
+		clog(LOG_DEBUG, "vcore_default is %d\n", vcore_default);
 		return 0;
 	}
 	return -1;
@@ -130,19 +98,16 @@ static int nforce2_exit(void) {
 static int vcore_parse(const char *ev, void **obj) {
 	int *ret = calloc(1, sizeof(int));
 	if (ret == NULL) {
-		cpufreqd_log(LOG_ERR,
-				"%s: couldn't make enough room for vcore (%s)\n",
-				__func__, strerror(errno));
+		clog(LOG_ERR, "couldn't make enough room for vcore (%s)\n",
+				strerror(errno));
 		return -1;
 	}
 
-	cpufreqd_log(LOG_DEBUG, "%s - %s: called with %s\n",
-				nforce2.plugin_name, __func__, ev);
+	clog(LOG_DEBUG, "called with %s\n", ev);
 
 	/* try to parse the %d format */
 	if (sscanf(ev, "%d", ret) == 1) {
-		cpufreqd_log(LOG_INFO, "%s - %s: parsed %d\n",
-				nforce2.plugin_name, __func__, *ret);
+		clog(LOG_INFO, "parsed %d\n", *ret);
 		*ret = limit_vcore(*ret);
 	} else {
 		free(ret);
@@ -167,7 +132,7 @@ static void vcore_pre_change(void *obj, const struct cpufreq_policy *old,
 	if (cur_freq <= new->max) {
 		int vcore = *(int *)obj;
 		
-		cpufreqd_log(LOG_INFO, "%s: Setting Vcore to (%d)\n", __func__, vcore);
+		clog(LOG_INFO, "Setting Vcore to (%d)\n", vcore);
 		set_vcore(vcore);
 	}
 }
@@ -178,10 +143,29 @@ static void vcore_post_change(void *obj, const struct cpufreq_policy *old,
 	if (cur_freq > new->max) {
 		int vcore = *(int *)obj;
 		
-		cpufreqd_log(LOG_INFO, "%s: Setting Vcore to (%d)\n", __func__, vcore);
+		clog(LOG_INFO, "Setting Vcore to (%d)\n", vcore);
 		set_vcore(vcore);
 	}
 }
+
+static struct cpufreqd_keyword kw[] = {
+	{	.word = "vcore",
+		.parse = &vcore_parse,
+		.profile_pre_change = &vcore_pre_change,
+		.profile_post_change = &vcore_post_change
+	},
+	{ .word = NULL }
+};
+
+static struct cpufreqd_plugin nforce2 = {
+	.plugin_name	= "nforce2_atxp1",
+	.keywords	= kw,
+	.plugin_init	= NULL,
+	.plugin_exit	= nforce2_exit,
+	.plugin_update	= NULL,
+	.plugin_conf	= nforce2_conf,
+	.plugin_post_conf= nforce2_post_conf,
+};
 
 struct cpufreqd_plugin *create_plugin (void) {
 	return &nforce2;

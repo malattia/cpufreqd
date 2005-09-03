@@ -33,6 +33,6 @@
 extern void cpufreqd_log (const int prio, const char *fmt, ...);
 
 #define clog(__prio,__fmt,...) \
-	cpufreqd_log(__prio, "%s: "__fmt, __func__, ## __VA_ARGS__)
+	cpufreqd_log(__prio, "%-25s: "__fmt, __func__, ## __VA_ARGS__)
 
 #endif

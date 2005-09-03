@@ -102,7 +102,7 @@ int get_cpu_num(void) {
 
 	fp = fopen(CPUINFO_PROC, "r");
 	if(!fp) {
-		cpufreqd_log(LOG_ERR, "get_cpu_num(): %s: %s\n", CPUINFO_PROC, strerror(errno));
+		clog(LOG_ERR, "%s: %s\n", CPUINFO_PROC, strerror(errno));
 		return 1;
 	}
 
@@ -114,7 +114,7 @@ int get_cpu_num(void) {
 	}
 	fclose(fp);
 
-	cpufreqd_log(LOG_DEBUG, "get_cpu_num(): found %i CPUs\n", n);
+	clog(LOG_DEBUG, "found %i CPUs\n", n);
 
 	return n > 0 ? n : 1;
 }

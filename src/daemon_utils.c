@@ -55,8 +55,9 @@ int write_cpufreqd_pid(const char *pidfile)
 			fd = fopen(old_pidfile, "r");
 			/* if the file exists see if there's another cpufreqd process running */
 			if (fd) {
-				if (fscanf(fd, "%s", old_cmdline) == 1 && strstr(old_cmdline,"cpufreqd") != NULL) {
-					cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): the daemon is already running.\n");
+				if (fscanf(fd, "%s", old_cmdline) == 1 
+						&& strstr(old_cmdline,"cpufreqd") != NULL) {
+					clog(LOG_ERR, "the daemon is already running.\n");
 					fclose(fd);
 					fclose(pid);
 					return -1;
@@ -73,12 +74,12 @@ int write_cpufreqd_pid(const char *pidfile)
 	/* write pidfile */
 	pid = fopen(pidfile, "w");
 	if (!pid) {
-		cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): %s: %s.\n", pidfile, strerror(errno));
+		clog(LOG_ERR, "%s: %s.\n", pidfile, strerror(errno));
 		return -1;
 	}
 
 	if (!fprintf(pid, "%d", getpid())) {
-		cpufreqd_log(LOG_ERR, "write_cpufreqd_pid(): cannot write pid %d.\n", getpid());
+		clog(LOG_ERR, "cannot write pid %d.\n", getpid());
 		fclose(pid);
 		clear_cpufreqd_pid(pidfile);
 		return -1;
@@ -95,13 +96,13 @@ int write_cpufreqd_pid(const char *pidfile)
  * Returns 0 on success, -1 otherwise.
  */
 int clear_cpufreqd_pid(const char *pidfile) {
-        
-  if (unlink(pidfile) < 0) {
-    cpufreqd_log(LOG_ERR, "clear_cpufreqd_pid(): error while removing %s: %s.\n", pidfile, strerror(errno));
-    return -1;
-  }
 
-  return 0;
+	if (unlink(pidfile) < 0) {
+		clog(LOG_ERR, "error while removing %s: %s.\n", pidfile, strerror(errno));
+		return -1;
+	}
+
+	return 0;
 }
 
 /*  int daemonize (void)
@@ -109,42 +110,42 @@ int clear_cpufreqd_pid(const char *pidfile) {
  */
 int daemonize (void) {
 
-  cpufreqd_log(LOG_INFO, "daemonize(): going background, bye.\n");
+	clog(LOG_INFO, "going background, bye.\n");
 
-  switch (fork ()) {
-    case -1:
-      cpufreqd_log(LOG_ERR, "deamonize(): fork: %s\n", strerror (errno));
-      return -1;
-    case 0:
-      /* child */
-      break;
-    default:
-      /* parent */
-      exit (0);
-  }
+	switch (fork ()) {
+		case -1:
+			clog(LOG_ERR, "fork: %s\n", strerror (errno));
+			return -1;
+		case 0:
+			/* child */
+			break;
+		default:
+			/* parent */
+			exit (0);
+	}
 
-  /* disconnect */
-  setsid ();
-  umask (0);
+	/* disconnect */
+	setsid ();
+	umask (0);
 
-  /* set up stdout to log and stderr,stdin to /dev/null */
-  if (freopen("/dev/null", "r", stdin) == NULL) {
-    cpufreqd_log(LOG_ERR, "deamonize(): %s: %s.\n", "/dev/null", strerror(errno));
-    return -1;
-  }
-  
-  if (freopen("/dev/null", "w", stdout) == NULL) {
-    cpufreqd_log(LOG_ERR, "deamonize(): %s: %s.\n", "/dev/null", strerror(errno));
-    return -1;
-  }
-  
-  if (freopen("/dev/null", "w", stderr) == NULL) {
-    cpufreqd_log(LOG_ERR, "deamonize(): %s: %s.\n", "/dev/null", strerror(errno));
-    return -1;
-  }
+	/* set up stdout to log and stderr,stdin to /dev/null */
+	if (freopen("/dev/null", "r", stdin) == NULL) {
+		clog(LOG_ERR, "/dev/null: %s.\n", strerror(errno));
+		return -1;
+	}
 
-  /* get outta the way */
-  chdir ("/");
-  return 0;
+	if (freopen("/dev/null", "w", stdout) == NULL) {
+		clog(LOG_ERR, "/dev/null: %s.\n", strerror(errno));
+		return -1;
+	}
+
+	if (freopen("/dev/null", "w", stderr) == NULL) {
+		clog(LOG_ERR, "/dev/null: %s.\n", strerror(errno));
+		return -1;
+	}
+
+	/* get outta the way */
+	chdir ("/");
+	return 0;
 }
 

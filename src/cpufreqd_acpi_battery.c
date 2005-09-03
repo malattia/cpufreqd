@@ -47,25 +47,6 @@ static struct battery_info *infos   = 0L;
 static int bat_num                  = 0;
 static int battery_level            = 0;
 
-static int acpi_battery_init(void);
-static int acpi_battery_exit(void);
-static int acpi_battery_parse(const char *ev, void **obj);
-static int acpi_battery_evaluate(const void *s);
-static int acpi_battery_update(void);
-
-static struct cpufreqd_keyword kw[] = {
-	{ .word = "battery_interval", .parse = &acpi_battery_parse, .evaluate = &acpi_battery_evaluate },
-	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
-};
-
-static struct cpufreqd_plugin acpi_battery = {
-	.plugin_name      = "acpi_battery_plugin",      /* plugin_name */
-	.keywords         = kw,                    /* config_keywords */
-	.plugin_init      = &acpi_battery_init,         /* plugin_init */
-	.plugin_exit      = &acpi_battery_exit,         /* plugin_exit */
-	.plugin_update    = &acpi_battery_update,       /* plugin_update */
-};
-
 /* int no_dots(const struct dirent *d)
  * 
  * Filter function for scandir, returns
@@ -173,7 +154,7 @@ static int acpi_battery_exit(void) {
 	if (infos != NULL) {
 		free(infos);
 	}
-	clog(LOG_INFO, "%s - exited.\n", acpi_battery.plugin_name);
+	clog(LOG_INFO, "exited.\n");
 	return 0;
 }
 
@@ -310,6 +291,19 @@ static int acpi_battery_update(void) {
 
 	return 0;
 }
+
+static struct cpufreqd_keyword kw[] = {
+	{ .word = "battery_interval", .parse = &acpi_battery_parse, .evaluate = &acpi_battery_evaluate },
+	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
+};
+
+static struct cpufreqd_plugin acpi_battery = {
+	.plugin_name      = "acpi_battery_plugin",      /* plugin_name */
+	.keywords         = kw,                    /* config_keywords */
+	.plugin_init      = &acpi_battery_init,         /* plugin_init */
+	.plugin_exit      = &acpi_battery_exit,         /* plugin_exit */
+	.plugin_update    = &acpi_battery_update,       /* plugin_update */
+};
 
 struct cpufreqd_plugin *create_plugin (void) {
 	return &acpi_battery;

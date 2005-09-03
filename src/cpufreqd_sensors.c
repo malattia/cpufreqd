@@ -283,13 +283,3 @@ static struct cpufreqd_plugin sensors_plugin = {
 struct cpufreqd_plugin *create_plugin (void) {
 	return &sensors_plugin;
 }
-#if 0
-int main (int argc, char *argv[]) {
-	FILE * f = fopen("/etc/sensors.conf", "r");
-	sensors_init(f);
-	fclose(f);
-	get_sensors();
-	sensors_cleanup();	
-	return 0;
-}
-#endif

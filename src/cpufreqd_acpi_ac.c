@@ -35,26 +35,6 @@ static char *ac_filelist[64];
 static unsigned short ac_state;
 static int ac_dir_num;
 
-static int no_dots(const struct dirent *d);
-static int acpi_ac_init(void);
-static int acpi_ac_exit(void);
-static int acpi_ac_update(void);
-static int acpi_ac_parse(const char *ev, void **obj);
-static int acpi_ac_evaluate(const void *s);
-
-static struct cpufreqd_keyword kw[] = {
-	{ .word = "ac", .parse = &acpi_ac_parse, .evaluate = &acpi_ac_evaluate },
-	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
-};
-
-static struct cpufreqd_plugin acpi_ac = {
-	.plugin_name	= "acpi_ac_plugin",	/* plugin_name */
-	.keywords	= kw,			/* config_keywords */
-	.plugin_init	= &acpi_ac_init,	/* plugin_init */
-	.plugin_exit	= &acpi_ac_exit,	/* plugin_exit */
-	.plugin_update	= &acpi_ac_update	/* plugin_update */
-};
-
 static int no_dots(const struct dirent *d) {
 	return d->d_name[0]!= '.';
 }
@@ -152,8 +132,7 @@ static int acpi_ac_parse(const char *ev, void **obj) {
 		return -1;
 	}
 
-	clog(LOG_INFO, "parsed: %s\n",
-			acpi_ac.plugin_name, *ret==PLUGGED ? "on" : "off");
+	clog(LOG_INFO, "parsed: %s\n", *ret==PLUGGED ? "on" : "off");
 
 	*obj = ret;
 	return 0;
@@ -170,6 +149,19 @@ static int acpi_ac_evaluate(const void *s) {
 
 	return (*ac == ac_state) ? MATCH : DONT_MATCH;
 }
+
+static struct cpufreqd_keyword kw[] = {
+	{ .word = "ac", .parse = &acpi_ac_parse, .evaluate = &acpi_ac_evaluate },
+	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
+};
+
+static struct cpufreqd_plugin acpi_ac = {
+	.plugin_name	= "acpi_ac_plugin",	/* plugin_name */
+	.keywords	= kw,			/* config_keywords */
+	.plugin_init	= &acpi_ac_init,	/* plugin_init */
+	.plugin_exit	= &acpi_ac_exit,	/* plugin_exit */
+	.plugin_update	= &acpi_ac_update	/* plugin_update */
+};
 
 struct cpufreqd_plugin *create_plugin (void) {
 	return &acpi_ac;

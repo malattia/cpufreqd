@@ -47,29 +47,10 @@ struct TNODE {
 typedef struct TNODE TNODE;
 typedef TNODE TREE;
 
-static int programs_exit(void);
-static int programs_parse(const char *ev, void **obj);
-static void programs_free(void *obj);
-static int programs_evaluate(const void *s);
-static int programs_update(void);
-static int find_program(const TNODE *l);
-
 static TREE *running_programs = 0L;
 
 #define DEBUG_TREE
 #undef DEBUG_TREE
-
-static struct cpufreqd_keyword kw[] = {
-	{ .word = "programs", .parse = &programs_parse,   .evaluate = &programs_evaluate, .free=programs_free },
-	{ .word = NULL },
-};
-
-static struct cpufreqd_plugin programs = {
-	.plugin_name      = "programs_plugin",      /* plugin_name */
-	.keywords         = kw,                     /* config_keywords */
-	.plugin_exit      = &programs_exit,         /* plugin_exit */
-	.plugin_update    = &programs_update,       /* plugin_update */
-};
 
 /* create a new node obj */
 static TNODE * new_tnode(void) {
@@ -119,7 +100,7 @@ static void insert_tnode(TREE **t, const char *c) {
 		*t = new_tnode();
 		memcpy((*t)->name, c, PRG_LENGTH);
 		(*t)->used = 1;
-		cpufreqd_log(LOG_DEBUG, "insert_tnode(): new node (%s)\n", c);
+		clog(LOG_DEBUG, "new node (%s)\n", c);
 		return;
 	}
 
@@ -271,7 +252,7 @@ static TNODE * find_tnode(TREE *t, const char *c) {
 #ifdef DEBUG_TREE
 static void debug_tnode(TNODE *n) {
 	if (n != NULL) {
-		cpufreqd_log(LOG_DEBUG, "%s [u:%d] [h:%d]\n", n->name, n->used, n->height);
+		clog(LOG_DEBUG, "%s [u:%d] [h:%d]\n", n->name, n->used, n->height);
 	}
 }
 
@@ -284,7 +265,7 @@ static void print_tree(TNODE *n) {
 		}
 		tab[i]='\\';
 		tab[i+1]='\0';
-		cpufreqd_log(LOG_DEBUG, "%s%s \t%s - [h:%d]\n",
+		clog(LOG_DEBUG, "%s%s \t%s - [h:%d]\n",
 				tab, n->name, n->parent!=NULL?n->parent->name:"nobody", n->height);
 	}
 }
@@ -320,7 +301,7 @@ static int programs_update(void) {
 	n = scandir("/proc", &namelist, numeric_entry, NULL);
 
 	if (n < 0) {
-		cpufreqd_log(LOG_ERR, "get_running_programs() - scandir: %s\n", strerror(errno));
+		clog(LOG_ERR, "scandir: %s\n", strerror(errno));
 
 	} else {
 
@@ -335,8 +316,7 @@ static int programs_update(void) {
 				 * user cannot read thie link or
 				 * has disappeared while scanning, don't worry */
 #if 0
-				cpufreqd_log(LOG_DEBUG, "programs_update(): %s: %s\n",
-						file, strerror(errno));
+				clog(LOG_DEBUG, "%s: %s\n", file, strerror(errno));
 #endif
 				continue;
 			}
@@ -351,7 +331,7 @@ static int programs_update(void) {
 		}
 	}
 	free(namelist);
-	cpufreqd_log(LOG_INFO, "get_running_programs(): read %d processes\n", ret);
+	clog(LOG_INFO, "read %d processes\n", ret);
 	preorder_visit(running_programs, &sweep_unused_node);
 #ifdef DEBUG_TREE
 	preorder_visit(running_programs, &debug_tnode);
@@ -361,7 +341,7 @@ static int programs_update(void) {
 }
 
 static int programs_exit(void) {
-	cpufreqd_log(LOG_INFO, "%s - exit() called\n", programs.plugin_name);
+	clog(LOG_INFO, "called\n");
 	free_tree(running_programs);
 	return 0;
 }
@@ -371,7 +351,7 @@ static int programs_parse(const char *ev, void **obj) {
 	char *t_prog;
 	TREE *ret=NULL;
 
-	cpufreqd_log(LOG_DEBUG, "programs_parse(): called with entries %s.\n", ev);
+	clog(LOG_DEBUG, "called with entries %s.\n", ev);
 	strncpy(str_copy, ev, 5*PRG_LENGTH);
 
 	t_prog = strtok(str_copy,",");
@@ -380,7 +360,7 @@ static int programs_parse(const char *ev, void **obj) {
 			continue;
 
 		insert_tnode(&ret, t_prog);
-		cpufreqd_log(LOG_DEBUG, "parse_config_rule(): read program: %s\n", t_prog);
+		clog(LOG_DEBUG, "read program %s\n", t_prog);
 	} while ((t_prog = strtok(NULL,",")) != NULL);
 
 	*obj = ret;
@@ -392,18 +372,28 @@ static void programs_free(void *obj) {
 }
 
 static int find_program(const TNODE *l) {
-	cpufreqd_log(LOG_DEBUG, "%s find_program(): tree ptr %p\n",
-			programs.plugin_name, l);
+	clog(LOG_DEBUG, "tree ptr %p\n", l);
 	return (find_tnode(running_programs, l->name)!=NULL) ? MATCH :
 		(l->right!=NULL && find_program(l->right)==MATCH) ? MATCH :
 		(l->left!=NULL && find_program(l->left)==MATCH) ? MATCH : DONT_MATCH;
 }
 
 static int programs_evaluate(const void *s) {
-	cpufreqd_log(LOG_DEBUG, "%s evaluate(): tree ptr %p\n",
-			programs.plugin_name, s);
+	clog(LOG_DEBUG, "tree ptr %p\n", s);
 	return find_program((const TNODE *) s);
 }
+
+static struct cpufreqd_keyword kw[] = {
+	{ .word = "programs", .parse = &programs_parse,   .evaluate = &programs_evaluate, .free=programs_free },
+	{ .word = NULL },
+};
+
+static struct cpufreqd_plugin programs = {
+	.plugin_name      = "programs_plugin",      /* plugin_name */
+	.keywords         = kw,                     /* config_keywords */
+	.plugin_exit      = &programs_exit,         /* plugin_exit */
+	.plugin_update    = &programs_update,       /* plugin_update */
+};
 
 /* MUST DEFINE THIS ONE */
 struct cpufreqd_plugin *create_plugin (void) {

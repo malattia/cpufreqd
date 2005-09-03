@@ -37,10 +37,10 @@
 char *create_temp_dir(char *buf) {
 	strncpy(buf, TMP_DIR_TEMPL, TMP_DIR_TEMPL_LEN);
 	if (mkdtemp(buf) != NULL) {
-		cpufreqd_log(LOG_INFO, "Created temporary dir: '%s'.\n", buf);
+		clog(LOG_INFO, "Created temporary dir: '%s'.\n", buf);
 		return buf;
 	}
-	cpufreqd_log(LOG_ERR, "Couldn't create temporary dir: %s.\n", strerror(errno));
+	clog(LOG_ERR, "Couldn't create temporary dir: %s.\n", strerror(errno));
 	return NULL;
 }
 
@@ -58,20 +58,20 @@ void delete_temp_dir(const char *dirname) {
 
 	/* check file and delete it */
 	if (stat(filename, &buf) != 0) {
-		cpufreqd_log(LOG_ERR, "Couldn't stat %s: %s\n", filename, strerror(errno));
+		clog(LOG_ERR, "Couldn't stat %s: %s\n", filename, strerror(errno));
 	} else if (!S_ISSOCK(buf.st_mode)) {
-		cpufreqd_log(LOG_ERR, "%s not a socket!\n", filename);
+		clog(LOG_ERR, "%s not a socket!\n", filename);
 	} else if (unlink(filename) != 0) {
-		cpufreqd_log(LOG_ERR, "Couldn't delete %s: %s\n", filename, strerror(errno));
+		clog(LOG_ERR, "Couldn't delete %s: %s\n", filename, strerror(errno));
 	} else {
-		cpufreqd_log(LOG_INFO, "%s deleted.\n", filename);
+		clog(LOG_INFO, "%s deleted.\n", filename);
 	}
 	
 	/* it's safe to try this anyway */
 	if (rmdir(dirname) != 0) {
-		cpufreqd_log(LOG_ERR, "Couldn't delete %s: %s\n", dirname, strerror(errno));
+		clog(LOG_ERR, "Couldn't delete %s: %s\n", dirname, strerror(errno));
 	} else {
-		cpufreqd_log(LOG_INFO, "%s deleted.\n", dirname);
+		clog(LOG_INFO, "%s deleted.\n", dirname);
 	}
 }
 
@@ -86,20 +86,20 @@ int open_unix_sock(const char *dirname) {
 	snprintf(sa.sun_path, MAX_PATH_LEN , "%s%s", dirname, CPUFREQD_SOCKET);
 	
 	if ((fd = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
-		cpufreqd_log(LOG_ALERT, "socket(): %s.\n", strerror(errno));
+		clog(LOG_ALERT, "socket(): %s.\n", strerror(errno));
 
 	} else if (bind(fd, &sa, sizeof(sa)) == -1) {
-		cpufreqd_log(LOG_ALERT, "bind(): %s.\n", strerror(errno));
+		clog(LOG_ALERT, "bind(): %s.\n", strerror(errno));
 		close(fd);
 		fd = -1;
 
 	} else if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-		cpufreqd_log(LOG_ALERT, "fcntl(): %s.\n", strerror(errno));
+		clog(LOG_ALERT, "fcntl(): %s.\n", strerror(errno));
 		close(fd);
 		fd = -1;
 
 	} else if (listen(fd, 5) == -1) {
-		cpufreqd_log(LOG_ALERT, "listen(): %s.\n", strerror(errno));
+		clog(LOG_ALERT, "listen(): %s.\n", strerror(errno));
 		close(fd);
 		fd = -1;
 	}

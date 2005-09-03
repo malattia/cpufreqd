@@ -47,7 +47,7 @@ do { \
 	LIST_FOREACH_NODE(__node, (directives)) { \
 		dir = (struct directive *)__node->content; \
 		if (dir->keyword->event_func != NULL) { \
-			cpufreqd_log(LOG_DEBUG, "Triggering " #event_func " for %s\n", dir->keyword->word); \
+			clog(LOG_DEBUG, "Triggering " #event_func " for %s\n", dir->keyword->word); \
 			dir->keyword->event_func(dir->obj, (old), (new)); \
 		} \
 	} \
@@ -90,7 +90,7 @@ static unsigned int rule_score(struct rule *rule) {
 		/* compute scores for rules and keep the highest */
 		if (d->keyword->evaluate != NULL && d->keyword->evaluate(d->obj) == MATCH) {
 			hits++;
-			cpufreqd_log(LOG_DEBUG, "Rule \"%s\": %s matches.\n", rule->name,
+			clog(LOG_DEBUG, "Rule \"%s\": %s matches.\n", rule->name,
 					d->keyword->word);
 		}
 	} /* end foreach rule entry */
@@ -109,14 +109,14 @@ static struct rule *update_rule_scores(struct LIST *rule_list) {
 	LIST_FOREACH_NODE(node, rule_list) {
 		tmp_rule = (struct rule *)node->content;
 		
-		cpufreqd_log(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
+		clog(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
 		tmp_score = rule_score(tmp_rule);
 
 		if (tmp_score > best_score) {
 			ret = tmp_rule;
 			best_score = tmp_score;
 		}
-		cpufreqd_log(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name, tmp_score);
+		clog(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name, tmp_score);
 	} /* end foreach rule */
 	return ret;
 }
@@ -140,22 +140,24 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 	/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
 	for (i=0; i<configuration.cpu_num; i++) {
 		if (cpufreq_set_policy(i, &(new->policy)) == 0) {
-			cpufreqd_log(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
+			clog(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
 			/* TODO: double check if everything is OK (configurable) */
 			if (configuration.double_check) {
 				struct cpufreq_policy *check = NULL;
 				check = cpufreq_get_policy(i);
 				if (check->max != new->policy.max || check->min != new->policy.min ||
 						strcmp(check->governor, new->policy.governor) != 0) {
-					cpufreqd_log(LOG_ERR, "I haven't been able to set the "
-							"chosen prolicy for CPU%d.\n", i);
-					cpufreqd_log(LOG_ERR, "I set %d-%d-%s\n",
-							new->policy.max, new->policy.min, new->policy.governor);
-					cpufreqd_log(LOG_ERR, "System says %d-%d-%s\n",
-							check->max, check->min, check->governor);
+					/* written policy and subsequent read disagree */
+					clog(LOG_ERR, "I haven't been able to set the chosen prolicy "
+							"for CPU%d.\n"
+							"I set %d-%d-%s\n",
+							"System says %d-%d-%s\n",
+							i, new->policy.max, new->policy.min,
+							new->policy.governor, check->max, 
+							check->min, check->governor);
 					return -1;
 				} else {
-					cpufreqd_log(LOG_INFO, "Policy correctly set %d-%d-%s\n",
+					clog(LOG_INFO, "Policy correctly set %d-%d-%s\n",
 							new->policy.max, new->policy.min, new->policy.governor);
 				}
 				cpufreq_put_policy(check);
@@ -163,7 +165,7 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 			}
 		}
 		else
-			cpufreqd_log(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", new->name, i);
+			clog(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", new->name, i);
 	}
 	/* profile postchange event */
 	if (new->directives.first) {
@@ -201,11 +203,11 @@ static int read_args (int argc, char *argv[]) {
 			return 0;
 		case 'f':
 			if (realpath(optarg, configuration.config_file) == NULL) {
-				cpufreqd_log(LOG_ERR, "Error reading command line argument (%s: %s).\n",
+				clog(LOG_ERR, "Error reading command line argument (%s: %s).\n",
 						optarg, strerror(errno));
 				return -1;
 			}
-			cpufreqd_log(LOG_DEBUG, "Using configuration file at %s\n", configuration.config_file);
+			clog(LOG_DEBUG, "Using configuration file at %s\n", configuration.config_file);
 			break;
 		case 'D':
 			configuration.no_daemon = 1;
@@ -250,30 +252,30 @@ static void print_help(const char *me) {
 }
 
 static void term_handler(int signo) {
-	cpufreqd_log(LOG_NOTICE, "Caught TERM signal (%s), forcing exit.\n", strsignal(signo));
+	clog(LOG_NOTICE, "Caught TERM signal (%s), forcing exit.\n", strsignal(signo));
 	force_exit = 1;
 }
 
 static void int_handler(int signo) {
-	cpufreqd_log(LOG_NOTICE, "Caught INT signal (%s), forcing exit.\n", strsignal(signo));
+	clog(LOG_NOTICE, "Caught INT signal (%s), forcing exit.\n", strsignal(signo));
 	force_exit = 1;
 }
 
 static void alarm_handler(int signo) {
-	cpufreqd_log(LOG_DEBUG, "Caught ALARM signal (%s).\n", strsignal(signo));
+	clog(LOG_DEBUG, "Caught ALARM signal (%s).\n", strsignal(signo));
 	timer_expired = 1;
 }
 
 static void hup_handler(int signo) {
-	cpufreqd_log(LOG_WARNING, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
+	clog(LOG_WARNING, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
 #if 0
-	cpufreqd_log(LOG_NOTICE, "Caught HUP signal (%s), reloading configuration file.\n", strsignal(signo));
+	clog(LOG_NOTICE, "Caught HUP signal (%s), reloading configuration file.\n", strsignal(signo));
 	force_reinit = 1;
 #endif
 }
 
 static void pipe_handler(int signo) {
-  cpufreqd_log(LOG_NOTICE, "Caught PIPE signal (%s).\n", strsignal(signo));
+  clog(LOG_NOTICE, "Caught PIPE signal (%s).\n", strsignal(signo));
 }
 
 static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *current) {
@@ -285,11 +287,11 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 
 	/* set the policy associated with the highest score */
 	if (best_rule == NULL) {
-		cpufreqd_log(LOG_WARNING, "No Rule matches current system status.\n");
+		clog(LOG_WARNING, "No Rule matches current system status.\n");
 
 		/* rule changed */
 	} else if (current != best_rule) {
-		cpufreqd_log(LOG_DEBUG, "New Rule (\"%s\"), applying.\n", 
+		clog(LOG_DEBUG, "New Rule (\"%s\"), applying.\n", 
 				best_rule->name);
 		/* pre change event */
 		if (current != NULL && best_rule->directives.first != NULL) {
@@ -303,7 +305,7 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 		} else if (best_rule->prof != current->prof) {
 			cpufreqd_set_profile(current->prof, best_rule->prof);
 		} else {
-			cpufreqd_log(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
+			clog(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
 					current->prof->name, best_rule->prof->name);
 		}
 
@@ -315,7 +317,7 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 
 		/* nothing new happened */
 	} else {
-		cpufreqd_log(LOG_DEBUG, "Rule unchanged (\"%s\"), doing nothing.\n", 
+		clog(LOG_DEBUG, "Rule unchanged (\"%s\"), doing nothing.\n", 
 				current->name);
 	}
 	return best_rule;
@@ -337,25 +339,25 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 	fds.events = POLLIN | POLLRDNORM;
 
 	if (poll(&fds, 1, 500) != 1) {
-		cpufreqd_log(LOG_ALERT, "Waited too long for data, aborting.\n");
+		clog(LOG_ALERT, "Waited too long for data, aborting.\n");
 
 	} else if (read(sock, &command, sizeof(uint32_t)) == -1) {
-		cpufreqd_log(LOG_ALERT, "process_packet - read(): %s\n", strerror(errno));
+		clog(LOG_ALERT, "process_packet - read(): %s\n", strerror(errno));
 
 	} else if (command != INVALID_CMD) {
-		cpufreqd_log(LOG_INFO, "command received: %0.4x %0.4x\n",
+		clog(LOG_INFO, "command received: %0.4x %0.4x\n",
 				REMOTE_CMD(command), REMOTE_ARG(command));
 		switch (REMOTE_CMD(command)) {
 			case CMD_UPDATE_STATE:
-				cpufreqd_log(LOG_DEBUG, "CMD_UPDATE_STATE\n");
-				cpufreqd_log(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
+				clog(LOG_DEBUG, "CMD_UPDATE_STATE\n");
+				clog(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
 				break;
 			case CMD_LIST_RULES:
-				cpufreqd_log(LOG_DEBUG, "CMD_LIST_RULES\n");
-				cpufreqd_log(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
+				clog(LOG_DEBUG, "CMD_LIST_RULES\n");
+				clog(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
 				break;
 			case CMD_LIST_PROFILES:
-				cpufreqd_log(LOG_DEBUG, "CMD_LIST_PROFILES\n");
+				clog(LOG_DEBUG, "CMD_LIST_PROFILES\n");
 				LIST_FOREACH_NODE(node, &conf->profiles) {
 					p = (struct profile *) node->content;
 					buflen = snprintf(buf, MAX_STRING_LEN, "%d/%s/%lu/%lu/%s\n",
@@ -367,22 +369,22 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 				}
 				break;
 			case CMD_SET_RULE:
-				cpufreqd_log(LOG_DEBUG, "CMD_SET_RULE\n");
-				cpufreqd_log(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
+				clog(LOG_DEBUG, "CMD_SET_RULE\n");
+				clog(LOG_ALERT, "Ignoring unimplemented command %0.8x\n", command);
 				break;
 			case CMD_SET_MODE:
-				cpufreqd_log(LOG_DEBUG, "CMD_SET_MODE\n");
+				clog(LOG_DEBUG, "CMD_SET_MODE\n");
 				cpufreqd_mode = REMOTE_ARG(command);
 				break;
 			case CMD_SET_PROFILE:
-				cpufreqd_log(LOG_DEBUG, "CMD_SET_PROFILE\n");
+				clog(LOG_DEBUG, "CMD_SET_PROFILE\n");
 				if (cpufreqd_mode == ARG_DYNAMIC) {
-					cpufreqd_log(LOG_ERR, "Couldn't set profile while running "
+					clog(LOG_ERR, "Couldn't set profile while running "
 							"in DYNAMIC mode.\n");
 					break;
 				}
 				if (!REMOTE_ARG(command)) {
-					cpufreqd_log(LOG_ERR, "Invalid argument %0.4x\n",
+					clog(LOG_ERR, "Invalid argument %0.4x\n",
 							REMOTE_ARG(command));
 					break;
 				}
@@ -401,13 +403,12 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 					}
 				}
 				if (counter > 0) {
-					cpufreqd_log(LOG_ERR, "Couldn't find profile %d\n",
+					clog(LOG_ERR, "Couldn't find profile %d\n",
 							REMOTE_ARG(command));
 				}
 				break;
 			default:
-				cpufreqd_log(LOG_ALERT,
-						"Unable to process packet: %d\n",
+				clog(LOG_ALERT, "Unable to process packet: %d\n",
 						command);
 				break;
 		}
@@ -490,7 +491,7 @@ int main (int argc, char *argv[]) {
 	 *  find cpufreq information about each cpu
 	 */
 	if ((configuration.sys_info = malloc(configuration.cpu_num * sizeof(struct cpufreq_sys_info))) == NULL) {
-		cpufreqd_log(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
+		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
 		ret = 1;
 		goto out;
 	}
@@ -502,7 +503,7 @@ int main (int argc, char *argv[]) {
 
 	/* SMP: with different speed cpus */
 	if ((configuration.limits = malloc(configuration.cpu_num * sizeof(struct cpufreq_limits))) == NULL) {
-		cpufreqd_log(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
+		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
 		ret = 1;
 		goto out_sys_info;
 	}
@@ -511,12 +512,12 @@ int main (int argc, char *argv[]) {
 		/* if one of the probes fails remove all the others also */
 		if (cpufreq_get_hardware_limits(i, &((configuration.limits+i)->min), &((configuration.limits+i)->max))!=0) {
 			/* TODO: if libcpufreq fails try to read /proc/cpuinfo and warn about this not being reliable */
-			cpufreqd_log(LOG_WARNING, "Unable to get hardware frequency limits for CPU%d.\n", i);
+			clog(LOG_WARNING, "Unable to get hardware frequency limits for CPU%d.\n", i);
 			free(configuration.limits);
 			configuration.limits = NULL;
 			break;
 		} else {
-			cpufreqd_log(LOG_INFO, "Limits for cpu%d: MIN=%lu - MAX=%lu\n", i, 
+			clog(LOG_INFO, "Limits for cpu%d: MIN=%lu - MAX=%lu\n", i, 
 					(configuration.limits+i)->min, (configuration.limits+i)->max);
 		}
 	}
@@ -561,8 +562,8 @@ cpufreqd_start:
 	/* Validate plugins, if no rules left exit.... */
 	if (validate_plugins(&configuration.plugins) == 0) {
 		cpufreqd_log(LOG_CRIT, "Hey! all the plugins I loaded are useless, "
-				"maybe your configuration needs some rework.\n");
-		cpufreqd_log(LOG_CRIT, "Exiting.\n");
+				"maybe your configuration needs some rework.\n"
+				"Exiting.\n");
 		ret = 1;
 		goto out_socket;
 	}
@@ -591,7 +592,7 @@ cpufreqd_start:
 			new_timer.it_value.tv_usec = 0;
 			new_timer.it_value.tv_sec = configuration.poll_interval;
 			if (setitimer(ITIMER_REAL, &new_timer, 0) < 0) {
-				cpufreqd_log(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
+				clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
 				ret = 1;
 				break;
 			}
@@ -612,13 +613,13 @@ cpufreqd_start:
 				case -1:
 					/* caused by SIGALARM (mostly) */
 					if (errno != EINTR)
-						cpufreqd_log(LOG_NOTICE, "poll(): %s.\n", strerror(errno));
+						clog(LOG_NOTICE, "poll(): %s.\n", strerror(errno));
 					break;
 				case 1:
 					/* somebody tried to contact us. see what he wants */
 					peer_sock = accept(cpufreqd_sock, NULL, 0);
 					if (peer_sock == -1) {
-						cpufreqd_log(LOG_ALERT, "Unable to accept connection: "
+						clog(LOG_ALERT, "Unable to accept connection: "
 								" %s\n", strerror(errno));
 					}
 					execute_command(peer_sock, &configuration);
@@ -626,7 +627,7 @@ cpufreqd_start:
 					peer_sock = -1;
 					break;
 				default:
-					cpufreqd_log(LOG_ALERT, "poll(): Internal error caught.\n");
+					clog(LOG_ALERT, "poll(): Internal error caught.\n");
 					break;
 			}
 

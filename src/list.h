@@ -36,17 +36,17 @@
  * Doubly linked list
  */
 struct LIST {
-  struct NODE *first;
-  struct NODE *last;
+	struct NODE *first;
+	struct NODE *last;
 };
 
 /*
  * Node
  */
 struct NODE {
-  void *content;
-  struct NODE *next;
-  struct NODE *prev;
+	void *content;
+	struct NODE *next;
+	struct NODE *prev;
 };
 
 /*

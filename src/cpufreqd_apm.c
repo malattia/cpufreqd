@@ -38,28 +38,6 @@ static int battery_present;
 static int battery_percent;
 static unsigned int ac_state;
 
-static int apm_init(void);
-static int apm_exit(void);
-static int apm_update(void);
-static int apm_ac_parse(const char *ev, void **obj);
-static int apm_ac_evaluate(const void *s);
-static int apm_bat_parse(const char *ev, void **obj);
-static int apm_bat_evaluate(const void *s);
-
-static struct cpufreqd_keyword kw[] = {
-	{ .word = "ac",       .parse = &apm_ac_parse,  .evaluate = &apm_ac_evaluate  },
-	{ .word = "battery",  .parse = &apm_bat_parse, .evaluate = &apm_bat_evaluate },
-	{ .word = NULL,       .parse = NULL,           .evaluate = NULL              }
-};
-
-static struct cpufreqd_plugin apm = {
-	.plugin_name      = "apm_plugin",	/* plugin_name */
-	.keywords         = kw,		/* config_keywords */
-	.plugin_init      = &apm_init,	/* plugin_init */
-	.plugin_exit      = &apm_exit,	/* plugin_exit */
-	.plugin_update    = &apm_update	/* plugin_update */
-};
-
 /*  static int apm_init(void)
  *
  *  test if apm file id present
@@ -70,7 +48,7 @@ static int apm_init(void) {
 
 	rc = stat(APM_PROC_FILE, &sb);
 	if (rc < 0) {
-		cpufreqd_log(LOG_ERR, "apm_init(): %s: %s\n", APM_PROC_FILE, strerror(errno));
+		clog(LOG_ERR, "%s: %s\n", APM_PROC_FILE, strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -94,17 +72,17 @@ static int apm_update(void) {
 	char ignore3[101];
 	unsigned int batt_flag;
 
-	cpufreqd_log(LOG_DEBUG, "%s - update() called\n", apm.plugin_name);
+	clog(LOG_DEBUG, "called\n");
 
 	fp = fopen(APM_PROC_FILE , "r");
 	if (!fp) {
-		cpufreqd_log(LOG_ERR, "scan_system_info(): %s: %s\n", APM_PROC_FILE, strerror(errno));
+		clog(LOG_ERR, "%s: %s\n", APM_PROC_FILE, strerror(errno));
 		return -1;
 	}
 
 	if (!fgets(buf, 100, fp)) {
 		fclose(fp);
-		cpufreqd_log(LOG_ERR, "scan_system_info(): %s: %s\n", APM_PROC_FILE, strerror(errno));
+		clog(LOG_ERR, "%s: %s\n", APM_PROC_FILE, strerror(errno));
 		return -1;
 	}
 
@@ -121,7 +99,7 @@ static int apm_update(void) {
 
 	fclose(fp);
 
-	cpufreqd_log(LOG_INFO, "scan_system_info(): battery %s - %d - ac: %s\n",
+	clog(LOG_INFO, "battery %s - %d - ac: %s\n",
 			battery_present?"present":"absent", 
 			battery_percent, 
 			ac_state?"on-line":"off-line");
@@ -134,29 +112,26 @@ static int apm_update(void) {
 static int apm_ac_parse(const char *ev, void **obj) {
 	unsigned int *ret = malloc(sizeof(int));
 	if (ret == NULL) {
-		cpufreqd_log(LOG_ERR, 
-				"%s - apm_ac_parse() couldn't make enough room for ac_status (%s)\n",
+		clog(LOG_ERR, "couldn't make enough room for ac_status (%s)\n",
 				strerror(errno));
 		return -1;
 	}
 
 	*ret = 0;
 
-	cpufreqd_log(LOG_DEBUG, "%s - apm_ac_parse() called with: %s\n",
-			apm.plugin_name, ev);
+	clog(LOG_DEBUG, "called with %s\n", ev);
 
 	if (strncmp(ev, "on", 2) == 0) {
 		*ret = PLUGGED;
 	} else if (strncmp(ev, "off", 3) == 0) {
 		*ret = UNPLUGGED;
 	} else {
-		cpufreqd_log(LOG_ERR, "%s - apm_parse() couldn't parse %s\n", ev);
+		clog(LOG_ERR, "couldn't parse %s\n", ev);
 		free(ret);
 		return -1;
 	}
 
-	cpufreqd_log(LOG_INFO, "%s - apm_ac_parse() parsed: %s\n",
-			apm.plugin_name, *ret==PLUGGED ? "on" : "off");
+	clog(LOG_INFO, "parsed %s\n", *ret==PLUGGED ? "on" : "off");
 
 	*obj = ret;
 	return 0;
@@ -168,8 +143,8 @@ static int apm_ac_parse(const char *ev, void **obj) {
 static int apm_ac_evaluate(const void *s) {
 	const unsigned int *ac = (const unsigned int *)s;
 
-	cpufreqd_log(LOG_DEBUG, "%s - evaluate() called: %s [%s]\n",
-			apm.plugin_name, *ac==PLUGGED ? "on" : "off", ac_state==PLUGGED ? "on" : "off");
+	clog(LOG_DEBUG, "called %s [%s]\n",
+			*ac==PLUGGED ? "on" : "off", ac_state==PLUGGED ? "on" : "off");
 
 	return (*ac == ac_state) ? MATCH : DONT_MATCH;
 }
@@ -180,26 +155,22 @@ static int apm_ac_evaluate(const void *s) {
 static int apm_bat_parse(const char *ev, void **obj) {
 	struct battery_interval *ret = malloc(sizeof(struct battery_interval));
 	if (ret == NULL) {
-		cpufreqd_log(LOG_ERR, 
-				"%s - apm_bat_parse() couldn't make enough room for battery_interval (%s)\n",
+		clog(LOG_ERR, "couldn't make enough room for battery_interval (%s)\n",
 				strerror(errno));
 		return -1;
 	}
 
 	ret->min = ret->max = 0;
 
-	cpufreqd_log(LOG_DEBUG, "%s - apm_bat_parse() called with: %s\n",
-			apm.plugin_name, ev);
+	clog(LOG_DEBUG, "called with %s\n", ev);
 
 	if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) != 2) {
-		cpufreqd_log(LOG_ERR, "%s - apm_bat_parse() wrong parameter: %s\n",
-				apm.plugin_name, ev);
+		clog(LOG_ERR, "wrong parameter %s\n", ev);
 		free(ret);
 		return -1;
 	}
 
-	cpufreqd_log(LOG_INFO, "%s - apm_bat_parse() parsed: %d-%d\n",
-			apm.plugin_name, ret->min, ret->max);
+	clog(LOG_INFO, "parsed %d-%d\n", ret->min, ret->max);
 
 	*obj = ret;
 	return 0;
@@ -211,11 +182,24 @@ static int apm_bat_parse(const char *ev, void **obj) {
 static int apm_bat_evaluate(const void *s) {
 	const struct battery_interval *bi = (const struct battery_interval *)s;
 
-	cpufreqd_log(LOG_DEBUG, "%s - apm_bat_evaluate() called: %d-%d [%d]\n",
-			apm.plugin_name, bi->min, bi->max, battery_percent);
+	clog(LOG_DEBUG, "called %d-%d [%d]\n", bi->min, bi->max, battery_percent);
 
 	return (battery_percent>=bi->min && battery_percent<=bi->max) ? MATCH : DONT_MATCH;
 }
+
+static struct cpufreqd_keyword kw[] = {
+	{ .word = "ac",       .parse = &apm_ac_parse,  .evaluate = &apm_ac_evaluate  },
+	{ .word = "battery",  .parse = &apm_bat_parse, .evaluate = &apm_bat_evaluate },
+	{ .word = NULL,       .parse = NULL,           .evaluate = NULL              }
+};
+
+static struct cpufreqd_plugin apm = {
+	.plugin_name      = "apm_plugin",	/* plugin_name */
+	.keywords         = kw,		/* config_keywords */
+	.plugin_init      = &apm_init,	/* plugin_init */
+	.plugin_exit      = &apm_exit,	/* plugin_exit */
+	.plugin_update    = &apm_update	/* plugin_update */
+};
 
 struct cpufreqd_plugin *create_plugin (void) {
 	return &apm;

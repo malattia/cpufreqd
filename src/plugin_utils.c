@@ -39,9 +39,8 @@ static void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugi
 		while (node1 != NULL) {
 			d = (struct directive *)node1->content;
 			if (d->plugin == plugin->plugin) {
-				cpufreqd_log(LOG_DEBUG, "%s: removing %s Rule directive %s\n",
-						__func__, tmp_rule->name,
-						d->keyword->word);
+				clog(LOG_DEBUG, "removing %s Rule directive %s\n",
+						tmp_rule->name, d->keyword->word);
 				free_keyword_object(d->keyword, d->obj);
 				tmp_rule->directives_count--;
 				node1 = list_remove_node(&tmp_rule->directives, node1);
@@ -57,9 +56,8 @@ static void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugi
 		while (node1 != NULL) {
 			d = (struct directive *)node1->content;
 			if (d->plugin == plugin->plugin) {
-				cpufreqd_log(LOG_DEBUG, "%s: removing %s Profile directive %s\n",
-						__func__, tmp_profile->name,
-						d->keyword->word);
+				clog(LOG_DEBUG, "removing %s Profile directive %s\n",
+						tmp_profile->name, d->keyword->word);
 				free_keyword_object(d->keyword, d->obj);
 				tmp_profile->directives_count--;
 				node1 = list_remove_node(&tmp_profile->directives, node1);
@@ -85,13 +83,13 @@ void load_plugin_list(struct LIST *plugins) {
 		if (load_plugin(o_plugin) == 0 &&
 				get_cpufreqd_object(o_plugin) == 0 &&
 				initialize_plugin(o_plugin) == 0) { 
-			cpufreqd_log(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
+			clog(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
 			n = n->next;
 
 		} else {
-			cpufreqd_log(LOG_INFO, "plugin failed to load: %s\n", o_plugin->name);
+			clog(LOG_INFO, "plugin failed to load: %s\n", o_plugin->name);
 			/* remove the list item and assing n the next node (returned from list_remove_node) */
-			cpufreqd_log(LOG_NOTICE, "discarded plugin %s\n", o_plugin->name);
+			clog(LOG_NOTICE, "discarded plugin %s\n", o_plugin->name);
 			n = list_remove_node(plugins, n);
 		} /* end else */
 	} /* end while */
@@ -130,10 +128,10 @@ int load_plugin(struct plugin_obj *cp) {
 
 	snprintf(libname, 512, CPUFREQD_LIBDIR"cpufreqd_%s.so", cp->name);
 
-	cpufreqd_log(LOG_INFO, "Loading \"%s\" for plugin \"%s\".\n", libname, cp->name);
+	clog(LOG_INFO, "Loading \"%s\" for plugin \"%s\".\n", libname, cp->name);
 	cp->library = dlopen(libname, RTLD_LAZY);
 	if (!cp->library) {
-		cpufreqd_log(LOG_ERR, "load_plugin(): %s\n", dlerror());
+		clog(LOG_ERR, "%s\n", dlerror());
 		return -1;
 	}
 
@@ -146,7 +144,7 @@ int load_plugin(struct plugin_obj *cp) {
 void close_plugin(struct plugin_obj *cp) {
 	/* close library */
 	if (dlclose(cp->library) != 0) {
-		cpufreqd_log(LOG_ERR, "Error unloading plugin %s: %s\n", cp->name, dlerror());
+		clog(LOG_ERR, "Error unloading plugin %s: %s\n", cp->name, dlerror());
 	}
 }
 
@@ -160,12 +158,12 @@ int get_cpufreqd_object(struct plugin_obj *cp) {
 	/* plugin ptr */
 	struct cpufreqd_plugin *(*create)(void);
 
-	cpufreqd_log(LOG_INFO, "Getting plugin object for \"%s\".\n", cp->name);
+	clog(LOG_INFO, "Getting plugin object for \"%s\".\n", cp->name);
 	/* create plugin */
 	create = (struct cpufreqd_plugin * (*) (void))dlsym(cp->library, "create_plugin");
 	error = dlerror();
 	if (error) {
-		cpufreqd_log(LOG_ERR, "get_cpufreqd_object(): %s\n", error);
+		clog(LOG_ERR, "get_cpufreqd_object(): %s\n", error);
 		return -1;
 	}
 	cp->plugin = create();
@@ -178,7 +176,7 @@ int get_cpufreqd_object(struct plugin_obj *cp) {
  */
 int initialize_plugin(struct plugin_obj *cp) {
 	int ret = 0;
-	cpufreqd_log(LOG_INFO, "Initializing plugin \"%s-%s\".\n",
+	clog(LOG_INFO, "Initializing plugin \"%s-%s\".\n",
 			cp->name, cp->plugin->plugin_name);
 	/* call init function */
 	if (cp->plugin->plugin_init != NULL) {
@@ -192,7 +190,7 @@ int initialize_plugin(struct plugin_obj *cp) {
  */
 int finalize_plugin(struct plugin_obj *cp) {
 	if (cp != NULL && cp->plugin->plugin_exit != NULL) {
-		cpufreqd_log(LOG_INFO, "Finalizing plugin \"%s-%s\".\n",
+		clog(LOG_INFO, "Finalizing plugin \"%s-%s\".\n",
 				cp->name, cp->plugin->plugin_name);
 		/* call exit function */
 		cp->plugin->plugin_exit();
@@ -227,7 +225,7 @@ void plugins_post_conf(struct LIST *plugins) {
 		/* try to post-configure the plugin */
 		if (plugin->plugin->plugin_post_conf != NULL
 				&& plugin->plugin->plugin_post_conf() != 0) {
-			cpufreqd_log(LOG_ERR, "Unable to configure plugin %s, removing\n",
+			clog(LOG_ERR, "Unable to configure plugin %s, removing\n",
 					plugin->plugin->plugin_name);
 
 			/* the next call is currently useless due to the fact that
@@ -263,7 +261,7 @@ struct plugin_obj *plugin_handle_section(const char *name, struct LIST *plugins)
 		
 		snprintf(starttag, MAX_STRING_LEN, "[%s]", o_plugin->plugin->plugin_name);
 		if (strncasecmp(name, starttag, MAX_STRING_LEN) == 0) {
-			cpufreqd_log(LOG_INFO, "Found Section for \"%s\".\n",
+			clog(LOG_INFO, "Found Section for \"%s\".\n",
 					o_plugin->plugin->plugin_name);
 			return o_plugin;
 		}
@@ -300,13 +298,12 @@ struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
 			if (strncmp(ckw->word, key, MAX_STRING_LEN) != 0)
 				continue;
 
-			cpufreqd_log(LOG_DEBUG, "Plugin %s handles keyword %s (value=%s)\n",
+			clog(LOG_DEBUG, "Plugin %s handles keyword %s (value=%s)\n",
 					o_plug->plugin->plugin_name, key, value);
 
 			if (ckw->parse(value, obj) != 0) {
-				cpufreqd_log(LOG_ERR, 
-						"%s: %s is unable to parse this value \"%s\". Discarded\n",
-						__func__, o_plug->plugin->plugin_name, value);
+				clog(LOG_ERR, "%s is unable to parse this value \"%s\". Discarded\n",
+						o_plug->plugin->plugin_name, value);
 				return NULL;
 			}
 			/* increase plugin use count */
@@ -315,7 +312,7 @@ struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
 			return ckw;
 		}
 	}
-	cpufreqd_log(LOG_NOTICE, "%s: unandled keyword \"%s\". Discarded\n", __func__, key);
+	clog(LOG_NOTICE, "unandled keyword \"%s\". Discarded\n", key);
 	return NULL;
 }
 
