@@ -24,6 +24,52 @@
 #include "cpufreqd_log.h"
 #include "cpufreqd.h"
 
+/* removes any reference to a given plugin from Ruls and Profile */
+#if 0
+static void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugin_obj *plugin) {
+	struct rule *tmp_rule = NULL;
+	struct profile *tmp_profile = NULL;
+	struct directive *d = NULL;
+	struct NODE *node1 = NULL;
+	
+	/* discard plugin related rule directives */
+	LIST_FOREACH_NODE(node, &configuration->rules) {
+		tmp_rule = (struct rule *)node->content;
+		node1 = tmp_rule->directives.first;
+		while (node1 != NULL) {
+			d = (struct directive *)node1->content;
+			if (d->plugin == plugin->plugin) {
+				cpufreqd_log(LOG_DEBUG, "%s: removing %s Rule directive %s\n",
+						__func__, tmp_rule->name,
+						d->keyword->word);
+				free_keyword_object(d->keyword, d->obj);
+				tmp_rule->directives_count--;
+				node1 = list_remove_node(&tmp_rule->directives, node1);
+			} else
+				node1 = node1->next;
+		}
+	}
+
+	/* same for profiles */
+	LIST_FOREACH_NODE(node, &configuration->profiles) {
+		tmp_profile = (struct profile *)node->content;
+		node1 = tmp_profile->directives.first;
+		while (node1 != NULL) {
+			d = (struct directive *)node1->content;
+			if (d->plugin == plugin->plugin) {
+				cpufreqd_log(LOG_DEBUG, "%s: removing %s Profile directive %s\n",
+						__func__, tmp_profile->name,
+						d->keyword->word);
+				free_keyword_object(d->keyword, d->obj);
+				tmp_profile->directives_count--;
+				node1 = list_remove_node(&tmp_profile->directives, node1);
+			} else
+				node1 = node1->next;
+		}
+	}
+}
+#endif
+
 /*
  *  Load plugins from a list of plugin_obj's. Also cleanup the
  *  list if a plugin fails to load
@@ -167,6 +213,34 @@ void update_plugin_states(struct LIST *plugins) {
 		if (o_plugin != NULL && o_plugin->used > 0 && 
 				o_plugin->plugin->plugin_update != NULL) {
 			o_plugin->plugin->plugin_update();
+		}
+	}
+}
+
+void plugins_post_conf(struct LIST *plugins) {
+	struct NODE *node = NULL;
+	struct plugin_obj *plugin = NULL;
+	/* plugin POST CONFIGURATION */
+	node = plugins->first;
+	while (node) {
+		plugin = (struct plugin_obj *) node->content;
+		/* try to post-configure the plugin */
+		if (plugin->plugin->plugin_post_conf != NULL
+				&& plugin->plugin->plugin_post_conf() != 0) {
+			cpufreqd_log(LOG_ERR, "Unable to configure plugin %s, removing\n",
+					plugin->plugin->plugin_name);
+
+			/* the next call is currently useless due to the fact that
+			 * plugins are post-conf'ed before any rule/profile is read
+			 */
+			/*
+			deconfigure_plugin(config, plugin);
+			*/
+			finalize_plugin(plugin);
+			close_plugin(plugin);
+			node = list_remove_node(plugins, node);
+		} else {
+			node = node->next;
 		}
 	}
 }

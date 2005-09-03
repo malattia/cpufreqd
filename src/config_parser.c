@@ -542,50 +542,6 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 	}
 }
 
-void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugin_obj *plugin);
-void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugin_obj *plugin) {
-	struct rule *tmp_rule = NULL;
-	struct profile *tmp_profile = NULL;
-	struct directive *d = NULL;
-	struct NODE *node1 = NULL;
-	
-	/* discard plugin related rule directives */
-	LIST_FOREACH_NODE(node, &configuration->rules) {
-		tmp_rule = (struct rule *)node->content;
-		node1 = tmp_rule->directives.first;
-		while (node1 != NULL) {
-			d = (struct directive *)node1->content;
-			if (d->plugin == plugin->plugin) {
-				cpufreqd_log(LOG_DEBUG, "%s: removing %s Rule directive %s\n",
-						__func__, tmp_rule->name,
-						d->keyword->word);
-				free_keyword_object(d->keyword, d->obj);
-				tmp_rule->directives_count--;
-				node1 = list_remove_node(&tmp_rule->directives, node1);
-			} else
-				node1 = node1->next;
-		}
-	}
-
-	/* same for profiles */
-	LIST_FOREACH_NODE(node, &configuration->profiles) {
-		tmp_profile = (struct profile *)node->content;
-		node1 = tmp_profile->directives.first;
-		while (node1 != NULL) {
-			d = (struct directive *)node1->content;
-			if (d->plugin == plugin->plugin) {
-				cpufreqd_log(LOG_DEBUG, "%s: removing %s Profile directive %s\n",
-						__func__, tmp_profile->name,
-						d->keyword->word);
-				free_keyword_object(d->keyword, d->obj);
-				tmp_profile->directives_count--;
-				node1 = list_remove_node(&tmp_profile->directives, node1);
-			} else
-				node1 = node1->next;
-		}
-	}
-}
-
 /* intialize the cpufreqd_conf object 
  * by reading the configuration file
  */
@@ -598,6 +554,7 @@ int init_configuration(struct cpufreqd_conf *configuration)
 	struct plugin_obj *plugin = NULL;
 	char *clean = NULL;
 	char buf[256];
+	int plugins_post_confed = 0; /* did I already run post_conf for all? */
 
 	/* configuration file */
 	cpufreqd_log(LOG_INFO, "init_configuration(): reading configuration file %s\n",
@@ -636,6 +593,11 @@ int init_configuration(struct cpufreqd_conf *configuration)
 
 		/* if Profile scan profile options */
 		if (strstr(clean,"[Profile]")) {
+
+			if (!plugins_post_confed) {
+				plugins_post_conf(&configuration->plugins);
+				plugins_post_confed = 1;
+			}
 
 			n = node_new(NULL, sizeof(struct profile));
 			if (n == NULL) {
@@ -684,6 +646,11 @@ int init_configuration(struct cpufreqd_conf *configuration)
 
 		/* if Rule scan rules options */
 		if (strstr(clean,"[Rule]")) {
+
+			if (!plugins_post_confed) {
+				plugins_post_conf(&configuration->plugins);
+				plugins_post_confed = 1;
+			}
 
 			n = node_new(NULL, sizeof(struct rule));
 			if (n == NULL) {
@@ -747,23 +714,7 @@ int init_configuration(struct cpufreqd_conf *configuration)
 		cpufreqd_log(LOG_ERR, "init_configuration(): No rules found!\n");
 		return -1;
 	}
-	
-	/* plugin POST CONFIGURATION */
-	LIST_FOREACH_NODE(node, &configuration->plugins) {
-		plugin = (struct plugin_obj *) node->content;
-		/* try to post-configure the plugin */
-		if (plugin->plugin->plugin_post_conf != NULL &&
-				plugin->plugin->plugin_post_conf() != 0) {
-			cpufreqd_log(LOG_ERR, "Unable to configure plugin %s, removing\n",
-					plugin->plugin->plugin_name);
 
-			deconfigure_plugin(configuration, plugin);
-			/* mark unused, will be removed later */
-			plugin->used = 0;
-		}
-	}
-
-	
 	/*
 	 * associate rules->profiles
 	 * go through rules and associate to the proper profile

@@ -35,6 +35,7 @@ int     get_cpufreqd_object	(struct plugin_obj *cp);
 int     initialize_plugin	(struct plugin_obj *cp);
 int     finalize_plugin		(struct plugin_obj *cp);
 void	update_plugin_states	(struct LIST *plugins);
+void	plugins_post_conf	(struct LIST *plugins);
 
 struct plugin_obj *plugin_handle_section
 				(const char *name, struct LIST *plugins);
