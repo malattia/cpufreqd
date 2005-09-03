@@ -107,8 +107,7 @@ static int check_battery(struct battery_info *info) {
 	/** /proc/acpi/battery/.../info **/
 	fp = fopen(file_name, "r");
 	if (!fp) {
-		cpufreqd_log(LOG_ERR , "%s - check_battery(): %s: %s\n", 
-				acpi_battery.plugin_name, file_name, strerror(errno));
+		clog(LOG_ERR , "%s: %s\n", file_name, strerror(errno));
 		return 0;
 	}
 
@@ -146,25 +145,24 @@ static int acpi_battery_init(void) {
 			/* check this battery */
 			check_battery(&(infos[n]));
 
-			cpufreqd_log(LOG_INFO, "acpi_battery_init() - %s battery path: %s, %s, capacity:%d\n",
+			clog(LOG_INFO, "%s battery path: %s, %s, capacity:%d\n",
 					infos[n].name, infos[n].path, 
 					infos[n].present?"present":"absent", infos[n].capacity);
 			
 			free(namelist[n]);
 		}
 		free(namelist);
-		cpufreqd_log(LOG_INFO, "acpi_battery_init() - found %d battery slots\n", bat_num);
+		clog(LOG_INFO, "found %d battery slots\n", bat_num);
 
 	} else if (n < 0) {
-		cpufreqd_log(LOG_ERR, "acpi_battery_init() - error, acpi_battery "
-				"module not compiled or inserted (%s: %s)?\n",
+		clog(LOG_ERR, "error, acpi_battery module not compiled or inserted (%s: %s)?\n",
 				ACPI_BATTERY_DIR, strerror(errno));
-		cpufreqd_log(LOG_ERR, "acpi_battery_init() - exiting.\n");
+		clog(LOG_ERR, "exiting.\n");
 		return -1;   
 
 	} else {
-		cpufreqd_log(LOG_ERR, "acpi_battery_init() - no batteries found, not a laptop?\n");
-		cpufreqd_log(LOG_ERR, "acpi_battery_init() - exiting.\n");
+		clog(LOG_ERR, "no batteries found, not a laptop?\n");
+		clog(LOG_ERR, "exiting.\n");
 		return -1;
 	}
 
@@ -175,7 +173,7 @@ static int acpi_battery_exit(void) {
 	if (infos != NULL) {
 		free(infos);
 	}
-	cpufreqd_log(LOG_INFO, "%s - exited.\n", acpi_battery.plugin_name);
+	clog(LOG_INFO, "%s - exited.\n", acpi_battery.plugin_name);
 	return 0;
 }
 
@@ -186,47 +184,41 @@ static int acpi_battery_parse(const char *ev, void **obj) {
 	char battery_name[32];
 	struct battery_interval *ret = calloc(1, sizeof(struct battery_interval));
 	if (ret == NULL) {
-		cpufreqd_log(LOG_ERR, 
-				"%s - acpi_battery_parse() couldn't make enough room for battery_interval (%s)\n",
+		clog(LOG_ERR, "couldn't make enough room for battery_interval (%s)\n",
 				strerror(errno));
 		return -1;
 	}
 
-	cpufreqd_log(LOG_DEBUG, "%s - acpi_battery_parse() called with: %s\n",
-			acpi_battery.plugin_name, ev);
+	clog(LOG_DEBUG, "called with: %s\n", ev);
 
 	/* try to parse the %[a-zA-Z0-9]:%d-%d format first */
 	if (sscanf(ev, "%32[a-zA-Z0-9]:%d-%d", battery_name, &(ret->min), &(ret->max)) == 3) {
 		/* validate battery name and assign pointer to struct battery_info */
 		if ((ret->bat = get_battery_info(battery_name)) == NULL) {
-			cpufreqd_log(LOG_ERR, "%s - acpi_battery_parse(): non existent thermal zone %s!\n",
-					acpi_battery.plugin_name, battery_name);
+			clog(LOG_ERR, "non existent thermal zone %s!\n",
+					battery_name);
 			free(ret);
 			return -1;
 		}
-		cpufreqd_log(LOG_INFO, "%s - acpi_battery_parse() parsed: %s %d-%d\n",
-				acpi_battery.plugin_name, ret->bat->name, ret->min, ret->max);
+		clog(LOG_INFO, "parsed %s %d-%d\n", ret->bat->name, ret->min, ret->max);
 
 	} else if (sscanf(ev, "%32[a-zA-Z0-9]:%d", battery_name, &(ret->min)) == 2) {
 		/* validate battery name and assign pointer to struct battery_info */
 		if ((ret->bat = get_battery_info(battery_name)) == NULL) {
-			cpufreqd_log(LOG_ERR, "%s - acpi_battery_parse(): non existent thermal zone %s!\n",
-					acpi_battery.plugin_name, battery_name);
+			clog(LOG_ERR, "non existent thermal zone %s!\n",
+					battery_name);
 			free(ret);
 			return -1;
 		}
 		ret->max = ret->min;
-		cpufreqd_log(LOG_INFO, "%s - acpi_battery_parse() parsed: %s %d\n",
-				acpi_battery.plugin_name, ret->bat->name, ret->min);
+		clog(LOG_INFO, "parsed %s %d\n", ret->bat->name, ret->min);
 
 	} else if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) == 2) {
-		cpufreqd_log(LOG_INFO, "%s - acpi_battery_parse() parsed: %d-%d\n",
-				acpi_battery.plugin_name, ret->min, ret->max);
+		clog(LOG_INFO, "parsed %d-%d\n", ret->min, ret->max);
 
 	} else if (sscanf(ev, "%d", &(ret->min)) == 1) {
 		ret->max = ret->min;
-		cpufreqd_log(LOG_INFO, "%s - acpi_battery_parse() parsed: %d\n",
-				acpi_battery.plugin_name, ret->min);
+		clog(LOG_INFO, "parsed %d\n", ret->min);
 
 	} else {
 		free(ret);
@@ -234,8 +226,7 @@ static int acpi_battery_parse(const char *ev, void **obj) {
 	}
 
 	if (ret->min > ret->max) {
-		cpufreqd_log(LOG_ERR, "%s - acpi_battery_parse() Min higher than Max?\n",
-				acpi_battery.plugin_name);
+		clog(LOG_ERR, "Min higher than Max?\n");
 		free(ret);
 		return -1;
 	}
@@ -253,8 +244,7 @@ static int acpi_battery_evaluate(const void *s) {
 		level = bi->bat->present ? bi->bat->level : -1;
 	}
 
-	cpufreqd_log(LOG_DEBUG, "%s - acpi_battery_evaluate() called: %d-%d [%s:%d]\n",
-			acpi_battery.plugin_name, bi->min, bi->max, 
+	clog(LOG_DEBUG, "called %d-%d [%s:%d]\n", bi->min, bi->max, 
 			bi != NULL && bi->bat != NULL ? bi->bat->name : "Medium", level);
 
 	return (level >= bi->min && level <= bi->max) ? MATCH : DONT_MATCH;
@@ -290,10 +280,8 @@ static int acpi_battery_update(void) {
 		snprintf(file_name, 256, "%s%s", infos[i].path, ACPI_BATTERY_STATE_FILE);
 		fp = fopen(file_name, "r");
 		if (!fp) {
-			cpufreqd_log(LOG_ERR, "acpi_battery_update(): %s: %s\n",
-					file_name, strerror(errno));
-			cpufreqd_log(LOG_INFO,
-					"acpi_battery_update(): battery path %s disappeared? "
+			clog(LOG_ERR, "%s: %s\n", file_name, strerror(errno));
+			clog(LOG_INFO, "battery path %s disappeared? "
 					"send SIGHUP to re-read batteries\n",
 					infos[i].path);
 			continue;
@@ -305,8 +293,7 @@ static int acpi_battery_update(void) {
 				capacity += infos[i].capacity;
 				infos[i].level = 100 * (tmp_remaining / (double)infos[i].capacity);
 				n_read++;
-				cpufreqd_log(LOG_INFO,
-						"acpi_battery_update(): battery life for %s is %d%%\n",
+				clog(LOG_INFO, "battery life for %s is %d%%\n",
 						infos[i].name, infos[i].level);
 			}
 		}
@@ -319,8 +306,7 @@ static int acpi_battery_update(void) {
 	else
 		battery_level = -1;
 
-	cpufreqd_log(LOG_INFO, "acpi_battery_update(): battery life %d%%\n",
-			battery_level);
+	clog(LOG_INFO, "battery life %d%%\n", battery_level);
 
 	return 0;
 }
