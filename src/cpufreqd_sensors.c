@@ -135,6 +135,7 @@ static int sensors_get(void) {
 	while (list) {
 		sensors_get_feature(*(list->chip), list->feat->number, &list->value);
 		clog(LOG_DEBUG, "%s: %.3f\n", list->feat->name, list->value);
+		list = list->next;
 	}
 	
 #if 0
@@ -178,6 +179,7 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 	const sensors_feature_data *feat;
 	int nr = 0, nr1 = 0, nr2 = 0;
 	struct sensors_monitor *list = monitor_list;
+	struct sensors_monitor *ret = NULL;
 
 	/* first look if such a name is already cached */
 	while (list) {
@@ -200,12 +202,23 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 				continue;
 
 			/* cache it */
-			} else if ((list = calloc(1, sizeof(struct sensors_monitor))) != NULL) {
+			} else if ((ret = calloc(1, sizeof(struct sensors_monitor))) != NULL) {
 				clog(LOG_DEBUG, "Creating new sensors_monitor for %s\n",
 						name);
-				list->chip = chip;
-				list->feat = feat;
-				return list;
+				ret->chip = chip;
+				ret->feat = feat;
+				ret->next = NULL;
+				/* append monitor to the list */
+				list = monitor_list;
+				if (list != NULL) {
+					while (list->next != NULL) {
+						list = list->next;
+					}
+					list->next = ret;
+				} else {
+					monitor_list = ret;
+				}
+				return ret;
 			/* got somethign wrong... */
 			} else {
 				clog(LOG_ERR, "Couldn't create new sensor monitor for %s (%s)\n",
@@ -229,20 +242,18 @@ static int sensor_parse(const char *ev, void **obj) {
 	clog(LOG_DEBUG, "called with %s\n", ev);
 
 	/* try to parse the %[a-zA-Z0-9]:%d-%d format first */
-	if (sscanf(ev, "%32[^:]:%f-%f", ret->name, (float *)&ret->min, (float *)&ret->max) == 3) {
+	if (sscanf(ev, "%32[^:]:%lf-%lf", ret->name, &ret->min, &ret->max) == 3) {
 		/* validate feature name */
 		if ((ret->monitor = validate_feature_name(ret->name)) != NULL) {
 			clog(LOG_INFO, "parsed %s %.3f-%.3f\n", ret->name, ret->min, ret->max);
-			/* append monitor to the list */
-			while (list->next)
-				list = list->next;
-			list->next = ret->monitor;
 			*obj = ret;
 		}
 		else {
 			clog(LOG_ERR, "feature \"%s\" does not exist, try 'sensors -u' "
-					"to see a full list ov available feature names.\n");
+					"to see a full list of available feature names.\n",
+					ret->name);
 			free(ret);
+			return -1;
 		}
 	} else {
 		free(ret);
