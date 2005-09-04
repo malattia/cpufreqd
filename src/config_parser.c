@@ -28,8 +28,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <errno.h>
 #include <ctype.h>
+#include <errno.h>
+#include <grp.h>
+#include <limits.h>
+#include <sys/types.h>
 #include <string.h>
 #include "config_parser.h"
 #include "cpufreq_utils.h"
@@ -106,6 +109,8 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 	char *name;
 	char *value;
 	char *token;
+	struct group *grp = NULL;
+	long int gid = 0;
 	struct plugin_obj o_plugin;
 	struct NODE *n_plugin;
 
@@ -210,6 +215,32 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 				configuration->enable_remote = atoi (value);
 				clog(LOG_WARNING, "Remote control %s.\n", 
 						configuration->enable_remote ? "enabled" : "disabled");
+			}
+			continue;
+		}
+		if (strcmp(name,"remote_group") == 0) {
+			if (value != NULL) {
+				gid = strtol(value, &token, 10);
+				
+				/* in case value doesn't hold a number or that
+				 * number is not acceptable try to consider it a
+				 * groupname otherwise validate the given gid.
+				 * If it still fails, shout!
+				 * Note: the group_id limit is pretty arbitrary here...
+				 */
+				if ((*token == '\0' && gid > 0 && gid < USHRT_MAX
+						&& (grp = getgrgid((gid_t)gid)) != NULL)
+						|| (grp = getgrnam(value)) != NULL) {
+
+					configuration->remote_gid = grp->gr_gid;
+					clog(LOG_WARNING, "Remote controls will be r/w from group %s (%d).\n",
+							grp->gr_name, grp->gr_gid);
+				} else {
+					configuration->remote_gid = 0;
+					clog(LOG_WARNING, "remote_group contains an invalid value "
+							"(%s), r/w group permissions will "
+							"remain unchanged.\n", value);
+				}
 			}
 			continue;
 		}
@@ -376,10 +407,7 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 			if (max_is_percent)
 				p->policy.max = percent_to_absolute(limits[0].max, p->policy.max);
 		}
-		/* normalize frequencies if such informations are available 
-		 *
-		 * TODO: move this to init_configuration() ?
-		 */
+		/* normalize frequencies if such informations are available */
 		p->policy.max = normalize_frequency(limits, freq, p->policy.max);
 		p->policy.min = normalize_frequency(limits, freq, p->policy.min);
 	} else {

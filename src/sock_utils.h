@@ -17,11 +17,14 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #define CPUFREQD_SOCKET		"/cpufreqd"
 #define TMP_DIR_TEMPL		"/tmp/cpufreqd-XXXXXX"
 #define TMP_DIR_TEMPL_LEN	21
 
-char *create_temp_dir(char *buf);
+char *create_temp_dir(char *buf, gid_t gid);
 void delete_temp_dir(const char *name);
-int open_unix_sock(const char *dirname);
+int open_unix_sock(const char *dirname, gid_t gid);
 void close_unix_sock(int fd);

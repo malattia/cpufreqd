@@ -67,6 +67,7 @@ struct cpufreqd_conf {
 	int log_level;
 	unsigned int cpu_num;
 	unsigned int enable_remote;
+	gid_t remote_gid;
 	unsigned int double_check;
 	unsigned int poll_interval;
 	unsigned int has_sysfs;

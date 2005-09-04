@@ -23,8 +23,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include "cpufreqd_log.h"
@@ -33,15 +31,27 @@
 
 /* create a temporary directory for cpufreqd socket.
  * It expects a buffer at least TMP_FILE_TEMPL_LEN long.
+ * Also, if the gid parameter is > 0 it changes
+ * permissions on the directory in order to let the provided
+ * group read/execute.
  */
-char *create_temp_dir(char *buf) {
+char *create_temp_dir(char *buf, gid_t gid) {
 	strncpy(buf, TMP_DIR_TEMPL, TMP_DIR_TEMPL_LEN);
-	if (mkdtemp(buf) != NULL) {
-		clog(LOG_INFO, "Created temporary dir: '%s'.\n", buf);
-		return buf;
+	
+	if (mkdtemp(buf) == NULL) {
+		clog(LOG_ERR, "Couldn't create temporary dir: %s.\n", strerror(errno));
+		return NULL;
+		
+	} else if (gid > 0 && chmod(buf, S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IXGRP) < 0) {
+		clog(LOG_ERR, "Couldn't chmod %s (%s).\n", buf, strerror(errno));
+
+	} else if (gid > 0 && chown(buf, 0, gid)) {
+		clog(LOG_ERR, "Couldn't chown %s (%s).\n", buf, strerror(errno));
 	}
-	clog(LOG_ERR, "Couldn't create temporary dir: %s.\n", strerror(errno));
-	return NULL;
+
+	clog(LOG_INFO, "Created temporary dir: '%s'.\n", buf);
+	return buf;
 }
 
 /* removes the temporary directory named name
@@ -77,31 +87,43 @@ void delete_temp_dir(const char *dirname) {
 
 /* opens a PF_UNIX socket and returns the file
  * descriptor (>0) on success, -1 otherwise.
+ * Also, if the gid parameter is > 0 it changes
+ * permissions on the file in order to let the privided
+ * group read/write to the socket
  */
-int open_unix_sock(const char *dirname) {
+int open_unix_sock(const char *dirname, gid_t gid) {
 	int fd = -1;
 	struct sockaddr_un sa;
 	
 	sa.sun_family = AF_UNIX;
-	snprintf(sa.sun_path, MAX_PATH_LEN , "%s%s", dirname, CPUFREQD_SOCKET);
+	snprintf(sa.sun_path, 108 , "%s%s", dirname, CPUFREQD_SOCKET);
 	
 	if ((fd = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
-		clog(LOG_ALERT, "socket(): %s.\n", strerror(errno));
+		clog(LOG_ERR, "socket(): %s.\n", strerror(errno));
 
 	} else if (bind(fd, &sa, sizeof(sa)) == -1) {
-		clog(LOG_ALERT, "bind(): %s.\n", strerror(errno));
+		clog(LOG_ERR, "bind(): %s.\n", strerror(errno));
 		close(fd);
 		fd = -1;
 
 	} else if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-		clog(LOG_ALERT, "fcntl(): %s.\n", strerror(errno));
+		clog(LOG_ERR, "fcntl(): %s.\n", strerror(errno));
 		close(fd);
 		fd = -1;
 
 	} else if (listen(fd, 5) == -1) {
-		clog(LOG_ALERT, "listen(): %s.\n", strerror(errno));
+		clog(LOG_ERR, "listen(): %s.\n", strerror(errno));
 		close(fd);
 		fd = -1;
+		
+	} else if (gid > 0 && chmod(sa.sun_path, S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IWGRP | S_IXGRP) < 0) {
+		clog(LOG_ERR, "Couldn't chmod %s (%s).\n",
+				sa.sun_path, strerror(errno));
+
+	} else if (gid > 0 && chown(sa.sun_path, 0, gid) < 0) {
+		clog(LOG_ERR, "Couldn't chown %s (%s).\n",
+				sa.sun_path, strerror(errno));
 	}
 	return fd;
 }

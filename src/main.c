@@ -30,6 +30,7 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include "config_parser.h"
 #include "cpufreq_utils.h"
@@ -64,6 +65,7 @@ struct cpufreqd_conf configuration = {
 	.log_level_overridden	= 0,
 	.log_level		= DEFAULT_VERBOSITY,
 	.enable_remote		= 0,
+	.remote_gid		= 0,
 	.double_check		= 0,
 	.print_help		= 0,
 	.print_version		= 0
@@ -267,10 +269,11 @@ static void alarm_handler(int signo) {
 }
 
 static void hup_handler(int signo) {
-	clog(LOG_WARNING, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
 #if 0
 	clog(LOG_NOTICE, "Caught HUP signal (%s), reloading configuration file.\n", strsignal(signo));
 	force_reinit = 1;
+#else
+	clog(LOG_WARNING, "Caught HUP signal (%s), ignored.\n", strsignal(signo));
 #endif
 }
 
@@ -510,8 +513,11 @@ int main (int argc, char *argv[]) {
 	memset(configuration.limits, 0, configuration.cpu_num * sizeof(struct cpufreq_limits));
 	for (i=0; i<configuration.cpu_num; i++) {
 		/* if one of the probes fails remove all the others also */
-		if (cpufreq_get_hardware_limits(i, &((configuration.limits+i)->min), &((configuration.limits+i)->max))!=0) {
-			/* TODO: if libcpufreq fails try to read /proc/cpuinfo and warn about this not being reliable */
+		if (cpufreq_get_hardware_limits(i,
+					&((configuration.limits+i)->min), &((configuration.limits+i)->max))!=0) {
+			/* TODO: if libcpufreq fails try to read /proc/cpuinfo
+			 * and warn about this not being reliable
+			 */
 			clog(LOG_WARNING, "Unable to get hardware frequency limits for CPU%d.\n", i);
 			free(configuration.limits);
 			configuration.limits = NULL;
@@ -539,19 +545,13 @@ cpufreqd_start:
 		goto out_config_read;
 	}
 
-	/* initialize plugins, if something goes wrong unload with all its
-	 * dependencies (rules and profiles)
-	 *
-	 * ??
-	 */
-	
 	/* setup UNIX socket if necessary */
 	if (configuration.enable_remote) {
 		dirname[0] = '\0';
-		if (create_temp_dir(dirname) == NULL) {
+		if (create_temp_dir(dirname, configuration.remote_gid) == NULL) {
 			clog(LOG_ERR, "Couldn't create temporary directory %s\n", dirname);
 			cpufreqd_sock = -1;
-		} else if ((cpufreqd_sock = open_unix_sock(dirname)) == -1) {
+		} else if ((cpufreqd_sock = open_unix_sock(dirname, configuration.remote_gid)) == -1) {
 			delete_temp_dir(dirname);
 			clog(LOG_ERR, "Couldn't open socket, remote controls disabled\n");
 		} else {
@@ -559,7 +559,7 @@ cpufreqd_start:
 		}
 	}
 
-	/* Validate plugins, if no rules left exit.... */
+	/* Validate plugins, if none left exit.... */
 	if (validate_plugins(&configuration.plugins) == 0) {
 		cpufreqd_log(LOG_CRIT, "Hey! all the plugins I loaded are useless, "
 				"maybe your configuration needs some rework.\n"
