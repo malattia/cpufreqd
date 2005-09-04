@@ -32,19 +32,22 @@ AC_ARG_WITH([sensors],
 	[sensors_with=yes]
 	)
 
+OLD_CFLAGS="$CFLAGS"
+OLD_LDFLAGS="$LDFLAGS"
+
 if test "x$sensors_with" != xno; then
+
 	if test "x$sensors_with" != xyes; then
 		CFLAGS="$CFLAGS -I${sensors_with}/include"
 		LDFLAGS="$LDFLAGS -L${sensors_with}/lib -lsensors"
 	else
-		sensors_with="/usr"
 		LDFLAGS="$LDFLAGS -lsensors"
 	fi
 
-	AC_CHECK_HEADER([sensors/sensors.h], [
-		AC_CHECK_LIB([sensors], [sensors_init], [
-			AC_DEFINE(SENSORS_SUPPORT, , [Define this to compile sensors support])
-			if test "x$sensors_with" != x__default__; then
+	AC_CHECK_HEADER([sensors/sensors.h],
+		[ AC_CHECK_LIB([sensors], [sensors_init],
+			[ AC_DEFINE(SENSORS_SUPPORT, , [Define this to compile sensors support])
+			if test "x$sensors_with" != xyes; then
 				ADD_CFLAGS="$ADD_CFLAGS -I${sensors_with}/include"
 				ADD_LDFLAGS="$ADD_LDFLAGS -L${sensors_with}/lib -lsensors"
 			else
@@ -54,11 +57,13 @@ if test "x$sensors_with" != xno; then
 			],
 			[sensors_support=failed])
 		],
-		[sensors_support=failed]
-	)
+		[sensors_support=failed])
 fi
 
-if test "x$sensors_support" == xfailed; then
+CFLAGS="$OLD_CFLAGS"
+LDFLAGS="$OLD_LDFLAGS"
+
+if test "x$sensors_support" = xfailed && test "x$sensors_with" != xyes; then
 	echo '***************************************************'
 	echo '***      ERROR WHILE CONFIGURING CPUFREQD       ***'
 	echo '***************************************************'

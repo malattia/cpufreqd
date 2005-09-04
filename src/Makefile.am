@@ -8,8 +8,6 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-D_POSIX_SOURCE -D_GNU_SOURCE \
 	@ADD_CFLAGS@
 
-AM_LDFLAGS = -module -avoid-version -export-dynamic @ADD_LDFLAGS@
-
 sbin_PROGRAMS = cpufreqd
 
 cpufreqd_SOURCES = \
@@ -21,6 +19,8 @@ cpufreqd_SOURCES = \
 		sock_utils.c \
 		cpufreq_utils.c \
 		list.c
+
+cpufreqd_LDFLAGS = -export-dynamic
 
 BUILD_PLUGINS = \
 		cpufreqd_programs.la \
@@ -39,27 +39,51 @@ lib_LTLIBRARIES = $(BUILD_PLUGINS)
 cpufreqd_nforce2_la_SOURCES = \
 		cpufreqd_nforce2.c
 
+cpufreqd_nforce2_la_LDFLAGS = \
+		-module -avoid-version
+
 cpufreqd_apm_la_SOURCES = \
 		cpufreqd_apm.c
 
+cpufreqd_apm_la_LDFLAGS = \
+		-module -avoid-version
+
 cpufreqd_acpi_ac_la_SOURCES = \
 		cpufreqd_acpi_ac.c
+
+cpufreqd_acpi_ac_la_LDFLAGS = \
+		-module -avoid-version
 								
 cpufreqd_acpi_temperature_la_SOURCES = \
 		cpufreqd_acpi_temperature.c
 
+cpufreqd_acpi_temperature_la_LDFLAGS = \
+		-module -avoid-version
+
 cpufreqd_acpi_battery_la_SOURCES = \
 		cpufreqd_acpi_battery.c
+
+cpufreqd_acpi_battery_la_LDFLAGS = \
+		-module -avoid-version
 
 cpufreqd_cpu_la_SOURCES = \
 		cpufreqd_cpu.c
 
+cpufreqd_cpu_la_LDFLAGS = \
+		-module -avoid-version
+
 cpufreqd_programs_la_SOURCES = \
 		cpufreqd_programs.c
+
+cpufreqd_programs_la_LDFLAGS = \
+		-module -avoid-version
 
 if SENSORS_SUPPORT
 cpufreqd_sensors_la_SOURCES = \
 		cpufreqd_sensors.c
+
+cpufreqd_sensors_la_LDFLAGS = \
+		-module -avoid-version @ADD_LDFLAGS@
 endif
 
 noinst_HEADERS = \
