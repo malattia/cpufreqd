@@ -134,40 +134,10 @@ static int sensors_get(void) {
 
 	while (list) {
 		sensors_get_feature(*(list->chip), list->feat->number, &list->value);
-		clog(LOG_DEBUG, "%s: %.3f\n", list->feat->name, list->value);
+		clog(LOG_INFO, "%s: %.3f\n", list->feat->name, list->value);
 		list = list->next;
 	}
 	
-#if 0
-	/* get all sensors from first chip */
-	const sensors_chip_name *chip;
-	const sensors_feature_data *feat;
-	double res;
-	int i = 0, nr=0, nr1=0, nr2=0;
-
-	clog(LOG_DEBUG, "getting sensors names\n");
-	while ( (chip = sensors_get_detected_chips(&nr)) != NULL) {
-		nr1 = nr2 = 0;
-		
-		clog(LOG_DEBUG, "chip#%d - prefix=%s, bus=%x, addr=%x, busname=%s\n",
-				nr, chip->prefix, chip->bus, chip->addr, chip->busname);
-
-		/* until our buffer is full */
-		while ((feat = sensors_get_all_features(*chip, &nr1, &nr2)) != NULL) {
-
-			/* sensor? */
-			if(feat->mapping != SENSORS_NO_MAPPING) {
-				/*clog(LOG_DEBUG, "SENSORS_NO_MAPPING %s\n", feat->name);*/
-				continue;
-			}
-
-			sensors_get_feature(*chip, feat->number, &res);
-			clog(LOG_DEBUG, "%s: %f\n", feat->name, res);
-			i++;
-		}
-	}
-	clog(LOG_DEBUG, "read %d features\n", i);
-#endif
 	return 0;
 }
 
@@ -208,7 +178,7 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 				ret->chip = chip;
 				ret->feat = feat;
 				ret->next = NULL;
-				/* append monitor to the list */
+				/* append monitor to the cache list */
 				list = monitor_list;
 				if (list != NULL) {
 					while (list->next != NULL) {
@@ -231,7 +201,7 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 }
 
 static int sensor_parse(const char *ev, void **obj) {
-	struct sensors_monitor *list = monitor_list;
+
 	struct sensor_object *ret = calloc(1, sizeof(struct sensor_object));
 	if (ret == NULL) {
 		clog(LOG_ERR, "couldn't make enough room for a sensor_object (%s)\n",

@@ -287,7 +287,7 @@ static int acpi_battery_update(void) {
 	else
 		battery_level = -1;
 
-	clog(LOG_INFO, "battery life %d%%\n", battery_level);
+	clog(LOG_INFO, "medium battery life %d%%\n", battery_level);
 
 	return 0;
 }
