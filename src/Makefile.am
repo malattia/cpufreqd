@@ -4,7 +4,7 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-Wmissing-declarations -Wredundant-decls \
 	-Wnested-externs -Winline -Wundef -Wbad-function-cast \
 	-Waggregate-return \
-	-std=c99 -pedantic \
+	-std=c99 \
 	-D_POSIX_SOURCE -D_GNU_SOURCE \
 	@ADD_CFLAGS@
 
