@@ -36,10 +36,13 @@
  * group read/execute.
  */
 char *create_temp_dir(char *buf, gid_t gid) {
+	mode_t oldmode = 0;
 	strncpy(buf, TMP_DIR_TEMPL, TMP_DIR_TEMPL_LEN);
 
+	oldmode = umask(S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
 	if (mkdtemp(buf) == NULL) {
 		clog(LOG_ERR, "Couldn't create temporary dir: %s.\n", strerror(errno));
+		umask(oldmode);
 		return NULL;
 
 	} else if (gid > 0 && chmod(buf, S_IRUSR | S_IWUSR | S_IXUSR |
@@ -49,7 +52,7 @@ char *create_temp_dir(char *buf, gid_t gid) {
 	} else if (gid > 0 && chown(buf, 0, gid)) {
 		clog(LOG_ERR, "Couldn't chown %s (%s).\n", buf, strerror(errno));
 	}
-
+	umask(oldmode);
 	clog(LOG_INFO, "Created temporary dir: '%s'.\n", buf);
 	return buf;
 }
