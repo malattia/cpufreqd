@@ -126,7 +126,8 @@ int daemonize (void) {
 
 	/* disconnect */
 	setsid ();
-	umask (0);
+	/* set a decent umask */
+	umask (S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
 
 	/* set up stdout to log and stderr,stdin to /dev/null */
 	if (freopen("/dev/null", "r", stdin) == NULL) {

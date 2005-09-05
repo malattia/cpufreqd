@@ -37,11 +37,11 @@
  */
 char *create_temp_dir(char *buf, gid_t gid) {
 	strncpy(buf, TMP_DIR_TEMPL, TMP_DIR_TEMPL_LEN);
-	
+
 	if (mkdtemp(buf) == NULL) {
 		clog(LOG_ERR, "Couldn't create temporary dir: %s.\n", strerror(errno));
 		return NULL;
-		
+
 	} else if (gid > 0 && chmod(buf, S_IRUSR | S_IWUSR | S_IXUSR |
 				S_IRGRP | S_IXGRP) < 0) {
 		clog(LOG_ERR, "Couldn't chmod %s (%s).\n", buf, strerror(errno));
@@ -92,12 +92,16 @@ void delete_temp_dir(const char *dirname) {
  * group read/write to the socket
  */
 int open_unix_sock(const char *dirname, gid_t gid) {
+	mode_t oldmode = 0;
 	int fd = -1;
 	struct sockaddr_un sa;
 	
 	sa.sun_family = AF_UNIX;
 	snprintf(sa.sun_path, 108 , "%s%s", dirname, CPUFREQD_SOCKET);
 	
+	if (gid > 0) {
+		oldmode = umask(S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
+	}
 	if ((fd = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
 		clog(LOG_ERR, "socket(): %s.\n", strerror(errno));
 
@@ -116,14 +120,12 @@ int open_unix_sock(const char *dirname, gid_t gid) {
 		close(fd);
 		fd = -1;
 		
-	} else if (gid > 0 && chmod(sa.sun_path, S_IRUSR | S_IWUSR | S_IXUSR |
-				S_IRGRP | S_IWGRP | S_IXGRP) < 0) {
-		clog(LOG_ERR, "Couldn't chmod %s (%s).\n",
-				sa.sun_path, strerror(errno));
-
 	} else if (gid > 0 && chown(sa.sun_path, 0, gid) < 0) {
 		clog(LOG_ERR, "Couldn't chown %s (%s).\n",
 				sa.sun_path, strerror(errno));
+	}
+	if (gid > 0) {
+		umask(oldmode);
 	}
 	return fd;
 }
