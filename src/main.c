@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili <malattia@gmail.com>
+ *  Copyright (C) 2002-2005  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -235,8 +235,8 @@ static int read_args (int argc, char *argv[]) {
  */
 static void print_version(const char *me) {
 	printf("%s version "__CPUFREQD_VERSION__".\n", me);
-	printf("Copyright 2002,2003,2004 Mattia Dongili <malattia@gmail.com>\n"
-			"                         George Staikos <staikos@0wned.org>\n");
+	printf("Copyright 2002,2003,2004 Mattia Dongili <"__CPUFREQD_MAINTAINER__">\n"
+	       "                         George Staikos <staikos@0wned.org>\n");
 }
 
 /*  void print_help(const char *me)
@@ -605,10 +605,28 @@ cpufreqd_start:
 			/* wait for a command */
 			fds.fd = cpufreqd_sock;
 			fds.events = POLLIN | POLLRDNORM;
-			switch (poll(&fds, 1, -1)) {
+			
+			/* set an arbitrary (high) timout, if it expires
+			 * while in DYNAMIC mode then something really 
+			 * nasty is happening with settimer/SIGALARM
+			 */
+			switch (poll(&fds, 1, 30*1000 /* 30 sec */)) {
 				case 0:
 					/* timed out. check to see if things have changed */
 					/* should not happen actually */
+					if (cpufreqd_mode == ARG_DYNAMIC) {
+#ifdef DEBUG
+						clog(LOG_ALERT, "ALERT! poll expired while in "
+								"DYNAMIC mode. Trying to dump core.\n"
+								"Bye Bye. (please mail the core file and"
+								"your cpufreqd executable"
+								"to "__CPUFREQD_MAINTAINER__")\n");
+						abort();
+#else
+						/* fixing thins up */
+						timer_expired = 1;
+#endif
+					}
 					break;
 				case -1:
 					/* caused by SIGALARM (mostly) */

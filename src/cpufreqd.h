@@ -21,6 +21,7 @@
 #define __CPUFREQD_H__
 
 #define __CPUFREQD_VERSION__	"2.0.0-beta4"
+#define __CPUFREQD_MAINTAINER__	"malattia@linux.it"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
