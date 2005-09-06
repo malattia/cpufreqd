@@ -618,8 +618,8 @@ cpufreqd_start:
 #ifdef DEBUG
 						clog(LOG_ALERT, "ALERT! poll expired while in "
 								"DYNAMIC mode. Trying to dump core.\n"
-								"Bye Bye. (please mail the core file and"
-								"your cpufreqd executable"
+								"Bye Bye. (please mail the core file and "
+								"your cpufreqd executable "
 								"to "__CPUFREQD_MAINTAINER__")\n");
 						abort();
 #else
