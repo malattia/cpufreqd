@@ -23,7 +23,6 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include "config_parser.h"
 #include "cpufreq_utils.h"
 #include "cpufreqd.h"
@@ -425,7 +425,8 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 int main (int argc, char *argv[]) {
 
 	struct sigaction signal_action;
-	struct pollfd fds;
+	sigset_t old_sigmask;
+	fd_set rfds;
 	struct itimerval new_timer;
 
 	unsigned int i = 0;
@@ -575,6 +576,14 @@ cpufreqd_start:
 		goto out_socket;
 	}
 
+	/* TODO: if we are going to pselect the socket
+	 * then block all signals to avoid races,
+	 * will be unblocked by pselect
+	 */
+	if (cpufreqd_sock != -1) {
+		sigprocmask(SIG_BLOCK, &signal_action.sa_mask, &old_sigmask);
+	}
+	
 	/*
 	 *  Looooooooop
 	 */
@@ -603,14 +612,15 @@ cpufreqd_start:
 		/* if the socket opened successfully */
 		if (cpufreqd_sock != -1) {
 			/* wait for a command */
-			fds.fd = cpufreqd_sock;
-			fds.events = POLLIN | POLLRDNORM;
+			FD_ZERO(&rfds);
+			FD_SET(cpufreqd_sock, &rfds);
 			
+			/* TODO: USE PSELECT!!! */
 			/* set an arbitrary (high) timout, if it expires
 			 * while in DYNAMIC mode then something really 
 			 * nasty is happening with settimer/SIGALARM
 			 */
-			switch (poll(&fds, 1, 30*1000 /* 30 sec */)) {
+			switch (pselect(cpufreqd_sock+1, &rfds, NULL, NULL, NULL, &old_sigmask)) {
 				case 0:
 					/* timed out. check to see if things have changed */
 					/* should not happen actually */
