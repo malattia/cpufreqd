@@ -1,4 +1,4 @@
-cpufreqd-2.0.0-beta4
+cpufreqd-2.0.0-beta5
 ====================
 
 ************
@@ -21,7 +21,7 @@ been set.
 Also, cpufreqd now depends on libcpufreq from cpufrequtils, get it here[1] and
 install it before building cpufreqd if you don't have that on your system
 already.
-It also contains 2 useful utilities that can be really helpful to  check that
+It also contains 2 useful utilities that can be really helpful to check that
 cpufreqd is behaving correctly.
 
 [1] http://www.kernel.org/pub/linux/utils/kernel/cpufreq/cpufrequtils.html

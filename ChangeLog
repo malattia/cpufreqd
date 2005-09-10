@@ -1,3 +1,17 @@
+version 2.0.0-beta5
+-------------------
+* added sensors plugin (you'll need userspace libs from lm-sensors)
+* fixed socket creation permissions
+* added the ability to allow a certain group to read/write
+to the socket
+* fixed looots of bugs
+* beautified logs
+* the "cpu" directive was wrong, now named "cpu_interval"
+run 'sed -i -e 's/^cpu=/cpu_interval=/' /etc/cpufreqd.conf'
+to fix things
+* reworked plugins post-configuration (might drop it actually), now
+plugins are correctly initialized even if their global section is missing
+
 version 2.0.0-beta4
 -------------------
 * more remote commands supported
