@@ -615,28 +615,10 @@ cpufreqd_start:
 			FD_ZERO(&rfds);
 			FD_SET(cpufreqd_sock, &rfds);
 			
-			/* TODO: USE PSELECT!!! */
-			/* set an arbitrary (high) timout, if it expires
-			 * while in DYNAMIC mode then something really 
-			 * nasty is happening with settimer/SIGALARM
-			 */
 			switch (pselect(cpufreqd_sock+1, &rfds, NULL, NULL, NULL, &old_sigmask)) {
 				case 0:
 					/* timed out. check to see if things have changed */
-					/* should not happen actually */
-					if (cpufreqd_mode == ARG_DYNAMIC) {
-#ifdef DEBUG
-						clog(LOG_ALERT, "ALERT! poll expired while in "
-								"DYNAMIC mode. Trying to dump core.\n"
-								"Bye Bye. (please mail the core file and "
-								"your cpufreqd executable "
-								"to "__CPUFREQD_MAINTAINER__")\n");
-						abort();
-#else
-						/* fixing thins up */
-						timer_expired = 1;
-#endif
-					}
+					/* should never happen actually */
 					break;
 				case -1:
 					/* caused by SIGALARM (mostly) */
