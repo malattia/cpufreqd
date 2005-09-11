@@ -1,5 +1,5 @@
 .\" Copyright 2002-2005, George Staikos (staikos@0wned.org)
-.\"                      Mattia Dongili (malattia@gmail.com)
+.\"                      Mattia Dongili (malattia@linux.it)
 .\"                      Rene Rebe (rene@rocklinux.org)
 .\" This file may be used subject to the terms and conditions of the
 .\" GNU General Public License Version 2, or any later version
@@ -192,13 +192,26 @@ to the provided values. Can be of the form %d-%d or simply %d for a fixed value
 (e.g.: acpi_temperature=10-100) or %s:%d-%d or %s:%d where the string represents
 the thermal zone name that must match (look at 'ls /proc/acpi/thermal_zone' for
 available names).
+
 .PP
 .SS "apm plugin"
 Monitors values reported by the APM subsystem. Available Rule entries:
+.TP
 .B "ac"
 Can be on or off.  The rule will have a higher score if the A/C adapter is on or
 off as defined in this setting.
+.TP
+.B "battery_interval"
+The rule will have a higher score if battery percentage is between the values
+provided. Must be of the form %d-%d (e.g.: battery_interval=10-100).
 
+.PP
+.SS "pmu plugin"
+Monitors values reported by the PMU subsystem. Available Rule entries:
+.TP
+.B "ac"
+Can be on or off.  The rule will have a higher score if the A/C adapter is on or
+off as defined in this setting.
 .TP
 .B "battery_interval"
 The rule will have a higher score if battery percentage is between the values
@@ -249,6 +262,25 @@ default Vcore before reboot. This value will be used to set Vcore on exit.
 Will set Vcore to this value (given in mV) when the corresponding Profile is
 applied. Due to safety reasons range is limited from 1200 to 1850.
 
+.PP
+.SS "sensors plugin"
+Allows you to specify lm-sensors features to watch, see `sensors \-u' to 
+find out which sensors are available on your system.
+A configuration section is also available to tell cpufreqd which sensors.conf
+file to use. If not specified it will take the first on the default locations.
+.TP
+.B "Section [sensors_plugin]"
+.RS
+.B "sensors_conf"
+Define this directive to the sensors.conf file you want cpufreqd to use to load
+the sensors library.
+.RE
+.TP
+.B "sensor"
+The rule will have a higher score if the given sensor feature reports a value
+between the two defined. Must be of the form %s:%f-%f where the string
+represents the feature name and the two decimal numbers the interval into which
+the directive is valid (e.g.: sensor=temp1:0-50).
 
 .SH EXAMPLE
 .nf
@@ -359,6 +391,6 @@ profile=hi
 .BR cpufreqd (8), cpufreqd-set (1), cpufreqd-get (1)
 
 .SH AUTHOR
-Mattia Dongili <malattia@gmail.com>
+Mattia Dongili <malattia@linux.it>
 
 George Staikos <staikos@0wned.org>
