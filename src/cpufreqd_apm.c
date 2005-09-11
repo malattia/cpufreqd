@@ -189,7 +189,7 @@ static int apm_bat_evaluate(const void *s) {
 
 static struct cpufreqd_keyword kw[] = {
 	{ .word = "ac",       .parse = &apm_ac_parse,  .evaluate = &apm_ac_evaluate  },
-	{ .word = "battery",  .parse = &apm_bat_parse, .evaluate = &apm_bat_evaluate },
+	{ .word = "battery_interval",  .parse = &apm_bat_parse, .evaluate = &apm_bat_evaluate },
 	{ .word = NULL,       .parse = NULL,           .evaluate = NULL              }
 };
 
