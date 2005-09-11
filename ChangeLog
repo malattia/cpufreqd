@@ -1,5 +1,8 @@
 version 2.0.0-beta5
 -------------------
+* the configure script now accepts --enable/disable options for 
+plugns that need some sort of special support
+* ported the PMU plugin
 * added sensors plugin (you'll need userspace libs from lm-sensors)
 * fixed socket creation permissions
 * added the ability to allow a certain group to read/write

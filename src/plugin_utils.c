@@ -112,6 +112,7 @@ int validate_plugins(struct LIST *plugins) {
 			used_plugins++;
 			n = n->next;
 		} else {
+			clog(LOG_INFO, "%s plugin is unused.\n", o_plugin->name);
 			finalize_plugin((struct plugin_obj*)n->content);
 			close_plugin((struct plugin_obj*)n->content);
 			n = list_remove_node(plugins, n);
@@ -145,7 +146,9 @@ void close_plugin(struct plugin_obj *cp) {
 	/* close library */
 	if (dlclose(cp->library) != 0) {
 		clog(LOG_ERR, "Error unloading plugin %s: %s\n", cp->name, dlerror());
+		return;
 	}
+	clog(LOG_INFO, "%s plugin closed.\n", cp->name);
 }
 
 /*  int get_cpufreqd_object(struct plugin_obj *cp)

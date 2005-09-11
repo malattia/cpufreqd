@@ -4,6 +4,7 @@ Rene Rebe <rene@rocklinux.org>
 Dietz Proepper <dietz@rotfl.franken.de>
 
 Other contributors:
-Hrvoje Zeba - cpufreqd remote
+Hrvoje Zeba - cpufreqd remote first implementation
 Prakash Punnoor - nforce2 plugin
+Franz Pletz - sensors plugin first implementation
 
