@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2005  Mattia Dongili <malattia@gmail.com>
+ *  Copyright (C) 2005  Mattia Dongili <malattia@linux.it>
  *                      Prakash Punnoor <prakash@punnoor.de>
  *
  *  This program is free software; you can redistribute it and/or modify

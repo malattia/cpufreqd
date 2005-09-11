@@ -250,7 +250,7 @@ static void print_help(const char *me) {
 			"  -D, --no-daemon              stay in foreground and print log to stdout (used to debug)\n"
 			"  -V, --verbosity              verbosity level from 0 (less verbose) to 7 (most verbose)\n"
 			"\n"
-			"Report bugs to Mattia Dongili <malattia@gmail.com>.\n", me);
+			"Report bugs to Mattia Dongili <malattia@linux.it>.\n", me);
 }
 
 static void term_handler(int signo) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili <malattia@gmail.com>
+ *  Copyright (C) 2002-2005  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
