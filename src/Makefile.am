@@ -24,30 +24,52 @@ cpufreqd_LDFLAGS = -export-dynamic
 
 BUILD_PLUGINS = \
 		cpufreqd_programs.la \
-		cpufreqd_acpi_battery.la \
-		cpufreqd_acpi_temperature.la \
-		cpufreqd_acpi_ac.la \
-		cpufreqd_nforce2.la \
-		cpufreqd_apm.la \
 		cpufreqd_cpu.la
 
-if SENSORS_SUPPORT
+if ACPI_PLUGIN
+BUILD_PLUGINS += cpufreqd_acpi_battery.la \
+		 cpufreqd_acpi_temperature.la \
+		 cpufreqd_acpi_ac.la
+endif
+if NFORCE2_PLUGIN
+BUILD_PLUGINS += cpufreqd_nforce2.la
+endif
+if APM_PLUGIN
+BUILD_PLUGINS += cpufreqd_apm.la
+endif
+if PMU_PLUGIN
+BUILD_PLUGINS += cpufreqd_pmu.la
+endif
+if SENSORS_PLUGIN
 BUILD_PLUGINS += cpufreqd_sensors.la
 endif
 lib_LTLIBRARIES = $(BUILD_PLUGINS)
 
+if NFORCE2_PLUGIN
 cpufreqd_nforce2_la_SOURCES = \
 		cpufreqd_nforce2.c
 
 cpufreqd_nforce2_la_LDFLAGS = \
 		-module -avoid-version
+endif
 
+if PMU_PLUGIN
+cpufreqd_pmu_la_SOURCES = \
+		cpufreqd_pmu.c
+
+cpufreqd_pmu_la_LDFLAGS = \
+		-module -avoid-version
+endif
+
+if APM_PLUGIN
 cpufreqd_apm_la_SOURCES = \
 		cpufreqd_apm.c
 
 cpufreqd_apm_la_LDFLAGS = \
 		-module -avoid-version
+endif
 
+if ACPI_PLUGIN
 cpufreqd_acpi_ac_la_SOURCES = \
 		cpufreqd_acpi_ac.c
 
@@ -65,6 +87,7 @@ cpufreqd_acpi_battery_la_SOURCES = \
 
 cpufreqd_acpi_battery_la_LDFLAGS = \
 		-module -avoid-version
+endif
 
 cpufreqd_cpu_la_SOURCES = \
 		cpufreqd_cpu.c
@@ -78,7 +101,7 @@ cpufreqd_programs_la_SOURCES = \
 cpufreqd_programs_la_LDFLAGS = \
 		-module -avoid-version
 
-if SENSORS_SUPPORT
+if SENSORS_PLUGIN
 cpufreqd_sensors_la_SOURCES = \
 		cpufreqd_sensors.c
 

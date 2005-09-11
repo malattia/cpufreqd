@@ -151,7 +151,7 @@
 #undef PACKAGE_VERSION
 
 /* Define this to compile sensors support */
-#undef SENSORS_SUPPORT
+#undef SENSORS_PLUGIN
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
