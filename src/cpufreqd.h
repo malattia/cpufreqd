@@ -20,7 +20,7 @@
 #ifndef __CPUFREQD_H__
 #define __CPUFREQD_H__
 
-#define __CPUFREQD_VERSION__	"2.0.0-beta5"
+#define __CPUFREQD_VERSION__	"2.0.0-pre1"
 #define __CPUFREQD_MAINTAINER__	"malattia@linux.it"
 
 #ifdef HAVE_CONFIG_H

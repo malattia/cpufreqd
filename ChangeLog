@@ -1,5 +1,9 @@
-version 2.0.0-beta5
+version 2.0.0-pre1
 -------------------
+* implemented backward compatibility for the configuration file
+format (great!!)
+* automatically load plugins (if not configured) and rely on plugins
+initialization to probe the necessary stuff
 * the configure script now accepts --enable/disable options for 
 plugns that need some sort of special support
 * ported the PMU plugin
@@ -11,7 +15,7 @@ to the socket
 * beautified logs
 * the "cpu" directive was wrong, now named "cpu_interval"
 run 'sed -i -e 's/^cpu=/cpu_interval=/' /etc/cpufreqd.conf'
-to fix things
+to fix things. I'm sooooo sooorry...
 * reworked plugins post-configuration (might drop it actually), now
 plugins are correctly initialized even if their global section is missing
 
