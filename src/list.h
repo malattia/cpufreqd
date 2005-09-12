@@ -32,6 +32,8 @@
 #define LIST_FOREACH_NODE(node, list) \
 	for (struct NODE *node = (list)->first; node != NULL; node = node->next)
 
+#define LIST_EMPTY(list) ((list)->first==NULL)
+
 /*
  * Doubly linked list
  */

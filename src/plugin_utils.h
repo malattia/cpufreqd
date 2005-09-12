@@ -27,6 +27,7 @@ struct plugin_obj {
 	unsigned int used;
 };
 
+void	discover_plugins	(struct LIST *plugins);
 void	load_plugin_list	(struct LIST *plugins);
 int	validate_plugins	(struct LIST *plugins);
 int     load_plugin		(struct plugin_obj *cp);

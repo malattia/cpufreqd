@@ -63,9 +63,13 @@ static inline void set_vcore(int vcore)
 static int nforce2_post_conf(void) {
 	struct stat sb;
 
+	if (!vcore_path[0]) {
+		clog(LOG_CRIT, "Unconfigured, exiting.\n");
+		return -1;
+	}
 	/* check vcore_path */
 	if (stat(vcore_path, &sb) != 0) {
-		clog(LOG_CRIT, "Unable to find %s\n", vcore_path);
+		clog(LOG_CRIT, "Unable to find %s.\n", vcore_path);
 		return -1;
 	}
 	return 0;
@@ -75,19 +79,18 @@ static int nforce2_conf(const char *key, const char *value) {
 
 	if (strncmp(key, "vcore_path", 10) == 0 && value !=NULL) {
 		snprintf(vcore_path, MAX_PATH_LEN, "%s", value);
-		clog(LOG_DEBUG, "vcore_path is %s\n", vcore_path);
+		clog(LOG_DEBUG, "vcore_path is %s.\n", vcore_path);
 		return 0;
 	}
 	else if (strncmp(key, "vcore_default", 13) == 0 && value !=NULL) {
 		vcore_default = limit_vcore(atoi(value));
-		clog(LOG_DEBUG, "vcore_default is %d\n", vcore_default);
+		clog(LOG_DEBUG, "vcore_default is %d.\n", vcore_default);
 		return 0;
 	}
 	return -1;
 }
 
 static int nforce2_exit(void) {
-	
 	set_vcore(vcore_default);
 	return 0;
 }

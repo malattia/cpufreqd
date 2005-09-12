@@ -111,11 +111,14 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 	char *token;
 	struct group *grp = NULL;
 	long int gid = 0;
+	fpos_t pos;
+	int duplicate = 0;
 	struct plugin_obj o_plugin;
 	struct NODE *n_plugin;
 
 	while (!feof(config)) {
 
+		fgetpos(config, &pos);
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
 		if (!clean[0]) /* returned an empty line */
@@ -124,6 +127,16 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 		/* end of section */
 		if (strcmp(clean,"[/General]") == 0)
 			break;
+		/* for backward compatibility let's try to detect
+		 * the begininning of a new section, rewind the file
+		 * descriptor and break
+		 */
+		if (clean[0] == '[') {
+			clog(LOG_WARNING, "Found an unclosed [General] section, "
+					"please review your cpufreqd.conf file\n");
+			fsetpos(config, &pos);
+			break;
+		}
 
 		name = strtok(clean, "=");
 		value = strtok(NULL, "");
@@ -174,6 +187,7 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 				o_plugin.library = NULL;
 				o_plugin.plugin = NULL;
 				o_plugin.used = 0;
+				duplicate = 0;
 				token = clean_config_line(token);
 				if (token == NULL)
 					continue;
@@ -181,9 +195,21 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 				strncpy(o_plugin.name, token, MAX_STRING_LEN);
 				o_plugin.name[MAX_STRING_LEN-1] = '\0';
 
-				n_plugin = node_new(&o_plugin, sizeof(struct plugin_obj));
-				list_append(&(configuration->plugins), n_plugin);
-				clog(LOG_DEBUG, "read plugin: %s\n", token);
+				LIST_FOREACH_NODE(node, &configuration->plugins) {
+					struct plugin_obj *op = (struct plugin_obj *) node->content;
+					if (strncmp(op->name, o_plugin.name, MAX_STRING_LEN) == 0) {
+						clog(LOG_WARNING, "Plugin \"%s\" already present, "
+								"discarding.\n", o_plugin.name);
+						duplicate = 1;
+						break;
+					}
+				}
+
+				if (!duplicate) {
+					n_plugin = node_new(&o_plugin, sizeof(struct plugin_obj));
+					list_append(&(configuration->plugins), n_plugin);
+					clog(LOG_DEBUG, "read plugin: %s\n", token);
+				}
 
 			} while ((token = strtok(NULL,",")) != NULL);
 			continue;
@@ -268,13 +294,15 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 	void *obj = NULL; /* to hold the value provided by a plugin */
 	struct cpufreqd_keyword *ckw = NULL;
 	struct cpufreqd_plugin *plugin = NULL;
+	fpos_t pos;
+	char *clean;
+	char *name;
+	char *value;
 	char buf[MAX_STRING_LEN];
 
 	while (!feof(config)) {
-		char *clean;
-		char *name;
-		char *value;
 
+		fgetpos(config, &pos);
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
 		if (!clean[0]) /* returned an empty line */
@@ -283,6 +311,16 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 		/* end of section */
 		if (strcmp(clean,"[/Profile]") == 0)
 			break;
+		/* for backward compatibility let's try to detect
+		 * the begininning of a new section, rewind the file
+		 * descriptor and break
+		 */
+		if (clean[0] == '[') {
+			clog(LOG_WARNING, "Found an unclosed [Profile] section, "
+					"please review your cpufreqd.conf file\n");
+			fsetpos(config, &pos);
+			break;
+		}
 
 		name = strtok(clean, "=");
 		value = strtok(NULL, "");
@@ -442,6 +480,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 	char *clean = NULL, *name = NULL, *value = NULL;
 	struct NODE *dir = NULL;
 	void *obj = NULL; /* to hold the value provided by a plugin */
+	fpos_t pos;
 	struct cpufreqd_keyword *ckw = NULL;
 	struct cpufreqd_plugin *plugin = NULL;
 
@@ -450,7 +489,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 
 	while (!feof(config)) {
 
-		buf[0] = '\0';
+		fgetpos(config, &pos);
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
 		if (!clean[0]) /* returned an empty line */
@@ -458,6 +497,16 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 
 		if (strcmp(clean,"[/Rule]") == 0)
 			break;
+		/* for backward compatibility let's try to detect
+		 * the begininning of a new section, rewind the file
+		 * descriptor and break
+		 */
+		if (clean[0] == '[') {
+			clog(LOG_WARNING, "Found an unclosed [Rule] section, "
+					"please review your cpufreqd.conf file\n");
+			fsetpos(config, &pos);
+			break;
+		}
 
 		name = strtok(clean, "=");
 		value = strtok(NULL, "");
@@ -522,12 +571,14 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 	char endtag[MAX_STRING_LEN];
 	char buf[MAX_STRING_LEN];
+	fpos_t pos;
 	char *clean = NULL, *name = NULL, *value = NULL;
 
 	snprintf(endtag, MAX_STRING_LEN, "[/%s]", plugin->plugin->plugin_name);
 
 	while (!feof(config)) {
 		
+		fgetpos(config, &pos);
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
 		if (!clean[0]) /* returned an empty line */
@@ -535,6 +586,17 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 
 		if (strncasecmp(endtag, clean, MAX_STRING_LEN) == 0)
 			break;
+		/* for backward compatibility let's try to detect
+		 * the begininning of a new section, rewind the file
+		 * descriptor and break
+		 */
+		if (clean[0] == '[') {
+			clog(LOG_WARNING, "Found unclosed [%s] section, "
+					"please review your cpufreqd.conf file\n",
+					plugin->plugin->plugin_name);
+			fsetpos(config, &pos);
+			break;
+		}
 		
 		name = strtok(clean, "=");
 		value = strtok(NULL, "");
@@ -583,6 +645,14 @@ int init_configuration(struct cpufreqd_conf *configuration)
 				fclose(fp_config);
 				return -1;
 			}
+
+			/* backward compatibility: if no plugins have
+			 * been configured, then discover them.
+			 * Plugin intialization is safe enough
+			 */
+			if (LIST_EMPTY(&configuration->plugins))
+				discover_plugins(&configuration->plugins);
+					
 			/*
 			 *  Load plugins
 			 *  just after having read the General section

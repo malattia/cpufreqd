@@ -17,12 +17,15 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <dirent.h>
+#include <dlfcn.h>
+#include <errno.h>
+#include <fnmatch.h>
 #include <stdio.h>
 #include <string.h>
-#include <dlfcn.h>
-#include "plugin_utils.h"
-#include "cpufreqd_log.h"
 #include "cpufreqd.h"
+#include "cpufreqd_log.h"
+#include "plugin_utils.h"
 
 /* removes any reference to a given plugin from Ruls and Profile */
 #if 0
@@ -67,6 +70,47 @@ static void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugi
 	}
 }
 #endif
+
+static int cpufreqd_plugin_filter(const struct dirent *d) {
+	return fnmatch("cpufreqd_*.so", d->d_name, 0) == 0;
+}
+
+/*
+ * Try to discover pugins
+ */
+void discover_plugins(struct LIST *plugins) {
+	int n = 0;
+	struct plugin_obj o_plugin;
+	struct NODE *n_plugin;
+	struct dirent **namelist;
+
+	/* plugin names */
+	n = scandir(CPUFREQD_LIBDIR, &namelist, cpufreqd_plugin_filter, NULL);
+	if (n > 0) {
+		while (n--) {
+			o_plugin.library = NULL;
+			o_plugin.plugin = NULL;
+			o_plugin.used = 0;
+
+			sscanf(namelist[n]->d_name, "cpufreqd_%[^.].so", o_plugin.name);
+			o_plugin.name[MAX_STRING_LEN-1] = '\0';
+
+			n_plugin = node_new(&o_plugin, sizeof(struct plugin_obj));
+			list_append(plugins, n_plugin);
+			clog(LOG_INFO, "found plugin: %s\n", o_plugin.name);
+
+			free(namelist[n]);
+		}
+		free(namelist);
+
+	} else if (n < 0) {
+		clog(LOG_ERR, "error reading %s: %s\n",
+				CPUFREQD_LIBDIR, strerror(errno));
+
+	} else {
+		clog(LOG_WARNING, "no plugins found in %s\n", CPUFREQD_LIBDIR);
+	}
+}
 
 /*
  *  Load plugins from a list of plugin_obj's. Also cleanup the
