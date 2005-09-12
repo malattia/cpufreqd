@@ -1,30 +1,64 @@
-cpufreqd-2.0.0-beta5
-====================
+cpufreqd-2.0.0-pre1
+===================
 
 ************
 *   NOTE   *
 ************
 
-This is a beta release! Things may not work as you expect, use this software at
+This is a pre release! Things may not work as you expect, use this software at
 your own risk.
-After this scary disclaimer let me tell you that the status of cpufreqd is not
-that bad actually. Valgrind seems pretty happy with it, so no memory leaks and
-my laptop and desktop PC are pretty happy and running quite cool in this hot
-italian summer :)
-Note however that I had a couple of reports of cpufreqd not changing frequency
+Cpufreqd2 now provides all the features of cpufreqd1 plus a lot more! The 
+configuration file format is still compatible but will emit a lot of warnings
+if you still use the old format. Take a look at the cpufreqd.conf manpage to see
+what changed.
+
+For 2.0.0-beta4 users
+---------------------
+That version contained a bug in the cpufreqd_cpu plugin,
+the directive name was (erroneously) "cpu" instead of "cpu_interval". Just run
+
+	sed -i -e 's/^cpu=/cpu_interval=/' /etc/cpufreqd.conf
+
+to fix things up. (The same happened for the apm plugin with 
+"battery"/"battery_interval" but probably nobody tested it yet)
+
+Note also that I had a couple of reports of cpufreqd not changing frequency
 actually but I've not been able to reproduce that yet, I'd be really happy if
 somebody experiencing this problem could put some light to it.
 To be sure you don't have this problem use the "double_check" option in
 cpufreqd.conf, it will make cpufreqd check that the requested policy has really
 been set.
 
-Also, cpufreqd now depends on libcpufreq from cpufrequtils, get it here[1] and
-install it before building cpufreqd if you don't have that on your system
-already.
+Last but not least, cpufreqd now depends on libcpufreq from cpufrequtils, get
+it here[1] and install it before building cpufreqd if you don't have that on
+your system already.
 It also contains 2 useful utilities that can be really helpful to check that
 cpufreqd is behaving correctly.
 
 [1] http://www.kernel.org/pub/linux/utils/kernel/cpufreq/cpufrequtils.html
+
+****************
+* PLUGIN STATE *
+****************
+
+---+---+-------------------+---------------------
+ R |   | acpi_ac           | OK!
+ R |   | acpi_battery      | OK!
+ R |   | acpi_temperature  | OK!
+ R |   | acpi_event        | planned
+ R |   | apm               | not tested (reports?)
+ R |   | cpu               | OK!
+   | P | nforce2           | OK!
+ R |   | pmu               | some basic testing (reports?)
+ R |   | programs          | OK!
+ R |   | sensors           | OK!
+ R |   | date              | work in progress
+ R | P | exec              | work in progress
+   | P | nvclock           | work in progress
+   |   | {acpi_}fan        | ??? missing hardware
+---+---+-------------------+---------------------
+ P = adds Profile directives
+ R = adds Rule directives
 
 ***********
 
