@@ -24,7 +24,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "cpufreqd_log.h"
 #include "cpufreqd_plugin.h"
 #include "nvclock.h"
 
@@ -80,23 +79,20 @@ static int nvclock_init(void) {
 static int nvclock_parse(const char *ev, void **obj) {
 	struct nvclock_elem *ret = calloc(1, sizeof(struct nvclock_elem));
 	if (ret == NULL) {
-		cpufreqd_log(LOG_ERR, 
-				"%s: couldn't make enough room for nv_elem (%s)\n",
-				__func__, strerror(errno));
+		clog(LOG_ERR, "%s: couldn't make enough room for nv_elem (%s)\n",
+				strerror(errno));
 		return -1;
 	}
 
-	cpufreqd_log(LOG_DEBUG, "%s - %s: called with %s\n",
-				nvclock.plugin_name, __func__, ev);
+	clog(LOG_DEBUG, "called with %s\n", ev);
 
 	/* try to parse the %d:%d format */
 	if (sscanf(ev, "%d:%d", &(ret->card), &(ret->value)) == 2) {
-		cpufreqd_log(LOG_INFO, "%s - %s: parsed %d:%d\n",
-				nvclock.plugin_name, __func__, ret->card, ret->value);
+		clog(LOG_INFO, "parsed %d:%d\n", ret->card, ret->value);
 		if (ret->card < 0  ||  ret->card >= MAX_CARDS) {
-			cpufreqd_log(LOG_ERR,"%s: Only %i cards supported!\n",
-				        __func__, MAX_CARDS);
-			return 1;
+			clog(LOG_ERR,"Only %i cards supported!\n", MAX_CARDS);
+			free(ret);
+			return -1;
 		}
 	} else {
 		free(ret);
@@ -112,7 +108,7 @@ static void nvcore_change(void *obj, const struct cpufreq_policy *old, const str
 	struct nvclock_elem *nv = obj;
 	
 	if (nv->card <= num_cards) {/* we really need "<=" */
-		cpufreqd_log(LOG_INFO, "%s: Setting nv_core for card %d to (%d)\n", __func__, nv->card, nv->value);
+		clog(LOG_INFO, "Setting nv_core for card %d to (%d)\n", nv->card, nv->value);
 		set_card(nv->card);
 		card[nv->card].gpu = NORMAL;
 		nv_card.set_gpu_speed(nv->value);
@@ -123,7 +119,7 @@ static void nvmem_change(void *obj, const struct cpufreq_policy *old, const stru
 	struct nvclock_elem *nv = obj;
 	
 	if (nv->card <= num_cards) {/* we really need "<=" */
-		cpufreqd_log(LOG_INFO, "%s: Setting nv_mem for card %d to (%d)\n", __func__, nv->card, nv->value);
+		clog(LOG_INFO, "Setting nv_mem for card %d to (%d)\n", nv->card, nv->value);
 		set_card(nv->card);
 		card[nv->card].gpu = NORMAL;
 		nv_card.set_memory_speed(nv->value);
