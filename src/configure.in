@@ -91,11 +91,13 @@ if test "x$nvclock_enable" = xyes; then
 	echo '***************************************************'
 	AC_MSG_ERROR([NVCLOCK support needs a configured and built Nvclock tree, please supply it with --enable-nvclock=PATH])
 else
+	OLD_CPPFLAGS="$CPPFLAGS"
 	OLD_CFLAGS="$CFLAGS"
 	OLD_LDFLAGS="$LDFLAGS"
 	if test "x$nvclock_enable" != xno; then
 
 		if test "x$nvclock_enable" != xno; then
+			CPPFLAGS="$CPPFLAGS -I${nvclock_enable}"
 			CFLAGS="$CFLAGS -I${nvclock_enable}"
 			LDFLAGS="$LDFLAGS -L${nvclock_enable} -lbackend"
 		fi
@@ -112,6 +114,7 @@ else
 			],
 			[nvclock_support=failed])
 	fi
+	CPPFLAGS="$OLD_CPPFLAGS"
 	CFLAGS="$OLD_CFLAGS"
 	LDFLAGS="$OLD_LDFLAGS"
 fi
@@ -168,11 +171,13 @@ AC_ARG_ENABLE([sensors],
 	[sensors_enable=$enableval],
 	[sensors_enable=yes]
 	)
+OLD_CPPFLAGS="$CPPFLAGS"
 OLD_CFLAGS="$CFLAGS"
 OLD_LDFLAGS="$LDFLAGS"
 if test "x$sensors_enable" != xno; then
 
 	if test "x$sensors_enable" != xyes; then
+		CPPFLAGS="$CPPFLAGS -I${sensors_enable}/include"
 		CFLAGS="$CFLAGS -I${sensors_enable}/include"
 		LDFLAGS="$LDFLAGS -L${sensors_enable}/lib -lsensors"
 	else
@@ -194,6 +199,7 @@ if test "x$sensors_enable" != xno; then
 		],
 		[sensors_support=failed])
 fi
+CPPFLAGS="$OLD_CPPFLAGS"
 CFLAGS="$OLD_CFLAGS"
 LDFLAGS="$OLD_LDFLAGS"
 if test "x$sensors_support" = xfailed && test "x$sensors_enable" != xyes; then
