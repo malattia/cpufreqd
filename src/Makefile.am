@@ -5,9 +5,8 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-Wnested-externs -Winline -Wundef -Wbad-function-cast \
 	-Waggregate-return \
 	-std=c99 \
-	-D_POSIX_SOURCE -D_GNU_SOURCE \
-	@ADD_CFLAGS@
-
+	-D_POSIX_SOURCE -D_GNU_SOURCE
+	
 sbin_PROGRAMS = cpufreqd
 
 cpufreqd_SOURCES = \
@@ -20,7 +19,7 @@ cpufreqd_SOURCES = \
 		cpufreq_utils.c \
 		list.c
 
-cpufreqd_LDFLAGS = -export-dynamic
+cpufreqd_LDFLAGS = -export-dynamic @CPUFREQD_LDFLAGS@
 
 BUILD_PLUGINS = \
 		cpufreqd_programs.la \
@@ -33,6 +32,9 @@ BUILD_PLUGINS += cpufreqd_acpi_battery.la \
 endif
 if NFORCE2_PLUGIN
 BUILD_PLUGINS += cpufreqd_nforce2.la
+endif
+if NVCLOCK_PLUGIN
+BUILD_PLUGINS += cpufreqd_nvclock.la
 endif
 if APM_PLUGIN
 BUILD_PLUGINS += cpufreqd_apm.la
@@ -51,6 +53,19 @@ cpufreqd_nforce2_la_SOURCES = \
 
 cpufreqd_nforce2_la_LDFLAGS = \
 		-module -avoid-version
+endif
+
+if NVCLOCK_PLUGIN
+cpufreqd_nvclock_la_SOURCES = \
+		cpufreqd_nvclock.c
+
+cpufreqd_nvclock_la_CFLAGS = \
+		$(AM_CFLAGS) @NVCLOCK_CFLAGS@
+
+cpufreqd_nvclock_la_LDFLAGS = \
+		-module -avoid-version @NVCLOCK_LDFLAGS@
+
+#cpufreqd_nvclock_la_LIBADD = libbackend.a
 endif
 
 if PMU_PLUGIN
@@ -105,8 +120,11 @@ if SENSORS_PLUGIN
 cpufreqd_sensors_la_SOURCES = \
 		cpufreqd_sensors.c
 
+cpufreqd_sensors_la_CFLAGS = \
+		$(AM_CFLAGS) @SENSORS_CFLAGS@
+		
 cpufreqd_sensors_la_LDFLAGS = \
-		-module -avoid-version @ADD_LDFLAGS@
+		-module -avoid-version @SENSORS_LDFLAGS@
 endif
 
 noinst_HEADERS = \

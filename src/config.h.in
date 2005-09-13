@@ -43,12 +43,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `cpufreq' library (-lcpufreq). */
-#undef HAVE_LIBCPUFREQ
-
-/* Define to 1 if you have the `dl' library (-ldl). */
-#undef HAVE_LIBDL
-
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
@@ -134,6 +128,9 @@
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #undef LSTAT_FOLLOWS_SLASHED_SYMLINK
+
+/* Define this to compile NVCLOCK support */
+#undef NVCLOCK_PLUGIN
 
 /* Name of package */
 #undef PACKAGE
