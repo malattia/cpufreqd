@@ -74,7 +74,7 @@ static int sensors_post_conf(void) {
 		return -1;
 	}
 
-	clog(LOG_NOTICE, "using %s\n", sensors_conffile);
+	clog(LOG_INFO, "using %s\n", sensors_conffile);
 
 	if(sensors_init(config)) {
 		clog(LOG_ERR, "sensors_init() failed, sensosrs disabled!\n");
