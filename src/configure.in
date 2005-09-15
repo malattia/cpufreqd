@@ -97,17 +97,23 @@ else
 	if test "x$nvclock_enable" != xno; then
 
 		if test "x$nvclock_enable" != xno; then
-			CPPFLAGS="$CPPFLAGS -I${nvclock_enable}"
-			CFLAGS="$CFLAGS -I${nvclock_enable}"
-			LDFLAGS="$LDFLAGS -L${nvclock_enable} -lbackend"
+			
+#CPPFLAGS="$CPPFLAGS -I${nvclock_enable}/src/backend -I${nvclock_enable}/src/nvcontrol"
+#CFLAGS="$CFLAGS -I${nvclock_enable}/src/backend -I${nvclock_enable}/src/nvcontrol"
+#LDFLAGS="$LDFLAGS -L${nvclock_enable}/src/backend -L${nvclock_enable}/src/nvcontrol -lbackend -lnvcontrol"
+#[-lnvcontrol -lXext -lX11]
+			
+			CPPFLAGS="$CPPFLAGS -I${nvclock_enable}/src/backend"
+			CFLAGS="$CFLAGS -I${nvclock_enable}/src/backend"
+			LDFLAGS="$LDFLAGS -L${nvclock_enable}/src/backend"
 		fi
 
 		AC_CHECK_HEADER([backend.h],
-			[ AC_CHECK_LIB([backend], [FindAllCards],
+			[ AC_CHECK_LIB([backend], [init_nvclock],
 				[ AC_DEFINE(NVCLOCK_PLUGIN, , [Define this to compile NVCLOCK support])
 				if test "x$nvclock_enable" != xyes; then
-					NVCLOCK_CFLAGS="-I${nvclock_enable}"
-					NVCLOCK_LDFLAGS="-L${nvclock_enable} -lbackend"
+					NVCLOCK_CFLAGS="-I${nvclock_enable}/src/backend"
+					NVCLOCK_LDFLAGS="-L${nvclock_enable}/src/backend -lbackend"
 				fi
 				],
 				[nvclock_support=failed])
@@ -179,9 +185,7 @@ if test "x$sensors_enable" != xno; then
 	if test "x$sensors_enable" != xyes; then
 		CPPFLAGS="$CPPFLAGS -I${sensors_enable}/include"
 		CFLAGS="$CFLAGS -I${sensors_enable}/include"
-		LDFLAGS="$LDFLAGS -L${sensors_enable}/lib -lsensors"
-	else
-		LDFLAGS="$LDFLAGS -lsensors"
+		LDFLAGS="$LDFLAGS -L${sensors_enable}/lib"
 	fi
 
 	AC_CHECK_HEADER([sensors/sensors.h],
