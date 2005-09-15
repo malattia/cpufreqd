@@ -29,10 +29,8 @@
 
 struct nvclock_elem {
 	int card;
-	int value; /* used for gpu and mem clock */
+	unsigned int value; /* used for gpu and mem clock */
 };
-
-static unsigned int num_cards;
 
 
 static int nvclock_init(void);
@@ -57,7 +55,7 @@ static struct cpufreqd_keyword kw[] = {
 	{ .word = NULL }
 };
 
-static struct cpufreqd_plugin nvclock = {
+static struct cpufreqd_plugin nvclock_plugin = {
 	.plugin_name	= "nvclock",
 	.keywords	= kw,
 	.plugin_init	= nvclock_init,
@@ -69,8 +67,7 @@ static struct cpufreqd_plugin nvclock = {
 
 
 static int nvclock_init(void) {
-	num_cards = FindAllCards();
-	return 0;
+	return !init_nvclock();
 }
 
 /*
@@ -87,8 +84,8 @@ static int nvclock_parse(const char *ev, void **obj) {
 	clog(LOG_DEBUG, "called with %s\n", ev);
 
 	/* try to parse the %d:%d format */
-	if (sscanf(ev, "%d:%d", &(ret->card), &(ret->value)) == 2) {
-		clog(LOG_INFO, "parsed %d:%d\n", ret->card, ret->value);
+	if (sscanf(ev, "%i:%u", &(ret->card), &(ret->value)) == 2) {
+		clog(LOG_INFO, "parsed %i:%u\n", ret->card, ret->value);
 		if (ret->card < 0  ||  ret->card >= MAX_CARDS) {
 			clog(LOG_ERR,"Only %i cards supported!\n", MAX_CARDS);
 			free(ret);
@@ -107,10 +104,12 @@ static int nvclock_parse(const char *ev, void **obj) {
 static void nvcore_change(void *obj, const struct cpufreq_policy *old, const struct cpufreq_policy *new) {
 	struct nvclock_elem *nv = obj;
 	
-	if (nv->card <= num_cards) {/* we really need "<=" */
-		clog(LOG_INFO, "Setting nv_core for card %d to (%d)\n", nv->card, nv->value);
+	if (nv->card < nvclock.num_cards) {
+		clog(LOG_INFO, "Setting nv_core for card %i to (%u)\n", nv->card, nv->value);
 		set_card(nv->card);
-		card[nv->card].gpu = NORMAL;
+		nvclock.card[nv->card].gpu = DESKTOP;
+		nv_card.number = -1; /* Force a re-init of the function pointers */
+		set_card(nv->card);
 		nv_card.set_gpu_speed(nv->value);
 	}
 }
@@ -118,15 +117,17 @@ static void nvcore_change(void *obj, const struct cpufreq_policy *old, const str
 static void nvmem_change(void *obj, const struct cpufreq_policy *old, const struct cpufreq_policy *new) {
 	struct nvclock_elem *nv = obj;
 	
-	if (nv->card <= num_cards) {/* we really need "<=" */
-		clog(LOG_INFO, "Setting nv_mem for card %d to (%d)\n", nv->card, nv->value);
+	if (nv->card < nvclock.num_cards) {
+		clog(LOG_INFO, "Setting nv_mem for card %i to (%u)\n", nv->card, nv->value);
 		set_card(nv->card);
-		card[nv->card].gpu = NORMAL;
+		nvclock.card[nv->card].gpu = DESKTOP;
+		nv_card.number = -1; /* Force a re-init of the function pointers */
+		set_card(nv->card);
 		nv_card.set_memory_speed(nv->value);
 	}
 }
 
 struct cpufreqd_plugin *create_plugin (void) {
-	return &nvclock;
+	return &nvclock_plugin;
 }
 
