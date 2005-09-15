@@ -446,8 +446,10 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 				p->policy.max = percent_to_absolute(limits[0].max, p->policy.max);
 		}
 		/* normalize frequencies if such informations are available */
-		p->policy.max = normalize_frequency(limits, freq, p->policy.max);
-		p->policy.min = normalize_frequency(limits, freq, p->policy.min);
+		if (freq !=NULL) {
+			p->policy.max = normalize_frequency(limits, freq, p->policy.max);
+			p->policy.min = normalize_frequency(limits, freq, p->policy.min);
+		}
 	} else {
 		if (min_is_percent || max_is_percent) {
 			clog(LOG_WARNING, "Unable to calculate absolute values for profile \"%s\".\n",

@@ -35,7 +35,7 @@ unsigned long normalize_frequency (struct cpufreq_limits *limits,
 
 	struct cpufreq_available_frequencies *tmp = freqs;
 	unsigned long higher=0L, lower=0L;
-
+	
 	/* if limits are available determine if an out of bounds values is given */
 	if (limits != NULL) {
 		if (user_freq<=limits->min)
