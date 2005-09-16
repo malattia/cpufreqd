@@ -596,6 +596,7 @@ cpufreqd_start:
 		 * before the timer expires)
 		 */
 		if (cpufreqd_mode == ARG_DYNAMIC && timer_expired) {
+			timer_expired = 0;
 			new_timer.it_interval.tv_usec = 0;
 			new_timer.it_interval.tv_sec = 0;
 			new_timer.it_value.tv_usec = 0;
@@ -606,7 +607,13 @@ cpufreqd_start:
 				break;
 			}
 			current_rule = cpufreqd_loop(&configuration, current_rule);
-			timer_expired = 0;
+			/* if no socket available then pause()
+			 * otherwise continue and pselect the socket
+			 */
+			if (cpufreqd_sock == -1) {
+				pause();
+				continue;
+			}
 		}
 
 		/* if the socket opened successfully */
@@ -640,10 +647,6 @@ cpufreqd_start:
 					clog(LOG_ALERT, "poll(): Internal error caught.\n");
 					break;
 			}
-
-		/* no socket available, simply pause() */
-		} else {
-			pause();
 		}
 	}
 
