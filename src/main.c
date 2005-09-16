@@ -607,13 +607,6 @@ cpufreqd_start:
 				break;
 			}
 			current_rule = cpufreqd_loop(&configuration, current_rule);
-			/* if no socket available then pause()
-			 * otherwise continue and pselect the socket
-			 */
-			if (cpufreqd_sock == -1) {
-				pause();
-				continue;
-			}
 		}
 
 		/* if the socket opened successfully */
@@ -647,6 +640,12 @@ cpufreqd_start:
 					clog(LOG_ALERT, "poll(): Internal error caught.\n");
 					break;
 			}
+		}
+		/* if no socket available then pause()
+		 * otherwise continue and pselect the socket
+		 */
+		else if (!timer_expired) {
+			pause();
 		}
 	}
 
