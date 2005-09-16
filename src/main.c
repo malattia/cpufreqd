@@ -157,6 +157,7 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 							i, new->policy.max, new->policy.min,
 							new->policy.governor, check->max, 
 							check->min, check->governor);
+					cpufreq_put_policy(check);
 					return -1;
 				} else {
 					clog(LOG_INFO, "Policy correctly set %d-%d-%s\n",
@@ -166,8 +167,10 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 						
 			}
 		}
-		else
+		else {
 			clog(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", new->name, i);
+			return -1;
+		}
 	}
 	/* profile postchange event */
 	if (new->directives.first) {
@@ -576,7 +579,7 @@ cpufreqd_start:
 		goto out_socket;
 	}
 
-	/* TODO: if we are going to pselect the socket
+	/* if we are going to pselect the socket
 	 * then block all signals to avoid races,
 	 * will be unblocked by pselect
 	 */
@@ -641,8 +644,8 @@ cpufreqd_start:
 					break;
 			}
 		}
-		/* if no socket available then pause()
-		 * otherwise continue and pselect the socket
+		/* paranoid check for timer expiration
+		 * (might actually happen...)
 		 */
 		else if (!timer_expired) {
 			pause();
