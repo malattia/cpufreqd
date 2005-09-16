@@ -67,9 +67,9 @@ static TNODE * new_tnode(void) {
 }
 
 /* set the usage count to 0 */
-static void neglect_node(TNODE *n) {
-	if (n != NULL) {
-		n->used = 0;
+static void neglect_node(TNODE **n) {
+	if (*n != NULL) {
+		(*n)->used = 0;
 	}
 }
 
@@ -124,7 +124,7 @@ static void insert_tnode(TREE **t, const char *c) {
  */
 static TNODE *predecessor(TNODE *n) {
 	TNODE *ret = n->left;
-	while (ret->right!=NULL) {
+	while (ret->right != NULL) {
 		ret = ret->right;
 	}
 	return ret;
@@ -146,61 +146,64 @@ static TNODE *successor(TNODE *n) {
 
 /* removes an unused node from the tree
 */
-static void sweep_unused_node(TNODE *n) {
+static void sweep_unused_node(TNODE **n) {
 	TNODE *swap = NULL;
 
-	if (n!=NULL && n->used==0) {
+	if (*n != NULL && (*n)->used == 0) {
 
 		/* 1- a node with no child */
-		if (n->right==NULL && n->left==NULL) {
-			if (n->parent!=NULL) {
-				if (n->parent->left==n) n->parent->left=NULL;
-				if (n->parent->right==n) n->parent->right=NULL;
+		if ((*n)->right == NULL && (*n)->left == NULL) {
+			if ((*n)->parent!=NULL) {
+				if ((*n)->parent->left == *n) (*n)->parent->left = NULL;
+				if ((*n)->parent->right == *n) (*n)->parent->right = NULL;
 			} else {
 				/* hey i'm removing the root elem */
 				running_programs = NULL;
 			}
-			free_tnode(n);
+			free_tnode(*n);
+			*n = NULL;
 		}
 
 		/* 2- a node with one child */
-		else if (n->right==NULL && n->left!=NULL) {
-			if (n->parent!=NULL) {
-				if (n->parent->left==n) {
-					n->parent->left = n->left;
+		else if ((*n)->right == NULL && (*n)->left != NULL) {
+			if ((*n)->parent != NULL) {
+				if ((*n)->parent->left == *n) {
+					(*n)->parent->left = (*n)->left;
 				}
-				else if (n->parent->right==n) {
-					n->parent->right = n->left;
+				else if ((*n)->parent->right == *n) {
+					(*n)->parent->right = (*n)->left;
 				}
-				n->left->parent = n->parent;
+				(*n)->left->parent = (*n)->parent;
 			} else {
 				/* hey i'm removing the root elem */
-				running_programs = n->left;
+				running_programs = (*n)->left;
 			}
-			free_tnode(n);
+			free_tnode(*n);
+			*n = NULL;
 		}
-		else if (n->left==NULL && n->right!=NULL) {
-			if (n->parent!=NULL) {
-				if (n->parent->left==n) {
-					n->parent->left = n->right;
+		else if ((*n)->left == NULL && (*n)->right != NULL) {
+			if ((*n)->parent != NULL) {
+				if ((*n)->parent->left == *n) {
+					(*n)->parent->left = (*n)->right;
 				}
-				else if (n->parent->right==n) {
-					n->parent->right = n->right;
+				else if ((*n)->parent->right == *n) {
+					(*n)->parent->right = (*n)->right;
 				}
-				n->right->parent = n->parent;
+				(*n)->right->parent = (*n)->parent;
 			} else {
 				/* hey i'm removing the root elem */
-				running_programs = n->right;
+				running_programs = (*n)->right;
 			}
-			free_tnode(n);
+			free_tnode(*n);
+			*n = NULL;
 		}
 
 		/* 3- a node with 2 children */
 		else {
 			/* this actually unbalances the tree */
-			swap = predecessor(n);
+			swap = predecessor(*n);
 			/* consider predecessor subtree (can't have right childs) */
-			if (swap->parent->left==swap) {
+			if (swap->parent->left == swap) {
 				swap->parent->left = swap->left;
 			} else {
 				swap->parent->right = swap->left;
@@ -208,41 +211,38 @@ static void sweep_unused_node(TNODE *n) {
 			if (swap->left != NULL)
 				swap->left->parent = swap->parent;
 
-			strncpy(n->name, swap->name, PRG_LENGTH);
-			n->used = swap->used;
+			strncpy((*n)->name, swap->name, PRG_LENGTH);
+			(*n)->used = swap->used;
 			free_tnode(swap);
+			*n = NULL;
 		}
 	}
 }
 
 /* preorder visit 
- *
- * TODO remove recursion?
  */
-static void preorder_visit(TREE *t, void (*cb)(TNODE *n)) {
+static void preorder_visit(TREE *t, void (*cb)(TNODE **n)) {
+	if (t != NULL && t->left != NULL) {
+		preorder_visit(t->left, cb);
+	}
 	if (t != NULL) {
-		if (t->left!=NULL) {
-			preorder_visit(t->left, cb);
-		}
-
-		cb(t);
-
-		if (t->right!=NULL) {
-			preorder_visit(t->right, cb);
-		}
+		cb(&t);
+	}
+	if (t != NULL && t->right != NULL) {
+		preorder_visit(t->right, cb);
 	}
 }
 
 /* find a node */
 static TNODE * find_tnode(TREE *t, const char *c) {
 	int cmp = 0;
-	if (c != NULL && t!=NULL) {
+	if (c != NULL && t != NULL) {
 		cmp = strncmp(t->name, c, PRG_LENGTH);
 		if (cmp > 0) {
 			return find_tnode(t->left, c);
 		} else if (cmp < 0) {
 			return find_tnode(t->right, c);
-		} else if (t->used>0) {
+		} else if (t->used > 0) {
 			return t;
 		} 
 	}
@@ -252,7 +252,7 @@ static TNODE * find_tnode(TREE *t, const char *c) {
 #ifdef DEBUG_TREE
 static void debug_tnode(TNODE *n) {
 	if (n != NULL) {
-		clog(LOG_DEBUG, "%s [u:%d] [h:%d]\n", n->name, n->used, n->height);
+		clog(LOG_DEBUG, "DEBUG_TREE %s [u:%d] [h:%d]\n", n->name, n->used, n->height);
 	}
 }
 
@@ -260,12 +260,12 @@ static void print_tree(TNODE *n) {
 	char tab[64];
 	unsigned int i=0;
 	if (n != NULL) {
-		for(i=0; i<n->height&&i<63; i++) {
+		for(i = 0; i < n->height && i < 63; i++) {
 			tab[i]=' ';
 		}
-		tab[i]='\\';
-		tab[i+1]='\0';
-		clog(LOG_DEBUG, "%s%s \t%s - [h:%d]\n",
+		tab[i] = '\\';
+		tab[i+1] = '\0';
+		clog(LOG_DEBUG, "DEBUG_TREE %s%s \t%s - [h:%d]\n",
 				tab, n->name, n->parent!=NULL?n->parent->name:"nobody", n->height);
 	}
 }
@@ -373,9 +373,9 @@ static void programs_free(void *obj) {
 
 static int find_program(const TNODE *l) {
 	clog(LOG_DEBUG, "tree ptr %p\n", l);
-	return (find_tnode(running_programs, l->name)!=NULL) ? MATCH :
-		(l->right!=NULL && find_program(l->right)==MATCH) ? MATCH :
-		(l->left!=NULL && find_program(l->left)==MATCH) ? MATCH : DONT_MATCH;
+	return (find_tnode(running_programs, l->name) != NULL) ? MATCH :
+		(l->right != NULL && find_program(l->right) == MATCH) ? MATCH :
+		(l->left != NULL && find_program(l->left) == MATCH) ? MATCH : DONT_MATCH;
 }
 
 static int programs_evaluate(const void *s) {
