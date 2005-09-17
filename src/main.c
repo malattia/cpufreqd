@@ -582,8 +582,17 @@ cpufreqd_start:
 	/* if we are going to pselect the socket
 	 * then block all signals to avoid races,
 	 * will be unblocked by pselect
+	 *
+	 * NOTE: Since Linux today does not have a pselect() system  call,  the
+	 *       current glibc2 routine still contains this race.
+	 *       (man 2 pselect).
+	 *       I'll make all the efforts to avoid that race (the code between
+	 *       setitimer and pselect is as short as possible, but...)
+	 *
 	 */
-	if (cpufreqd_sock != -1) {
+	if (cpufreqd_sock > 0) {
+		sigemptyset(&signal_action.sa_mask);
+		sigaddset(&signal_action.sa_mask, SIGALRM);
 		sigprocmask(SIG_BLOCK, &signal_action.sa_mask, &old_sigmask);
 	}
 	
@@ -592,11 +601,8 @@ cpufreqd_start:
 	 */
 	while (!force_exit && !force_reinit) {
 		/*
-		 * Set timer and run the system scan and rule selection
-		 * if running in DYNAMIC mode
-		 * Also check if we still need to expire the timer 
-		 * (happens in case a command has been received
-		 * before the timer expires)
+		 * Run the system scan and rule selection and set timer
+		 * if running in DYNAMIC mode AND the timer is expired
 		 */
 		if (cpufreqd_mode == ARG_DYNAMIC && timer_expired) {
 			timer_expired = 0;
@@ -604,16 +610,17 @@ cpufreqd_start:
 			new_timer.it_interval.tv_sec = 0;
 			new_timer.it_value.tv_usec = 0;
 			new_timer.it_value.tv_sec = configuration.poll_interval;
+			current_rule = cpufreqd_loop(&configuration, current_rule);
+			/* set next alarm */
 			if (setitimer(ITIMER_REAL, &new_timer, 0) < 0) {
 				clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
 				ret = 1;
 				break;
 			}
-			current_rule = cpufreqd_loop(&configuration, current_rule);
 		}
 
 		/* if the socket opened successfully */
-		if (cpufreqd_sock != -1) {
+		if (cpufreqd_sock > 0) {
 			/* wait for a command */
 			FD_ZERO(&rfds);
 			FD_SET(cpufreqd_sock, &rfds);
@@ -640,7 +647,7 @@ cpufreqd_start:
 					peer_sock = -1;
 					break;
 				default:
-					clog(LOG_ALERT, "poll(): Internal error caught.\n");
+					clog(LOG_ALERT, "pselect(): Internal error caught.\n");
 					break;
 			}
 		}
