@@ -34,7 +34,6 @@
  * - no duplicates allowed
  * - contains a 'used' short to reuse the allocated
  *   memory through each loop
- * - deletion of unused nodes happens during insertion
  */
 struct TNODE {
 	char name[PRG_LENGTH];
@@ -48,9 +47,6 @@ typedef struct TNODE TNODE;
 typedef TNODE TREE;
 
 static TREE *running_programs = 0L;
-
-#define DEBUG_TREE
-#undef DEBUG_TREE
 
 /* create a new node obj */
 static TNODE * new_tnode(void) {
@@ -160,6 +156,7 @@ static void sweep_unused_node(TNODE **n) {
 				/* hey i'm removing the root elem */
 				running_programs = NULL;
 			}
+			clog(LOG_DEBUG, "Removed node (%s).\n", (*n)->name);
 			free_tnode(*n);
 			*n = NULL;
 		}
@@ -178,6 +175,7 @@ static void sweep_unused_node(TNODE **n) {
 				/* hey i'm removing the root elem */
 				running_programs = (*n)->left;
 			}
+			clog(LOG_DEBUG, "Removed node (%s).\n", (*n)->name);
 			free_tnode(*n);
 			*n = NULL;
 		}
@@ -194,6 +192,7 @@ static void sweep_unused_node(TNODE **n) {
 				/* hey i'm removing the root elem */
 				running_programs = (*n)->right;
 			}
+			clog(LOG_DEBUG, "Removed node (%s).\n", (*n)->name);
 			free_tnode(*n);
 			*n = NULL;
 		}
@@ -211,6 +210,8 @@ static void sweep_unused_node(TNODE **n) {
 			if (swap->left != NULL)
 				swap->left->parent = swap->parent;
 
+			clog(LOG_DEBUG, "Removed node (%s).\n", (*n)->name);
+			/* copy node data */
 			strncpy((*n)->name, swap->name, PRG_LENGTH);
 			(*n)->used = swap->used;
 			free_tnode(swap);
@@ -291,7 +292,7 @@ static int programs_update(void) {
 
 	struct dirent **namelist;
 	int n=0, ret=0, n_chars=0;
-	char file[100];
+	char file[PRG_LENGTH];
 	char program[PRG_LENGTH];
 	char *prg_basename;
 
@@ -306,10 +307,10 @@ static int programs_update(void) {
 	} else {
 
 		while(n--) {
-			snprintf(file, 99, "/proc/%s/exe", namelist[n]->d_name);    
+			snprintf(file, PRG_LENGTH - 1, "/proc/%s/exe", namelist[n]->d_name);    
 			free(namelist[n]);
 
-			n_chars = readlink(file, program, 99);
+			n_chars = readlink(file, program, PRG_LENGTH - 1);
 
 			if (n_chars < 0) {
 				/* probably this process is a kernel process or 
