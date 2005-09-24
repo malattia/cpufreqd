@@ -242,7 +242,7 @@ Monitors active processes. Available entries:
 
 .PP
 .SS "nforce2_atxp1 plugin"
-Allows to change Vcore of the CPU on the fly if you own a NForce2 board with
+Allows you to change Vcore of the CPU on the fly if you own a NForce2 board with
 atxp1 voltage regulator (and its module loaded). The use of this plugin will
 allow a new Profile directive and requires a configuration section.
 .TP
@@ -261,6 +261,23 @@ default Vcore before reboot. This value will be used to set Vcore on exit.
 .B "vcore"
 Will set Vcore to this value (given in mV) when the corresponding Profile is
 applied. Due to safety reasons range is limited from 1200 to 1850.
+
+.PP
+.SS "nvclock plugin"
+Allows you to tweak the core an memory clock for NVidia cards.
+The use of this plugin will allow new Profile directives.
+.BI "NOTE: you MUST use this plugin ONLY with supported cards."
+See also the nvclock homepage (http://www.linuxhardware.org/nvclock).
+
+.TP
+.B "nv_core"
+Sets the core clock in MHz. Must be of the form %d:%d where the first integer
+represents the card number, the second the desired frequency in MHz.
+
+.TP
+.B "nv_mem"
+Sets the memory clock in MHz. Must be of the form %d:%d where the first integer
+represents the card number, the second the desired frequency in MHz.
 
 .PP
 .SS "sensors plugin"
