@@ -98,6 +98,11 @@ Make cpufreqd open a local UNIX socket and listen for command to be executed.
 See cpufreqd-set(1) and cpufreqd-set(1) for two very simple clients.
 
 .TP
+.B "remote_group"
+Make the socket readable and writeable to the specified group. Useful to allow
+simple users to tweak cpufreqd with cpufreqd-set and cpufreqd-set.
+
+.TP
 .B "double_check"
 Make cpufreqd check if the requested policy has been correctly applied by
 re-reading the corresponding kernel attributes.
