@@ -5,7 +5,8 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-Wnested-externs -Winline -Wundef -Wbad-function-cast \
 	-Waggregate-return \
 	-std=c99 \
-	-D_POSIX_SOURCE -D_GNU_SOURCE
+	-D_POSIX_SOURCE -D_GNU_SOURCE \
+	-I${top_builddir}
 	
 sbin_PROGRAMS = cpufreqd
 
@@ -60,12 +61,10 @@ cpufreqd_nvclock_la_SOURCES = \
 		cpufreqd_nvclock.c
 
 cpufreqd_nvclock_la_CFLAGS = \
-		$(AM_CFLAGS) @NVCLOCK_CFLAGS@
+		$(AM_CFLAGS) -I/@NVCLOCK_SRCDIR@/src/backend
 
 cpufreqd_nvclock_la_LDFLAGS = \
-		-module -avoid-version @NVCLOCK_LDFLAGS@
-
-#cpufreqd_nvclock_la_LIBADD = libbackend.a
+		-module -avoid-version -L/@NVCLOCK_SRCDIR@/src/backend -lbackend
 endif
 
 if PMU_PLUGIN
@@ -121,10 +120,10 @@ cpufreqd_sensors_la_SOURCES = \
 		cpufreqd_sensors.c
 
 cpufreqd_sensors_la_CFLAGS = \
-		$(AM_CFLAGS) @SENSORS_CFLAGS@
+		$(AM_CFLAGS) -I/@SENSORS_SRCDIR@/include
 		
 cpufreqd_sensors_la_LDFLAGS = \
-		-module -avoid-version @SENSORS_LDFLAGS@
+		-module -avoid-version -L/@SENSORS_SRCDIR@/lib -lsensors
 endif
 
 noinst_HEADERS = \
