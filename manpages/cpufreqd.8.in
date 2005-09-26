@@ -24,7 +24,8 @@ configurable. Logs are reported through syslogd.
 stay in foreground (used to debug).
 .TP
 .B "-f filename, --file=filename"
-Specify the configuration file to read.  The default is /etc/cpufreqd.conf.
+Specify the configuration file to read.  The default is 
+@CPUFREQD_CONF_DIR@/cpufreqd.conf.
 .TP
 .B "-h, --help"
 Display command line help.
@@ -40,8 +41,8 @@ verbosity level from 0 (less verbose) to 7 (most verbose). Default verbosity is 
 This lets 
 .B cpufreqd 
 perform a re-initialization.  The configuration file (default is
-/etc/cpufreqd.conf) will  be re-read and probes re-done. (Not yet implemented in
-cpufreqd-2.0)
+@CPUFREQD_CONF_DIR@/cpufreqd.conf) will  be re-read and probes re-done. (Not
+yet implemented in cpufreqd-2.0)
 .TP
 .B SIGINT, SIGTERM
 .B cpufreqd
