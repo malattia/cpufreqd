@@ -32,7 +32,12 @@ tags:
 	if [ -f ./tags ]; then \
 		rm ./tags; \
 	fi; \
-	ctags src/*.[ch];
+	ctags -f tags src/*.[ch] utils/*.[ch];
 
+cscope:
+	if [ -f ./cscope.out ] ; then \
+		rm ./cscope.out; \
+	fi; \
+	cscope -R -b -fcscope.out
 
 #sysconf_DATA = cpufreqd.conf
