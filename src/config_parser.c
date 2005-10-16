@@ -259,7 +259,7 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 						|| (grp = getgrnam(value)) != NULL) {
 
 					configuration->remote_gid = grp->gr_gid;
-					clog(LOG_WARNING, "Remote controls will be r/w from group %s (%d).\n",
+					clog(LOG_WARNING, "Remote controls will be r/w for group %s (%d).\n",
 							grp->gr_name, grp->gr_gid);
 				} else {
 					configuration->remote_gid = 0;

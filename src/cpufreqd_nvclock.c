@@ -107,10 +107,9 @@ static void nvcore_change(void *obj, const struct cpufreq_policy *old, const str
 	if (nv->card < nvclock.num_cards) {
 		clog(LOG_INFO, "Setting nv_core for card %i to (%u)\n", nv->card, nv->value);
 		set_card(nv->card);
-		nvclock.card[nv->card].gpu = DESKTOP;
-		nv_card.number = -1; /* Force a re-init of the function pointers */
-		set_card(nv->card);
-		nv_card.set_gpu_speed(nv->value);
+		if(nv_card.supported & GPU_OVERCLOCKING_SUPPORTED)
+			nv_card.set_gpu_speed(nv->value);
+		unset_card(nv->card);
 	}
 }
 
@@ -120,10 +119,9 @@ static void nvmem_change(void *obj, const struct cpufreq_policy *old, const stru
 	if (nv->card < nvclock.num_cards) {
 		clog(LOG_INFO, "Setting nv_mem for card %i to (%u)\n", nv->card, nv->value);
 		set_card(nv->card);
-		nvclock.card[nv->card].gpu = DESKTOP;
-		nv_card.number = -1; /* Force a re-init of the function pointers */
-		set_card(nv->card);
-		nv_card.set_memory_speed(nv->value);
+		if(nv_card.supported & MEM_OVERCLOCKING_SUPPORTED)
+			nv_card.set_memory_speed(nv->value);
+		unset_card(nv->card);
 	}
 }
 

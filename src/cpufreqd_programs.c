@@ -50,15 +50,7 @@ static TREE *running_programs = 0L;
 
 /* create a new node obj */
 static TNODE * new_tnode(void) {
-	TNODE *ret = (TNODE *)malloc(sizeof(TNODE));
-	if (ret != NULL) {
-		ret->left = NULL;
-		ret->right = NULL;
-		ret->parent = NULL;
-		ret->name[0] = '\0';
-		ret->used = 0;
-		ret->height = 0;
-	}
+	TNODE *ret = (TNODE *)calloc(1, sizeof(TNODE));
 	return ret;
 }
 
