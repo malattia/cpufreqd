@@ -47,19 +47,20 @@
  * WARNING: it modifies the input string!
  */
 static char *clean_config_line (char *str) {
-	int i = 0;
+	int i;
 
 	/* remove white spaces at the beginning */
-	while (isspace(str[0])) {
-		str++;
+	while (isspace(*str)) {
+		++str;
 	}
 
 	/* remove end line white space */
-	i = strlen(str) - 1;
-	while (i >= 0 && isspace(str[i])) {
-		str[i] = '\0';
-		i--;
+	for (i = strlen(str) - 1; i>=0; --i) {
+		if (!isspace(str[i]))
+			break;
 	}
+	
+	str[i + 1] = '\0';
 
 	return str;
 }
@@ -73,12 +74,12 @@ static char *clean_config_line (char *str) {
  */
 static char *strip_comments_line (char *str) {
 	char *ch = str;
-	while (ch[0]) {
-		if (ch[0] == '#') {
-			ch[0] = '\0';
+	while (*ch) {
+		if (*ch == '#') {
+			*ch = '\0';
 			break;
 		}
-		ch++;
+		++ch;
 	}
 	return str;
 }
@@ -91,7 +92,7 @@ static char *read_clean_line(FILE *fp, char *buf, int n) {
 		buf[n-1] = '\0';
 		buf = strip_comments_line(buf);
 		/* returned an empty line ? */
-		if (buf[0]) {
+		if (*buf) {
 			buf = clean_config_line(buf);
 		}
 	}
@@ -121,7 +122,7 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 		fgetpos(config, &pos);
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
-		if (!clean[0]) /* returned an empty line */
+		if (!*clean) /* returned an empty line */
 			continue;
 
 		/* end of section */
@@ -131,7 +132,7 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 		 * the begininning of a new section, rewind the file
 		 * descriptor and break
 		 */
-		if (clean[0] == '[') {
+		if (*clean == '[') {
 			clog(LOG_WARNING, "Found an unclosed [General] section, "
 					"please review your cpufreqd.conf file\n");
 			fsetpos(config, &pos);
@@ -193,7 +194,7 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 					continue;
 
 				strncpy(o_plugin.name, token, MAX_STRING_LEN);
-				o_plugin.name[MAX_STRING_LEN-1] = '\0';
+				o_plugin.name[MAX_STRING_LEN - 1] = '\0';
 
 				LIST_FOREACH_NODE(node, &configuration->plugins) {
 					struct plugin_obj *op = (struct plugin_obj *) node->content;
@@ -224,7 +225,7 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 						CPUFREQD_PIDFILE);
 				strncpy(configuration->pidfile, CPUFREQD_PIDFILE, MAX_PATH_LEN);
 			}
-			configuration->pidfile[MAX_PATH_LEN-1] = '\0';
+			configuration->pidfile[MAX_PATH_LEN - 1] = '\0';
 			continue;
 		}
 
@@ -305,7 +306,7 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 		fgetpos(config, &pos);
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
-		if (!clean[0]) /* returned an empty line */
+		if (!*clean) /* returned an empty line */
 			continue;
 
 		/* end of section */
@@ -315,7 +316,7 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 		 * the begininning of a new section, rewind the file
 		 * descriptor and break
 		 */
-		if (clean[0] == '[') {
+		if (*clean == '[') {
 			clog(LOG_WARNING, "Found an unclosed [Profile] section, "
 					"please review your cpufreqd.conf file\n");
 			fsetpos(config, &pos);
@@ -329,14 +330,14 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 		if (value == NULL)
 			continue;
 
-		if (strcmp(name,"name")==0) {
+		if (strcmp(name,"name") == 0) {
 			strncpy(p->name, value, MAX_STRING_LEN);
 			p->name[MAX_STRING_LEN-1] = '\0';
 			state |= HAS_NAME;
 			continue;
 		}
 		
-		if (strcmp(name,"minfreq")==0) {
+		if (strcmp(name,"minfreq") == 0) {
 			if (sscanf(value, "%d", &tmp_freq) != 1) {
 				clog(LOG_ERR, "unable to parse MIN value %s.\n", value);
 				return -1;
@@ -392,7 +393,7 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 		/* it's plugin time to tell if they like the directive */
 		ckw = plugin_handle_keyword(plugins, name, value, &obj, &plugin);
 		/* if no plugin found read next line */
-		if (ckw != NULL) {
+		if (ckw) {
 			dir = node_new(NULL, sizeof(struct directive));
 			if (dir == NULL) {
 				free_keyword_object(ckw, obj);
@@ -432,7 +433,7 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 	/* TODO: check if the selected governor is available */
 
 	/* validate and normalize frequencies */
-	if (limits!=NULL) {
+	if (limits) {
 		/* calculate actual frequncies if percent where given frequencies */
 		if (state & HAS_CPU) {
 			if (min_is_percent)
@@ -446,12 +447,12 @@ static int parse_config_profile (FILE *config, struct profile *p, struct LIST *p
 				p->policy.max = percent_to_absolute(limits[0].max, p->policy.max);
 		}
 		/* normalize frequencies if such informations are available */
-		if (freq !=NULL) {
+		if (freq) {
 			p->policy.max = normalize_frequency(limits, freq, p->policy.max);
 			p->policy.min = normalize_frequency(limits, freq, p->policy.min);
 		}
 	} else {
-		if (min_is_percent || max_is_percent) {
+		if (min_is_percent | max_is_percent) {
 			clog(LOG_WARNING, "Unable to calculate absolute values for profile \"%s\".\n",
 					p->name);
 		}
@@ -494,7 +495,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 		fgetpos(config, &pos);
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
-		if (!clean[0]) /* returned an empty line */
+		if (!*clean) /* returned an empty line */
 			continue;
 
 		if (strcmp(clean,"[/Rule]") == 0)
@@ -503,7 +504,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 		 * the begininning of a new section, rewind the file
 		 * descriptor and break
 		 */
-		if (clean[0] == '[') {
+		if (*clean == '[') {
 			clog(LOG_WARNING, "Found an unclosed [Rule] section, "
 					"please review your cpufreqd.conf file\n");
 			fsetpos(config, &pos);
@@ -519,14 +520,14 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 
 		if (strcmp(name, "profile") == 0) {
 			strncpy(r->profile_name, value, MAX_STRING_LEN);
-			r->profile_name[MAX_STRING_LEN-1] = '\0';
+			r->profile_name[MAX_STRING_LEN - 1] = '\0';
 			state |= HAS_PROFILE;
 			continue;
 		}
 		
 		if (strcmp(name,"name") == 0) {
 			strncpy(r->name, value, MAX_STRING_LEN);
-			r->name[MAX_STRING_LEN-1] = '\0';
+			r->name[MAX_STRING_LEN - 1] = '\0';
 			state |= HAS_NAME;
 			continue;
 		}
@@ -534,7 +535,7 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 		/* it's plugin time to tell if they like the directive */
 		ckw = plugin_handle_keyword(plugins, name, value, &obj, &plugin);
 		/* if plugin found append to the list */
-		if (ckw != NULL) {
+		if (ckw) {
 			dir = node_new(NULL, sizeof(struct directive));
 			if (dir == NULL) {
 				free_keyword_object(ckw, obj);
@@ -583,7 +584,7 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 		fgetpos(config, &pos);
 		clean = read_clean_line(config, buf, MAX_STRING_LEN);
 
-		if (!clean[0]) /* returned an empty line */
+		if (!*clean) /* returned an empty line */
 			continue;
 
 		if (strncasecmp(endtag, clean, MAX_STRING_LEN) == 0)
@@ -592,7 +593,7 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 		 * the begininning of a new section, rewind the file
 		 * descriptor and break
 		 */
-		if (clean[0] == '[') {
+		if (*clean == '[') {
 			clog(LOG_WARNING, "Found unclosed [%s] section, "
 					"please review your cpufreqd.conf file\n",
 					plugin->plugin->plugin_name);
@@ -634,10 +635,10 @@ int init_configuration(struct cpufreqd_conf *configuration)
 
 	while (!feof(fp_config)) {
 		
-		buf[0] = '\0';
+		*buf = '\0';
 		clean = read_clean_line(fp_config, buf, 256);
 
-		if (!clean[0]) /* returned an empty line */
+		if (!*clean) /* returned an empty line */
 			continue;
 
 		/* if General scan general options */
