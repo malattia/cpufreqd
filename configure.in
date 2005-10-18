@@ -186,7 +186,7 @@ fi
 ###################
 AC_ARG_ENABLE([sensors],
 	[AS_HELP_STRING(
-		[--enable-sensors=PATH],
+		[--enable-sensors[[[[=PATH]]]]],
 		[sensors support - will provide the sensors cpufreqd plugin, needs libsensors [default=autodetected]])
 	],
 	[sensors_enable=$enableval],
