@@ -188,6 +188,7 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 				o_plugin.library = NULL;
 				o_plugin.plugin = NULL;
 				o_plugin.used = 0;
+				o_plugin.configured = 0;
 				duplicate = 0;
 				token = clean_config_line(token);
 				if (token == NULL)

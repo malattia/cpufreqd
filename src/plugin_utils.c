@@ -91,6 +91,7 @@ void discover_plugins(struct LIST *plugins) {
 			o_plugin.library = NULL;
 			o_plugin.plugin = NULL;
 			o_plugin.used = 0;
+			o_plugin.configured = 0;
 
 			sscanf(namelist[n]->d_name, "cpufreqd_%[^.].so", o_plugin.name);
 			o_plugin.name[MAX_STRING_LEN-1] = '\0';
