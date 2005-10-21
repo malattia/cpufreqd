@@ -277,6 +277,7 @@ void plugins_post_conf(struct LIST *plugins) {
 
 			/* the next call is currently useless due to the fact that
 			 * plugins are post-conf'ed before any rule/profile is read
+			 * not now
 			 */
 			/*
 			deconfigure_plugin(config, plugin);

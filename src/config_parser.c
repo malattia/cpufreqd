@@ -600,6 +600,13 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 			fsetpos(config, &pos);
 			break;
 		}
+
+		/* if this plugin has already been configured
+		 * simply skip this option.
+		 * Will spit a lout warning later.
+		 */
+		if (plugin->configured)
+			continue;
 		
 		name = strtok(clean, "=");
 		value = strtok(NULL, "");
@@ -608,6 +615,13 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 			clog(LOG_WARNING, "plugin \"%s\" can't handle %s.\n",
 					plugin->plugin->plugin_name, name);
 		}
+	}
+	if (plugin->configured) {
+		clog(LOG_WARNING, "plugin \"%s\" already configured, "
+				"skipped full duplicate section.\n",
+				plugin->plugin->plugin_name);
+	} else {
+		plugin->configured++;
 	}
 }
 
@@ -707,8 +721,11 @@ int init_configuration(struct cpufreqd_conf *configuration)
 				clog(LOG_CRIT, "[Profile] name \"%s\" already exists. Skipped\n", 
 						tmp_profile->name);
 				node_free(n);
+				n = NULL;
+				break;
 			}
-			list_append(&configuration->profiles, n);
+			if (n != NULL)
+				list_append(&configuration->profiles, n);
 			/* avoid continuing */
 			continue;
 		}
@@ -737,6 +754,13 @@ int init_configuration(struct cpufreqd_conf *configuration)
 				return -1;
 			}
 				
+			/* check if there are options */
+			if (LIST_EMPTY(&tmp_rule->directives)) {
+				clog(LOG_CRIT, "[Rule] name \"%s\" has no options. Discarded.\n",
+						tmp_rule->name);
+				node_free(n);
+				continue;
+			}
 			/* check duplicate names */
 			LIST_FOREACH_NODE(node, &configuration->rules) {
 				struct rule *tmp = (struct rule *)node->content;
@@ -746,15 +770,11 @@ int init_configuration(struct cpufreqd_conf *configuration)
 				clog(LOG_ERR, "[Rule] name \"%s\" already exists. Skipped\n", 
 						tmp_rule->name);
 				node_free(n);
+				n = NULL;
+				break;
 			}
-			/* check if there are options */
-			if (tmp_rule->directives.first == NULL) {
-				clog(LOG_CRIT, "[Rule] name \"%s\" has no options. Discarded.\n",
-						tmp_rule->name);
-				node_free(n);
-				continue;
-			}
-			list_append(&configuration->rules, n);
+			if (n != NULL)
+				list_append(&configuration->rules, n);
 			/* avoid continuing */
 			continue;
 		}
@@ -772,7 +792,7 @@ int init_configuration(struct cpufreqd_conf *configuration)
 	/* did I read something? 
 	 * check if I read at least one rule, otherwise exit
 	 */
-	if (configuration->rules.first == NULL) {
+	if (LIST_EMPTY(&configuration->rules)) {
 		clog(LOG_ERR, "ERROR! No rules found!\n");
 		return -1;
 	}

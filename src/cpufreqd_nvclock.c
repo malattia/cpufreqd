@@ -109,7 +109,7 @@ static void nvcore_change(void *obj, const struct cpufreq_policy *old, const str
 		set_card(nv->card);
 		if(nv_card.supported & GPU_OVERCLOCKING_SUPPORTED)
 			nv_card.set_gpu_speed(nv->value);
-		unset_card(nv->card);
+		unset_card();
 	}
 }
 
@@ -121,7 +121,7 @@ static void nvmem_change(void *obj, const struct cpufreq_policy *old, const stru
 		set_card(nv->card);
 		if(nv_card.supported & MEM_OVERCLOCKING_SUPPORTED)
 			nv_card.set_memory_speed(nv->value);
-		unset_card(nv->card);
+		unset_card();
 	}
 }
 

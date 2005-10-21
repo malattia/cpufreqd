@@ -24,7 +24,11 @@ struct plugin_obj {
 	char name[256];
 	void *library;
 	struct cpufreqd_plugin *plugin;
-	unsigned int used;
+	unsigned int used;		/* track if the plugin is used 
+					eg. if a Rule/Profile contains 
+					any of its directives */
+	unsigned int configured;	/* track if the plugin has 
+					already been configured */
 };
 
 void	discover_plugins	(struct LIST *plugins);
@@ -39,7 +43,8 @@ void	update_plugin_states	(struct LIST *plugins);
 void	plugins_post_conf	(struct LIST *plugins);
 
 struct plugin_obj *plugin_handle_section
-				(const char *name, struct LIST *plugins);
+	(const char *name, struct LIST *plugins);
+
 struct cpufreqd_keyword *plugin_handle_keyword
 	(struct LIST *plugins, const char *key, const char *value, void **obj,
 	 struct cpufreqd_plugin **plugin);
