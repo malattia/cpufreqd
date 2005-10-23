@@ -142,17 +142,31 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 		name = strtok(clean, "=");
 		value = strtok(NULL, "");
 
-
 		if (strcmp(name,"poll_interval") == 0) {
-			if (value != NULL) {
-				configuration->poll_interval = atoi (value);
-			}
-			/* validate */
-			if (configuration->poll_interval < 1) {
+			float poll_val = 1.0;
+			if (value != NULL &&  sscanf(value, "%f", &poll_val) == 1) {
+				configuration->poll_intv.tv_usec = (poll_val - ((int)poll_val)) * 1000000;
+				configuration->poll_intv.tv_sec = poll_val;
+				/* check and limit the subsecond precision */
+				if (configuration->poll_intv.tv_sec == 0 && 
+						configuration->poll_intv.tv_usec < 150000) {
+					clog(LOG_WARNING, "WARNING! poll_interval has too "
+							"low value (%lu.%lu), using default.\n",
+							configuration->poll_intv.tv_sec,
+							configuration->poll_intv.tv_usec);
+					configuration->poll_intv.tv_usec = 0;
+					configuration->poll_intv.tv_sec = DEFAULT_POLL;
+				}
+				
+			} else {
 				clog(LOG_WARNING, "WARNING! poll_interval has invalid value, "
 						"using default.\n");
-				configuration->poll_interval = DEFAULT_POLL;
+				configuration->poll_intv.tv_usec = 0;
+				configuration->poll_intv.tv_sec = DEFAULT_POLL;
 			}
+			clog(LOG_INFO, "poll_interval is %lu.%lu seconds\n",
+					configuration->poll_intv.tv_sec,
+					configuration->poll_intv.tv_usec);
 			continue;
 		}
 
@@ -874,7 +888,8 @@ void free_configuration(struct cpufreqd_conf *configuration)
 	list_free_sublist(&(configuration->profiles), configuration->profiles.first);
 
 	/* clean other values */
-	configuration->poll_interval = DEFAULT_POLL;
+	configuration->poll_intv.tv_usec = 0;
+	configuration->poll_intv.tv_sec = DEFAULT_POLL;
 	configuration->has_sysfs = 0;
 	configuration->enable_remote = 0;
 	configuration->cpu_min_freq = 0;

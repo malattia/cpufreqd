@@ -59,7 +59,7 @@ struct cpufreqd_conf configuration = {
 	.config_file		= CPUFREQD_CONFDIR"cpufreqd.conf",
 	.pidfile		= CPUFREQD_STATEDIR"cpufreqd.pid",
 	.cpu_num		= 1,
-	.poll_interval		= DEFAULT_POLL,
+	.poll_intv		= { .tv_sec = DEFAULT_POLL, .tv_usec = 0 },
 	.has_sysfs		= 1,
 	.no_daemon		= 0,
 	.log_level_overridden	= 0,
@@ -608,8 +608,8 @@ cpufreqd_start:
 			timer_expired = 0;
 			new_timer.it_interval.tv_usec = 0;
 			new_timer.it_interval.tv_sec = 0;
-			new_timer.it_value.tv_usec = 0;
-			new_timer.it_value.tv_sec = configuration.poll_interval;
+			new_timer.it_value.tv_usec = configuration.poll_intv.tv_usec;
+			new_timer.it_value.tv_sec = configuration.poll_intv.tv_sec;
 			current_rule = cpufreqd_loop(&configuration, current_rule);
 			/* set next alarm */
 			if (setitimer(ITIMER_REAL, &new_timer, 0) < 0) {
@@ -620,7 +620,7 @@ cpufreqd_start:
 		}
 
 		/* if the socket opened successfully */
-		if (cpufreqd_sock > 0) {
+		if (cpufreqd_sock > 0 && !timer_expired) {
 			/* wait for a command */
 			FD_ZERO(&rfds);
 			FD_SET(cpufreqd_sock, &rfds);
