@@ -71,8 +71,9 @@ Acceptable configuration tokens and values include:
 .SS "[General]"
 .TP
 .B "poll_interval"
-An integer larger than 0, measures the interval between system status reading in
-seconds. (default: 1)
+A float larger than 0.15, measures the interval between system status reading in
+seconds. Note: the lower bound has been set in order to try to avoid trashing your
+system if using a too low value. (default: 1.0)
 
 .TP
 .B "enable_plugins"

@@ -1,3 +1,12 @@
+version 2.0.0-pre2
+-------------------
+* fixed leak in nvclock plugin (note that you still need to patch
+nvclock as a problem was found there also)
+* code cleanup in config_parser.c
+* enabled subsecond poll_interval
+* fixed SIGSEGV when duplicate rules found
+* avoid configuring the same plugin twice
+
 version 2.0.0-pre1
 -------------------
 * implemented backward compatibility for the configuration file

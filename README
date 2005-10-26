@@ -1,4 +1,4 @@
-cpufreqd-2.0.0-pre1
+cpufreqd-2.0.0-pre2
 ===================
 
 ************
@@ -54,7 +54,7 @@ cpufreqd is behaving correctly.
  R |   | sensors           | OK!
  R |   | date              | work in progress
  R | P | exec              | work in progress
-   | P | nvclock           | work in progress
+   | P | nvclock           | OK!
    |   | {acpi_}fan        | ??? missing hardware
 ---+---+-------------------+---------------------
  P = adds Profile directives

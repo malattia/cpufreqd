@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([cpufreqd],[2.0.0-pre1],[malattia@linux.it], [cpufreqd])
+AC_INIT([cpufreqd],[2.0.0-pre2],[malattia@linux.it], [cpufreqd])
 AC_CANONICAL_TARGET([])
 
 AM_INIT_AUTOMAKE(1.8 dist-bzip2 foreign)
