@@ -26,36 +26,38 @@ set -e
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
+check_for_cpufreq_support() {
+	# forget it if we're trying to start and no cpufreq found in kernel
+	if !([ -d /sys/devices/system/cpu/cpu0/cpufreq ] || [ -f /proc/cpufreq ]) ; then
+		echo -n "No cpufreq interface found, "
+		return 1
+	fi
+	return 0
+}
+
+check_for_pm_support() {
+	# forget it if we're trying to start and no power management support is
+	# included in kernel
+	if !([ -d /proc/pmu ] || [ -f /proc/apm ] || [ -d /proc/acpi ]) ; then
+		echo -n "No supported power management interface found, "
+		return 1
+	fi
+	return 0
+}
+
 case "$1" in
     configure)
-        if [ -d /sys/devices/system/cpu/cpu0/cpufreq ] || [ -f /proc/cpufreq ] ; then
-            
-          [ -z ${CPUFREQD_PM} ] || unset CPUFREQD_PM
-
-          if [ -d /proc/pmu ]; then
-            CPUFREQD_PM=pmu
-          elif [ -f /proc/apm ]; then
-            CPUFREQD_PM=apm
-          elif [ -d /proc/acpi ]; then
-            CPUFREQD_PM=acpi
-          fi
-          
-
-          if [ ${CPUFREQD_PM} ]; then
-            # setup a very simple default configuration file
-            sed -i -e "s/^\(pm_type=\)acpi\(.*\)/\1$CPUFREQD_PM\2/" /etc/cpufreqd.conf
-
-          fi
-
-        fi
-
         # setup startup links, they'll warn the user of anything not being setup properly
         update-rc.d cpufreqd defaults > /dev/null
-        if [ -x /usr/sbin/invoke-rc.d ] ; then
-              invoke-rc.d cpufreqd start
-        else
-            /etc/init.d/cpufreqd start
-        fi
+	if ( check_for_cpufreq_support && check_for_pm_support ) ; then
+		if [ -x /usr/sbin/invoke-rc.d ] ; then
+		      invoke-rc.d cpufreqd start
+		else
+		    /etc/init.d/cpufreqd start
+		fi
+	else
+		echo "not starting cpufreqd."
+	fi
 
 
     ;;

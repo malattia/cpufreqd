@@ -1,14 +1,23 @@
 #! /bin/sh
+### BEGIN INIT INFO
+# Required-Start: $local_fs $syslog
+# Required-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop cpufreqd
+# Description: fully configurable daemon for dynamic frequency
+#	 and voltage scaling
+### END INIT INFO
 # 
 # Startup script for the cpufreqd daemon. It's been made using the
-# skeleton	example file to build /etc/init.d/ scripts.
-#		This file should be used to construct scripts for /etc/init.d.
+# skeleton example file to build /etc/init.d/ scripts.
+# This file should be used to construct scripts for /etc/init.d.
 #
-#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#		Modified for Debian GNU/Linux
-#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+# Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+# Modified for Debian GNU/Linux
+# by Ian Murdock <imurdock@gnu.ai.mit.edu>.
 #
-# Version:	@(#)skeleton  1.9.1  08-Apr-2002  miquels@cistron.nl
+# Version: @(#)skeleton  1.9.1  08-Apr-2002  miquels@cistron.nl
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
@@ -17,6 +26,9 @@ CPUFREQD_CONFFILE=/etc/cpufreqd.conf
 NAME=cpufreqd
 DESC="CPU Frequency daemon"
 
+# use lsb-base
+. /lib/lsb/init-functions
+
 # abort if no executable exists
 test -x $DAEMON || exit 0
 
@@ -24,64 +36,68 @@ test -x $DAEMON || exit 0
 test -r $CPUFREQD_CONFFILE || exit 0
 
 check_for_cpufreq_support() {
-  # forget it if we're trying to start and no cpufreq found in kernel
-  if !([ -d /sys/devices/system/cpu/cpu0/cpufreq ] || [ -f /proc/cpufreq ]) ; then
-	  echo "$DESC: no cpufreq interface found. "
-	  exit 0
-  fi
+	# forget it if we're trying to start and no cpufreq found in kernel
+	if !([ -d /sys/devices/system/cpu/cpu0/cpufreq ] || [ -f /proc/cpufreq ]) ; then
+#		log_failure_msg "no cpufreq interface found. "
+		return 1
+	fi
+	return 0
 }
 
 check_for_pm_support() {
-  # forget it if we're trying to start and no power management support is
-  # included in kernel
-  if !([ -d /proc/pmu ] || [ -f /proc/apm ] || [ -d /proc/acpi ]) ; then
-	  echo "$DESC: no supported power management interface found. "
-	  exit 0
-  fi
+	# forget it if we're trying to start and no power management support is
+	# included in kernel
+	if !([ -d /proc/pmu ] || [ -f /proc/apm ] || [ -d /proc/acpi ]) ; then
+#		log_failure_msg "no supported power management interface found. "
+		return 1
+	fi
+	return 0
 }
 
 set -e
 
+retval=0
 case "$1" in
-  start)
-      check_for_cpufreq_support
-      check_for_pm_support
-      echo -n "Starting $DESC: $NAME"
-      start-stop-daemon --start --oknodo --exec $DAEMON -- -f $CPUFREQD_CONFFILE || retval=$?
-      if [ "x$retval" != "x" ] ; then
-        echo -n " Errors occurred starting cpufreqd"
-      fi
-      echo "."
-      ;;
-  stop)
-      echo -n "Stopping $DESC: $NAME"
-      start-stop-daemon --stop --oknodo --exec $DAEMON
-      echo "."
-      ;;
-  reload|force-reload)
-      check_for_cpufreq_support
-      check_for_pm_support
-      echo -n "Reloading $DESC configuration..."
-      start-stop-daemon --stop --oknodo --signal 1 --exec $DAEMON -- -f $CPUFREQD_CONFFILE
-      echo "done."
-      ;;
-  restart)
-      echo -n "Restarting $DESC: $NAME"
-      start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
-      check_for_cpufreq_support
-      check_for_pm_support
-      sleep 1
-      start-stop-daemon --start --oknodo --exec $DAEMON -- -f $CPUFREQD_CONFFILE || retval=$?
-      if [ "x$retval" != "x" ] ; then
-        echo -n " Errors occurred starting cpufreqd"
-      fi
-      echo "."
-      ;;
-  *)
-      N=/etc/init.d/$NAME
-      echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
-      exit 1
-      ;;
+	start)
+		log_daemon_msg "Starting $DESC" "$NAME"
+		if ( check_for_cpufreq_support && check_for_pm_support ) ; then
+			start_daemon $DAEMON -f $CPUFREQD_CONFFILE
+		else
+#			log_failure_msg " Errors occurred starting cpufreqd"
+			retval=1
+		fi
+		log_end_msg $retval;
+	;;
+	stop)
+		log_daemon_msg "Stopping $DESC" "$NAME"
+		killproc $DAEMON 15
+		log_end_msg $retval
+	;;
+#  reload|force-reload)
+#      check_for_cpufreq_support
+#      check_for_pm_support
+#      echo -n "Reloading $DESC configuration..."
+#      start-stop-daemon --stop --oknodo --signal 1 --exec $DAEMON -- -f $CPUFREQD_CONFFILE
+#      echo "done."
+#      ;;
+	reload|force-reload|restart)
+		log_daemon_msg "Restarting $DESC" "$NAME"
+		killproc $DAEMON
+		sleep 1
+		if ( check_for_cpufreq_support && check_for_pm_support ) ; then
+			start_daemon $DAEMON -f $CPUFREQD_CONFFILE
+		else
+#			log_failure_msg " Errors occurred starting cpufreqd"
+			retval=1
+		fi
+		log_end_msg $retval;
+	;;
+	*)
+		N=/etc/init.d/$NAME
+		echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+		retval=2
+	;;
 esac
 
-exit 0
+exit $retval
+

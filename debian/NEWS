@@ -1,0 +1,13 @@
+cpufreqd (1.999+2.0pre2-1) unstable; urgency=low
+
+  This major release of cpufreqd contains many improvements,
+  especially a much wider range of configuration options (through
+  the use of plug-ins).
+  All in-kernel CpuFreq governors are supported but the default
+  configuration ships with performance and powersave only as not
+  all processors can run all governors.
+  
+  So I strongly suggest to review cpufreqd configuration after
+  installation.
+
+ -- Mattia Dongili <malattia@debian.org>  Tue, 01 Nov 2005 16:08:38 +0100

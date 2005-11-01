@@ -3,7 +3,7 @@ Tue, 24 Jun 2003 17:05:25 +0200.
 
 It was downloaded from http://sourceforge.net/projects/cpufreqd
 
-Upstream Authors: Mattia Dongili <malattia@gmail.com>
+Upstream Authors: Mattia Dongili <malattia@linux.it>
                   George Staikos <staikos@0wned.org> 
 
 Copyright:
@@ -18,9 +18,8 @@ Copyright:
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this package; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA.
+   along with this package; if not, write to the Free Software Foundation,
+   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 On Debian systems, the complete text of the GNU General
 Public License can be found in `/usr/share/common-licenses/GPL'.

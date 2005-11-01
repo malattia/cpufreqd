@@ -1,9 +1,49 @@
-cpufreqd (1.2.3-3) unstable; urgency=low
+cpufreqd (1.999+2.0pre2-1) unstable; urgency=low
+  
+  * New upstream release.
+  * Now suggest cpufrequtils (closes: #333617)
+  * The new plugin architecture allows:
+     - for easy selection of resources to poll (closes: #239946)
+     - polling of ACPI thermal zones (closes: #298645)
+  * Added Spanish translation (closes: #334559)
+  * Added Swedish translation (closes: #330409)
 
-  * Added dependency alternative to debconf to allow installation of cdebconf.
-  * Updated Standards-Version to 3.6.2
+ -- Mattia Dongili <malattia@debian.org>  Tue, 01 Nov 2005 16:08:38 +0100
 
- -- Mattia Dongili <malattia@debian.org>  Wed, 03 Aug 2005 18:48:21 +0200
+cpufreqd (1.999+2.0pre1-1) unstable; urgency=low
+  
+  * New upstream release.
+
+ -- Mattia Dongili <malattia@debian.org>  Sun, 25 Sep 2005 22:35:12 +0200
+
+cpufreqd (1.999+2.0beta4-1) unstable; urgency=medium
+  
+  * Beta test, will never upload.
+  * Completed plugin interface, now a plugin can hook almost
+    everywhere into cpufreqd. A sample plugin for nforce2 is
+    available
+
+ -- Mattia Dongili <malattia@debian.org>  Mon, 15 Aug 2005 23:03:14 +0200
+
+cpufreqd (1.999+2.0beta3-1) unstable; urgency=medium
+  
+  * Beta test, will never upload.
+  * Many improvements.
+
+ -- Mattia Dongili <malattia@debian.org>  Sat, 13 Aug 2005 00:13:10 +0200
+
+cpufreqd (1.999+2.0beta2-1) unstable; urgency=medium
+  
+  * Beta test, will never upload.
+  * Fixed floating point exeption with empty rules.
+
+ -- Mattia Dongili <malattia@debian.org>  Wed, 03 Aug 2005 12:38:13 +0200
+
+cpufreqd (1.999+2.0beta1-1) unstable; urgency=medium
+  
+  * Beta test, will never upload.
+
+ -- Mattia Dongili <malattia@debian.org>  Sat, 30 Jul 2005 20:08:59 +0200
 
 cpufreqd (1.2.3-2) unstable; urgency=medium
   

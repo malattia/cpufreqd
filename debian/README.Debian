@@ -1,13 +1,28 @@
               README for Debian package of Cpufreqd
               =====================================
 
-Configuration for cpufreqd is done automatically during install however the
-configuration file created is very trivial and most of the time meaningless for
-anybody's needs. Thus it's strongly suggested to modify the configuration and
-restart cpufreqd after install.
+This package installs a very trivial configuration file and most of the time
+it's not suite for everybody needs. Thus it's strongly suggested to modify the
+configuration and restart cpufreqd after install.
 
 If the install process fails to detect proper cpufreq support it will warn
 through debconf with a low priority. Startup links are created and the startup
-script will try to give useful warnings.
+script will try to give useful hints.
 
-Two sample configuration files are provided in /usr/share/doc/cpufreqd/examples.
+Note for the NVclock plugin
+---------------------------
+The binary package doesn't currently provide the nvclock plugin since an
+nvclock development package is not available yet. 
+
+Advanced users may want try this feature as follows:
+ - apt-get source nvclock
+ - apt-get source cpufreqd
+ - apply a trivial patch downloadable from http://cpufreqd.sf.net
+ - configure nvclock with --disable-nvcontrol --disable-gtk --disable-qt
+   and build it (simply make, no need to install it)
+ - configure cpufreqd (you want to edit the debian/rules file) with 
+   --enable-nvclock=/dir/where/apt/unzipped/nvclock-0.8b
+   and build cpufreqd's deb package by means of
+   dpkg-buildpackage -rfakeroot -uc -us -b
+   or with
+   make && make install

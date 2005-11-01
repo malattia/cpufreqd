@@ -1,0 +1,80 @@
+# cpufreqd po-debconf translation to Spanish
+# Copyright (C) 2005 Software in the Public Interest
+# This file is distributed under the same license as the cpufreqd package.
+#
+# Changes:
+#  - Initial translation
+#         César Gómez Martín <cesar.gomez@gmail.com>
+#
+#   Traductores, si no conoce el formato PO, merece la pena leer la
+#   documentación de gettext, especialmente las secciones dedicadas a este
+#   formato, por ejemplo ejecutando:
+#          info -n '(gettext)PO Files'
+#          info -n '(gettext)Header Entry'
+# Equipo de traducción al español, por favor, lean antes de traducir
+# los siguientes documentos:
+#
+#  - El proyecto de traducción de Debian al español
+#    http://www.debian.org/intl/spanish/
+#    especialmente las notas de traducción en
+#    http://www.debian.org/intl/spanish/notas
+#
+#  - La guía de traducción de po's de debconf:
+#    /usr/share/doc/po-debconf/README-trans
+#    o http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: cpufreqd\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-03-31 18:48+0200\n"
+"PO-Revision-Date: 2005-10-11 18:09+0100\n"
+"Last-Translator: César Gómez Martín <cesar.gomez@gmail.com>\n"
+"Language-Team: Debian l10n spanish <debian-l10n-spanish@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Spanish\n"
+"X-Poedit-Country: SPAIN\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#. Type: note
+#. Description
+#: ../templates:4
+msgid "Unable to find a Power Management interface in your kernel."
+msgstr "No se pudo encontrar una interfaz de gestión de energía en su núcleo."
+
+#. Type: note
+#. Description
+#: ../templates:4
+msgid ""
+" Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
+"and\n"
+" 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+msgstr ""
+"Cpufreqd no se arrancará, por favor, active ACPI, APM o PMU en su núcleo y\n"
+" 1. ejecute dpkg-reconfigure cpufreqd para tener una configuración "
+"automática simple o\n"
+" 2. edite /etc/cpufreqd.conf manualmente y ejecute dpkg-reconfigure cpufreqd."
+
+#. Type: note
+#. Description
+#: ../templates:12
+msgid "Unable to find a CpuFreq interface in your kernel."
+msgstr "No se pudo encontrar una interfaz CpuFreq en su núcleo."
+
+#. Type: note
+#. Description
+#: ../templates:12
+msgid ""
+" Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
+"and\n"
+" 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+msgstr ""
+"Cpufreqd no se arrancará, por favor, active un controlador CpuFreq en su "
+"núcleo y\n"
+" 1. ejecute dpkg-reconfigure cpufreqd para tener una configuración "
+"automática simple o\n"
+" 2. edite /etc/cpufreqd.conf manualmente y ejecute dpkg-reconfigure cpufreqd."
