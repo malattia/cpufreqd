@@ -872,6 +872,7 @@ void free_configuration(struct cpufreqd_conf *configuration)
 	/* cleanup config structs */
 	clog(LOG_INFO, "freeing rules.\n"); 
 	list_free_sublist(&(configuration->rules), configuration->rules.first);
+	configuration->rules.first = configuration->rules.last = NULL;
 
 	/* cleanup profile directives */
 	clog(LOG_INFO, "freeing profiles directives.\n");
@@ -886,6 +887,7 @@ void free_configuration(struct cpufreqd_conf *configuration)
 	}
 	clog(LOG_INFO, "freeing profiles.\n"); 
 	list_free_sublist(&(configuration->profiles), configuration->profiles.first);
+	configuration->profiles.first = configuration->profiles.last = NULL;
 
 	/* clean other values */
 	configuration->poll_intv.tv_usec = 0;
@@ -909,4 +911,5 @@ void free_configuration(struct cpufreqd_conf *configuration)
 		close_plugin(o_plugin);
 	}
 	list_free_sublist(&(configuration->plugins), configuration->plugins.first);
+	configuration->plugins.first = configuration->plugins.last = NULL;
 }
