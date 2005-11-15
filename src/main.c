@@ -150,9 +150,9 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 				if (check->max != new->policy.max || check->min != new->policy.min ||
 						strcmp(check->governor, new->policy.governor) != 0) {
 					/* written policy and subsequent read disagree */
-					clog(LOG_ERR, "I haven't been able to set the chosen prolicy "
+					clog(LOG_ERR, "I haven't been able to set the chosen policy "
 							"for CPU%d.\n"
-							"I set %d-%d-%s\n",
+							"I set %d-%d-%s\n"
 							"System says %d-%d-%s\n",
 							i, new->policy.max, new->policy.min,
 							new->policy.governor, check->max, 
