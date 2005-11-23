@@ -106,19 +106,19 @@ static unsigned int rule_score(struct rule *rule) {
 static struct rule *update_rule_scores(struct LIST *rule_list) {
 	struct rule *tmp_rule = NULL;
 	struct rule *ret = NULL;
-	unsigned int best_score = 0, tmp_score = 0;
+	unsigned int best_score = 0;
 
 	LIST_FOREACH_NODE(node, rule_list) {
 		tmp_rule = (struct rule *)node->content;
 		
 		clog(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
-		tmp_score = rule_score(tmp_rule);
+		tmp_rule->score = rule_score(tmp_rule);
 
-		if (tmp_score > best_score) {
+		if (tmp_rule->score > best_score) {
 			ret = tmp_rule;
-			best_score = tmp_score;
+			best_score = tmp_rule->score;
 		}
-		clog(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name, tmp_score);
+		clog(LOG_INFO, "Rule \"%s\" score: %d%%\n", tmp_rule->name, tmp_rule->score);
 	} /* end foreach rule */
 	return ret;
 }
@@ -143,7 +143,7 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 	for (i=0; i<configuration.cpu_num; i++) {
 		if (cpufreq_set_policy(i, &(new->policy)) == 0) {
 			clog(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
-			/* TODO: double check if everything is OK (configurable) */
+			/* double check if everything is OK (configurable) */
 			if (configuration.double_check) {
 				struct cpufreq_policy *check = NULL;
 				check = cpufreq_get_policy(i);
@@ -295,8 +295,19 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 	if (best_rule == NULL) {
 		clog(LOG_WARNING, "No Rule matches current system status.\n");
 
-		/* rule changed */
 	} else if (current != best_rule) {
+		/* rule changed */
+
+		/* try to be conservative, if the new rule has the same score
+		 * as the old one then keep the old one
+		 */
+		if (current != NULL && current->score == best_rule->score) {
+			clog(LOG_INFO, "New Rule (\"%s\") is equivalent "
+					"to the old one (\"%s\"), doing nothing.\n",
+					best_rule->name, current->name);
+			return current;
+		}
+		
 		clog(LOG_DEBUG, "New Rule (\"%s\"), applying.\n", 
 				best_rule->name);
 		/* pre change event */
@@ -321,8 +332,8 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 					&current->prof->policy, &best_rule->prof->policy);
 		}
 
-		/* nothing new happened */
 	} else {
+		/* nothing new happened */
 		clog(LOG_DEBUG, "Rule unchanged (\"%s\"), doing nothing.\n", 
 				current->name);
 	}
