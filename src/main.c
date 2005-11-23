@@ -620,35 +620,37 @@ cpufreqd_start:
 		}
 
 		/* if the socket opened successfully */
-		if (cpufreqd_sock > 0 && !timer_expired) {
+		if (cpufreqd_sock > 0) {
 			/* wait for a command */
 			FD_ZERO(&rfds);
 			FD_SET(cpufreqd_sock, &rfds);
 			
-			switch (pselect(cpufreqd_sock+1, &rfds, NULL, NULL, NULL, &old_sigmask)) {
-				case 0:
-					/* timed out. check to see if things have changed */
-					/* should never happen actually */
-					break;
-				case -1:
-					/* caused by SIGALARM (mostly) */
-					if (errno != EINTR)
-						clog(LOG_NOTICE, "poll(): %s.\n", strerror(errno));
-					break;
-				case 1:
-					/* somebody tried to contact us. see what he wants */
-					peer_sock = accept(cpufreqd_sock, NULL, 0);
-					if (peer_sock == -1) {
-						clog(LOG_ALERT, "Unable to accept connection: "
-								" %s\n", strerror(errno));
-					}
-					execute_command(peer_sock, &configuration);
-					close(peer_sock);
-					peer_sock = -1;
-					break;
-				default:
-					clog(LOG_ALERT, "pselect(): Internal error caught.\n");
-					break;
+			if (!timer_expired || cpufreqd_mode == ARG_MANUAL) {
+				switch (pselect(cpufreqd_sock+1, &rfds, NULL, NULL, NULL, &old_sigmask)) {
+					case 0:
+						/* timed out. check to see if things have changed */
+						/* should never happen actually */
+						break;
+					case -1:
+						/* caused by SIGALARM (mostly) */
+						if (errno != EINTR)
+							clog(LOG_NOTICE, "poll(): %s.\n", strerror(errno));
+						break;
+					case 1:
+						/* somebody tried to contact us. see what he wants */
+						peer_sock = accept(cpufreqd_sock, NULL, 0);
+						if (peer_sock == -1) {
+							clog(LOG_ALERT, "Unable to accept connection: "
+									" %s\n", strerror(errno));
+						}
+						execute_command(peer_sock, &configuration);
+						close(peer_sock);
+						peer_sock = -1;
+						break;
+					default:
+						clog(LOG_ALERT, "pselect(): Internal error caught.\n");
+						break;
+				}
 			}
 		}
 		/* paranoid check for timer expiration
