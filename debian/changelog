@@ -1,3 +1,13 @@
+cpufreqd (2.0.0-1) unstable; urgency=low
+  
+  * New upstream release.
+  * cpufreqd.init: exit succesfully in case a stop is issued and
+    cpufreqd is found running as requested by LSB thus making it
+    possible to remove cpufreqd when cpufreqd itsef is stopped
+    (closes: #340133)
+
+ -- Mattia Dongili <malattia@debian.org>  Sun, 27 Nov 2005 18:47:42 +0100
+
 cpufreqd (1.999+2.0pre2-1) unstable; urgency=low
   
   * New upstream release.

@@ -70,7 +70,9 @@ case "$1" in
 	;;
 	stop)
 		log_daemon_msg "Stopping $DESC" "$NAME"
-		killproc $DAEMON 15
+		if ( pidofproc $DAEMON 2>&1 > /dev/null ) ; then
+			killproc $DAEMON 15
+		fi
 		log_end_msg $retval
 	;;
 #  reload|force-reload)
