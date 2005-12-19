@@ -234,6 +234,59 @@ else
 fi
 AC_SUBST(SENSORS_SRCDIR)
 
+################
+# EXEC support #
+################
+AC_ARG_ENABLE([exec],
+	[AS_HELP_STRING(
+		[--enable-exec[[[[=PATH]]]]],
+		[exec support - will provide the exec cpufreqd plugin, needs libpthread [default=autodetected]])
+	],
+	[exec_enable=$enableval],
+	[exec_enable=yes]
+	)
+OLD_CPPFLAGS="$CPPFLAGS"
+OLD_CFLAGS="$CFLAGS"
+OLD_LDFLAGS="$LDFLAGS"
+if test "x$exec_enable" != xno; then
+
+	if test "x$exec_enable" != xyes; then
+		CPPFLAGS="$CPPFLAGS -I${exec_enable}/include"
+		CFLAGS="$CFLAGS -I${exec_enable}/include"
+		LDFLAGS="$LDFLAGS -L${exec_enable}/lib"
+	fi
+
+	AC_CHECK_HEADER([pthread.h],
+		[ AC_CHECK_LIB([pthread], [pthread_create],
+			[ AC_DEFINE(EXEC_PLUGIN, , [Define this to compile exec support])
+			if test "x$exec_enable" != xyes; then
+				EXEC_SRCDIR="${exec_enable}"
+			else
+				EXEC_SRCDIR="/usr"
+			fi
+			exec_support=success
+			],
+			[exec_support=failed])
+		],
+		[exec_support=failed])
+fi
+CPPFLAGS="$OLD_CPPFLAGS"
+CFLAGS="$OLD_CFLAGS"
+LDFLAGS="$OLD_LDFLAGS"
+if test "x$exec_support" = xfailed && test "x$exec_enable" != xyes; then
+	echo '***************************************************'
+	echo '***      ERROR WHILE CONFIGURING CPUFREQD       ***'
+	echo '***************************************************'
+	AC_MSG_ERROR([Failed to find requested libpthread development files in ${exec_enable}])
+fi
+AM_CONDITIONAL(EXEC_PLUGIN, test x"${exec_support}" = xsuccess)
+if test x"${exec_support}" = xsuccess; then
+	ENABLED_PLUGINS="$ENABLED_PLUGINS exec"
+else
+	DISABLED_PLUGINS="$DISABLED_PLUGINS exec"
+fi
+AC_SUBST(EXEC_SRCDIR)
+
 # Defines two useful paths in order to remove hardcoded paths
 if test "x$prefix" = xNONE; then
   prefix="${ac_default_prefix}"

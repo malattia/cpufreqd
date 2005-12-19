@@ -46,6 +46,9 @@ endif
 if SENSORS_PLUGIN
 BUILD_PLUGINS += cpufreqd_sensors.la
 endif
+if EXEC_PLUGIN
+BUILD_PLUGINS += cpufreqd_exec.la
+endif
 lib_LTLIBRARIES = $(BUILD_PLUGINS)
 
 if NFORCE2_PLUGIN
@@ -114,6 +117,17 @@ cpufreqd_programs_la_SOURCES = \
 
 cpufreqd_programs_la_LDFLAGS = \
 		-module -avoid-version
+
+if EXEC_PLUGIN
+cpufreqd_exec_la_SOURCES = \
+		cpufreqd_exec.c
+
+cpufreqd_exec_la_CFLAGS = \
+		$(AM_CFLAGS) -I/@EXEC_SRCDIR@/include
+
+cpufreqd_exec_la_LDFLAGS = \
+		-module -avoid-version -L/@EXEC_SRCDIR@/lib -lpthread
+endif
 
 if SENSORS_PLUGIN
 cpufreqd_sensors_la_SOURCES = \
