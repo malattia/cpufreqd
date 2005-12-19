@@ -1,12 +1,9 @@
-cpufreqd-2.0.0-pre2
-===================
+cpufreqd-2.0.0
+===============
 
 ************
 *   NOTE   *
 ************
-
-This is a pre release! Things may not work as you expect, use this software at
-your own risk.
 Cpufreqd2 now provides all the features of cpufreqd1 plus a lot more! The 
 configuration file format is still compatible but will emit a lot of warnings
 if you still use the old format. Take a look at the cpufreqd.conf manpage to see
@@ -46,7 +43,7 @@ cpufreqd is behaving correctly.
  R |   | acpi_battery      | OK!
  R |   | acpi_temperature  | OK!
  R |   | acpi_event        | planned
- R |   | apm               | not tested (reports?)
+ R |   | apm               | OK!
  R |   | cpu               | OK!
    | P | nforce2           | OK!
  R |   | pmu               | some basic testing (reports?)

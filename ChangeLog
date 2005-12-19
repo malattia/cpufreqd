@@ -1,3 +1,10 @@
+version 2.0.0
+-------------
+* 2.0.0 final
+* fix an incorrect printf format that caused to SIGSEGV on 64bit platforms
+* make cpufreqd al little more conservative when choosing a rule by 
+keeping an already applied rule in case of a tie
+
 version 2.0.0-pre2
 -------------------
 * fixed leak in nvclock plugin (note that you still need to patch
