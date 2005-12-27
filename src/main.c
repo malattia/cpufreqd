@@ -83,20 +83,23 @@ static int cpufreqd_mode = ARG_DYNAMIC; /* operation mode (manual / dynamic) */
  * for it.
  */
 static unsigned int rule_score(struct rule *rule) {
-	unsigned int hits = 0;
+	unsigned int hits = 0, directives = 0;
 	struct directive *d = NULL;
 	
 	/* call plugin->evaluate for each rule */
 	LIST_FOREACH_NODE(node, &rule->directives) {
 		d = (struct directive *) node->content;
 		/* compute scores for rules and keep the highest */
-		if (d->keyword->evaluate != NULL && d->keyword->evaluate(d->obj) == MATCH) {
-			hits++;
-			clog(LOG_DEBUG, "Rule \"%s\": %s matches.\n", rule->name,
-					d->keyword->word);
+		if (d->keyword->evaluate != NULL) {
+			directives++;
+			if (d->keyword->evaluate(d->obj) == MATCH) {
+				hits++;
+				clog(LOG_DEBUG, "Rule \"%s\": %s matches.\n", rule->name,
+						d->keyword->word);
+			}
 		}
 	} /* end foreach rule entry */
-	return hits + (100 * hits / rule->directives_count);
+	return hits + (100 * hits / directives);
 }
 
 /*  struct rule *update_rule_scores(struct LIST *rules)
