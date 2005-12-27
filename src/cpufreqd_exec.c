@@ -30,6 +30,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "cpufreqd_plugin.h"
 
 struct exec_cmd {
@@ -47,7 +50,8 @@ static struct exec_cmd exe_exit_cmd = { .cmd = "", .next = NULL };
 static int exec_parse (const char *line, void **obj) {
 	*obj = strdup(line);
 	if (*obj == NULL) {
-		clog(LOG_ERR, "Couldn't anough room for the command.\n");
+		clog(LOG_ERR, "Couldn't make enough room for the command '%s'.\n",
+				line);
 		return -1;
 	}
 	return 0;
@@ -57,7 +61,10 @@ static int exec_parse (const char *line, void **obj) {
  */
 static void *queue_launcher (void *arg) {
 	struct exec_cmd *etemp = NULL;
-
+	pid_t child_pid = 0;
+	int child_ret = 0;
+	struct sigaction signal_action;
+	
 	while (1) {
 		pthread_mutex_lock(&exe_q_mtx);
 		while (exe_q == NULL) {
@@ -72,6 +79,49 @@ static void *queue_launcher (void *arg) {
 		if (etemp->cmd[0]) {
 			/* fork + excl */
 			clog(LOG_DEBUG, "EXE: %s\n", etemp->cmd);
+			switch (child_pid = fork()) {
+				case -1:
+					clog(LOG_ERR, "Unable to fork new process: %s\n",
+							strerror(errno));
+					break;
+				case 0:
+					clog(LOG_DEBUG, "child process, exec 'sh -c %s'\n",
+							etemp->cmd);
+					/* child */
+					/* reset signal handlers to default */
+					sigemptyset(&signal_action.sa_mask);
+					sigaddset(&signal_action.sa_mask, SIGTERM);
+					sigaddset(&signal_action.sa_mask, SIGINT);
+					sigaddset(&signal_action.sa_mask, SIGHUP);
+					sigaddset(&signal_action.sa_mask, SIGALRM);
+					signal_action.sa_flags = 0;
+					signal_action.sa_handler = SIG_DFL;
+					sigaction(SIGTERM, &signal_action, 0);
+					sigaction(SIGINT, &signal_action, 0);
+					sigaction(SIGHUP, &signal_action, 0);
+					sigaction(SIGALRM, &signal_action, 0);
+
+					/* TODO: test if file exists, is executable, etc.*/
+					/* perhaps we don't need that, beacause exit status will be logged*/
+					child_ret = execl("/bin/sh", "/bin/sh", "-c", etemp->cmd, NULL);
+					clog(LOG_ERR, "Unable to execl new process: %s\n",
+							strerror(child_ret));
+					exit(1);
+				default:
+					waitpid(child_pid, &child_ret, 0);
+					if(WIFEXITED(child_ret)) {
+						clog(LOG_NOTICE, "\"%s\" exited with status %d\n",
+								etemp->cmd, WEXITSTATUS(child_ret));
+						clog(LOG_DEBUG, "EXE: %s done\n", etemp->cmd);
+					} else if(WIFSIGNALED(child_ret)) {
+						clog(LOG_NOTICE, "\"%s\" exited on signal %d\n",
+								etemp->cmd, WTERMSIG(child_ret));
+					} else {
+						clog(LOG_ERR, "\"%s\" exited with status %d\n",
+								etemp->cmd, child_ret);
+					}
+						
+			}
 			free(etemp);
 		} else
 			break;
@@ -115,12 +165,14 @@ static void change (void *obj, const struct cpufreq_policy *old,
  * to have some command available.
  */
 static int exec_init (void) {
-
+	int ret = 0;
 	/* launch exec thread */
-	if (pthread_create(&exe_thread, NULL, &queue_launcher, NULL) != 0)
-		return -1;
+	if ((ret = pthread_create(&exe_thread, NULL, &queue_launcher, NULL)) != 0) {
+		clog(LOG_ERR, "Unable to launch thread: %s\n", strerror(ret));
+		return ret;
+	}
 
-	return 0;
+	return ret;
 }
 
 static int exec_exit (void) {
@@ -153,23 +205,25 @@ static int exec_exit (void) {
 
 static struct cpufreqd_keyword kw[] =  {
 	{
+	/* only define post change events */
 		.word = "exec_post",
 		.parse = exec_parse,
 		.evaluate = NULL,
-		.profile_pre_change = &change,
+		.profile_pre_change = NULL,
 		.profile_post_change = &change,
-		.rule_pre_change = &change,
+		.rule_pre_change = NULL,
 		.rule_post_change = &change,
 		.free = NULL,
 	},
 	{
+	/* only define pre change events */
 		.word = "exec_pre",
 		.parse = exec_parse,
 		.evaluate = NULL,
 		.profile_pre_change = &change,
-		.profile_post_change = &change,
+		.profile_post_change = NULL,
 		.rule_pre_change = &change,
-		.rule_post_change = &change,
+		.rule_post_change = NULL,
 		.free = NULL,
 	},
 	{	.word = NULL, }
