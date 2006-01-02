@@ -619,7 +619,6 @@ cpufreqd_start:
 		 * if running in DYNAMIC mode AND the timer is expired
 		 */
 		if (cpufreqd_mode == ARG_DYNAMIC && timer_expired) {
-			timer_expired = 0;
 			new_timer.it_interval.tv_usec = 0;
 			new_timer.it_interval.tv_sec = 0;
 			new_timer.it_value.tv_usec = configuration.poll_intv.tv_usec;
@@ -631,6 +630,8 @@ cpufreqd_start:
 				ret = 1;
 				break;
 			}
+			/* can safely reset the expierd flag */
+			timer_expired = 0;
 		}
 
 		/* if the socket opened successfully */
@@ -648,7 +649,7 @@ cpufreqd_start:
 					case -1:
 						/* caused by SIGALARM (mostly) */
 						if (errno != EINTR)
-							clog(LOG_NOTICE, "poll(): %s.\n", strerror(errno));
+							clog(LOG_NOTICE, "pselect(): %s.\n", strerror(errno));
 						break;
 					case 1:
 						/* somebody tried to contact us. see what he wants */
