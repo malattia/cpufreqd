@@ -60,13 +60,6 @@ static int acpi_event_conf (const char *key, const char *value) {
 	return -1;
 }
 
-/*  We need a way to describe events in a simple manner.
- *  They will later match real acpi events
- */
-static int acpi_event_parse (const char *line, void **obj) {
-	return -1;
-}
-
 /*  Waits for ACPI events on the file descriptor opened previously.
  *  This function uses select(2) to wait for readable data in order
  *  to only wake cpufreqd once in case multiple events are available.
@@ -185,18 +178,7 @@ static int acpi_event_exit (void) {
 }
 
 static struct cpufreqd_keyword kw[] =  {
-	{
-	/* only define post change events */
-		.word = "acpi_event",
-		.parse = &acpi_event_parse,
-		.evaluate = NULL,
-		.profile_pre_change = NULL,
-		.profile_post_change = NULL,
-		.rule_pre_change = NULL,
-		.rule_post_change = NULL,
-		.free = NULL,
-	},
-	{	.word = NULL, }
+	{ .word = NULL, }
 };
 
 static struct cpufreqd_plugin plugin =  {
@@ -216,6 +198,4 @@ static struct cpufreqd_plugin plugin =  {
 struct cpufreqd_plugin *create_plugin(void) {
 	return &plugin;
 }
-
-
 
