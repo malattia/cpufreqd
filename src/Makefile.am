@@ -29,6 +29,7 @@ BUILD_PLUGINS = \
 if ACPI_PLUGIN
 BUILD_PLUGINS += cpufreqd_acpi_battery.la \
 		 cpufreqd_acpi_temperature.la \
+		 cpufreqd_acpi_event.la \
 		 cpufreqd_acpi_ac.la
 endif
 if NFORCE2_PLUGIN
@@ -99,6 +100,15 @@ cpufreqd_acpi_temperature_la_SOURCES = \
 cpufreqd_acpi_temperature_la_LDFLAGS = \
 		-module -avoid-version
 
+cpufreqd_acpi_event_la_SOURCES = \
+		cpufreqd_acpi_event.c
+
+cpufreqd_acpi_event_la_CFLAGS = \
+		$(AM_CFLAGS) -I/@PTHREAD_SRCDIR@/include
+
+cpufreqd_acpi_event_la_LDFLAGS = \
+		-module -avoid-version -L/@PTHREAD_SRCDIR@/lib -lpthread
+
 cpufreqd_acpi_battery_la_SOURCES = \
 		cpufreqd_acpi_battery.c
 
@@ -123,10 +133,10 @@ cpufreqd_exec_la_SOURCES = \
 		cpufreqd_exec.c
 
 cpufreqd_exec_la_CFLAGS = \
-		$(AM_CFLAGS) -I/@EXEC_SRCDIR@/include
+		$(AM_CFLAGS) -I/@PTHREAD_SRCDIR@/include
 
 cpufreqd_exec_la_LDFLAGS = \
-		-module -avoid-version -L/@EXEC_SRCDIR@/lib -lpthread
+		-module -avoid-version -L/@PTHREAD_SRCDIR@/lib -lpthread
 endif
 
 if SENSORS_PLUGIN

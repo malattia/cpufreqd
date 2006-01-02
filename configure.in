@@ -46,18 +46,79 @@ AC_SUBST(CPUFREQD_LDFLAGS)
 DISABLED_PLUGINS=""
 ENABLED_PLUGINS=" cpu programs"
 
+########################
+# POSIX Thread library #
+########################
+pthread_support=
+AC_ARG_WITH([pthread],
+	[AS_HELP_STRING(
+		[--with-pthread[[[[=PATH]]]]],
+		[POSIX Thread library - needed by the exec and ACPI-event plugins [default=autodetected]])
+	],
+	[pthread_enable=$withval],
+	[pthread_enable=yes]
+	)
+OLD_CPPFLAGS="$CPPFLAGS"
+OLD_CFLAGS="$CFLAGS"
+OLD_LDFLAGS="$LDFLAGS"
+if test "x$pthread_enable" != xno; then
+
+	if test "x$pthread_enable" != xyes; then
+		CPPFLAGS="$CPPFLAGS -I${pthread_enable}/include"
+		CFLAGS="$CFLAGS -I${pthread_enable}/include"
+		LDFLAGS="$LDFLAGS -L${pthread_enable}/lib"
+	fi
+
+	AC_CHECK_HEADER([pthread.h],
+		[ AC_CHECK_LIB([pthread], [pthread_create],
+			[ AC_DEFINE(PTHREAD_DIR, , [Define this to enable pthread support])
+			if test "x$pthread_enable" != xyes; then
+				PTHREAD_SRCDIR="${pthread_enable}"
+			else
+				PTHREAD_SRCDIR="/usr"
+			fi
+			pthread_lib=success
+			],
+			[pthread_lib=failed])
+		],
+		[pthread_lib=failed])
+fi
+CPPFLAGS="$OLD_CPPFLAGS"
+CFLAGS="$OLD_CFLAGS"
+LDFLAGS="$OLD_LDFLAGS"
+if test "x$pthread_lib" = xfailed; then
+	echo '***************************************************'
+	echo '***      ERROR WHILE CONFIGURING CPUFREQD       ***'
+	echo '***************************************************'
+	AC_MSG_ERROR([Failed to find necessary libpthread development files in ${pthread_enable}])
+fi
+AM_CONDITIONAL(PTHREAD_LIB, test x"${pthread_lib}" = xsuccess)
+AC_SUBST(PTHREAD_SRCDIR)
+
 ################
 # ACPI support #
 ################
 AC_ARG_ENABLE([acpi],
 	[AS_HELP_STRING(
 		[--enable-acpi],
-		[acpi plugins - will provide the 3 ACPI cpufreqd plugins [default=enabled]])
+		[acpi plugins - will provide the 4 ACPI cpufreqd plugins [default=enabled]])
 	],
 	[acpi_enable=$enableval],
 	[acpi_enable=yes]
 	)
+if test x"${pthread_lib}" != xsuccess; then
+	echo '*********************************************'
+	echo '***      ACPI Event plugin disabled       ***'
+	echo '*********************************************'
+	AC_WARNING(all, [The ACPI Event plugin needs a POSIX Thread library but none detected, use --with-pthread])
+fi
+
 AM_CONDITIONAL(ACPI_PLUGIN, test x"${acpi_enable}" = xyes)
+if test x"${acpi_enable}" = xyes && test x"${pthread_lib}" = xsuccess; then
+	ENABLED_PLUGINS="$ENABLED_PLUGINS acpi_event"
+else
+	DISABLED_PLUGINS="$DISABLED_PLUGINS acpi_event"
+fi
 if test x"${acpi_enable}" = xyes; then
 	ENABLED_PLUGINS="$ENABLED_PLUGINS acpi_battery acpi_ac acpi_temperature"
 else
@@ -239,53 +300,30 @@ AC_SUBST(SENSORS_SRCDIR)
 ################
 AC_ARG_ENABLE([exec],
 	[AS_HELP_STRING(
-		[--enable-exec[[[[=PATH]]]]],
-		[exec support - will provide the exec cpufreqd plugin, needs libpthread [default=autodetected]])
+		[--enable-exec],
+		[exec support - will provide the exec cpufreqd plugin, needs libpthread [default=enabled but depends on libpthread availability]])
 	],
 	[exec_enable=$enableval],
-	[exec_enable=yes]
+	[
+		if  test x"${pthread_lib}" = xsuccess; then
+			exec_enable=yes
+		else
+			exec_enable=no
+		fi
+	]
 	)
-OLD_CPPFLAGS="$CPPFLAGS"
-OLD_CFLAGS="$CFLAGS"
-OLD_LDFLAGS="$LDFLAGS"
-if test "x$exec_enable" != xno; then
-
-	if test "x$exec_enable" != xyes; then
-		CPPFLAGS="$CPPFLAGS -I${exec_enable}/include"
-		CFLAGS="$CFLAGS -I${exec_enable}/include"
-		LDFLAGS="$LDFLAGS -L${exec_enable}/lib"
-	fi
-
-	AC_CHECK_HEADER([pthread.h],
-		[ AC_CHECK_LIB([pthread], [pthread_create],
-			[ AC_DEFINE(EXEC_PLUGIN, , [Define this to compile exec support])
-			if test "x$exec_enable" != xyes; then
-				EXEC_SRCDIR="${exec_enable}"
-			else
-				EXEC_SRCDIR="/usr"
-			fi
-			exec_support=success
-			],
-			[exec_support=failed])
-		],
-		[exec_support=failed])
-fi
-CPPFLAGS="$OLD_CPPFLAGS"
-CFLAGS="$OLD_CFLAGS"
-LDFLAGS="$OLD_LDFLAGS"
-if test "x$exec_support" = xfailed && test "x$exec_enable" != xyes; then
+if test x"${pthread_lib}" != xsuccess && test x"$exec_enable" = xyes; then
 	echo '***************************************************'
 	echo '***      ERROR WHILE CONFIGURING CPUFREQD       ***'
 	echo '***************************************************'
-	AC_MSG_ERROR([Failed to find requested libpthread development files in ${exec_enable}])
+	AC_MSG_ERROR([The EXEC plugin needs a POSIX Thread library but none detected, use --with-pthread])
 fi
-AM_CONDITIONAL(EXEC_PLUGIN, test x"${exec_support}" = xsuccess)
-if test x"${exec_support}" = xsuccess; then
+AM_CONDITIONAL(EXEC_PLUGIN, test x"${exec_enable}" = xyes)
+if test x"${exec_enable}" = xyes; then
 	ENABLED_PLUGINS="$ENABLED_PLUGINS exec"
 else
 	DISABLED_PLUGINS="$DISABLED_PLUGINS exec"
 fi
-AC_SUBST(EXEC_SRCDIR)
 
 # Defines two useful paths in order to remove hardcoded paths
 if test "x$prefix" = xNONE; then
