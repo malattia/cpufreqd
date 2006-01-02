@@ -153,7 +153,8 @@ int validate_plugins(struct LIST *plugins) {
 	n = plugins->first;
 	while (n != NULL) {
 		o_plugin = (struct plugin_obj*)n->content;
-		if (o_plugin->used != 0) {
+		if (o_plugin->used != 0 || 
+				o_plugin->plugin->plugin_update == NULL) {
 			used_plugins++;
 			n = n->next;
 		} else {

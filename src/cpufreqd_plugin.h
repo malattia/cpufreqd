@@ -21,11 +21,16 @@
 #define __CPUFREQD_PLUGIN_H__
 
 #include <cpufreq.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
 #include "cpufreqd.h"
 #include "cpufreqd_log.h"
 
 #define MATCH       1
 #define DONT_MATCH  0
+
+#define wake_cpufreqd()	kill(getpid(), SIGALRM)
 
 struct cpufreqd_plugin;
 
