@@ -24,7 +24,7 @@
 #include "config_parser.h"
 #include "cpufreqd_log.h"
 
-extern struct cpufreqd_conf configuration; /* defined in cpufreqd.h and declared in main.c */
+extern struct cpufreqd_conf *configuration; /* defined in cpufreqd.h and declared in main.c */
 
 static unsigned int log_opened; /* syslog already opened */
 
@@ -46,13 +46,13 @@ void cpufreqd_log(int prio, const char *fmt, ...) {
 	va_list argp;
 
 	/* do we need to write? */
-	if (configuration.log_level < prio)
+	if (configuration->log_level < prio)
 		return;
 
 	va_start(argp, fmt);
 
-	if (configuration.no_daemon) {
-		if (configuration.log_level <= LOG_ERR) {
+	if (configuration->no_daemon) {
+		if (configuration->log_level <= LOG_ERR) {
 			vfprintf(stderr, fmt, argp);
 			/* fflush(stderr); */
 		} else {
@@ -66,7 +66,7 @@ void cpufreqd_log(int prio, const char *fmt, ...) {
 			log_opened = 1;
 		}
 		vsyslog(prio, fmt, argp);
-		if (configuration.log_level <= LOG_ERR) {
+		if (configuration->log_level <= LOG_ERR) {
 			vfprintf(stderr, fmt, argp);
 			/* fflush(stderr); */
 		}

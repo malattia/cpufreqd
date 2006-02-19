@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -54,8 +54,9 @@ do { \
 	} \
 } while (0);
 
+struct cpufreqd_conf *configuration;
 /* default configuration */
-struct cpufreqd_conf configuration = {
+static struct cpufreqd_conf default_configuration = {
 	.config_file		= CPUFREQD_CONFDIR"cpufreqd.conf",
 	.pidfile		= CPUFREQD_STATEDIR"cpufreqd.pid",
 	.cpu_num		= 1,
@@ -70,7 +71,6 @@ struct cpufreqd_conf configuration = {
 	.print_help		= 0,
 	.print_version		= 0
 };
-
 static struct rule *current_rule;
 static struct profile *current_profile;
 static int force_reinit = 0;
@@ -143,11 +143,11 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 				old!=NULL? &old->policy : NULL, &new->policy);
 	}
 	/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
-	for (i=0; i<configuration.cpu_num; i++) {
+	for (i=0; i<configuration->cpu_num; i++) {
 		if (cpufreq_set_policy(i, &(new->policy)) == 0) {
 			clog(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
 			/* double check if everything is OK (configurable) */
-			if (configuration.double_check) {
+			if (configuration->double_check) {
 				struct cpufreq_policy *check = NULL;
 				check = cpufreq_get_policy(i);
 				if (check->max != new->policy.max || check->min != new->policy.min ||
@@ -204,30 +204,30 @@ static int read_args (int argc, char *argv[]) {
 		switch (ch) {
 		case '?':
 		case 'h':
-			configuration.print_help = 1;
+			configuration->print_help = 1;
 			return 0;
 		case 'v':
-			configuration.print_version = 1;
+			configuration->print_version = 1;
 			return 0;
 		case 'f':
-			if (realpath(optarg, configuration.config_file) == NULL) {
+			if (realpath(optarg, configuration->config_file) == NULL) {
 				clog(LOG_ERR, "Error reading command line argument (%s: %s).\n",
 						optarg, strerror(errno));
 				return -1;
 			}
-			clog(LOG_DEBUG, "Using configuration file at %s\n", configuration.config_file);
+			clog(LOG_DEBUG, "Using configuration file at %s\n", configuration->config_file);
 			break;
 		case 'D':
-			configuration.no_daemon = 1;
+			configuration->no_daemon = 1;
 			break;
 		case 'V':
-			configuration.log_level = atoi(optarg);
-			if (configuration.log_level>7) {
-				configuration.log_level = 7;
-			} else if (configuration.log_level<0) {
-				configuration.log_level = 0;
+			configuration->log_level = atoi(optarg);
+			if (configuration->log_level>7) {
+				configuration->log_level = 7;
+			} else if (configuration->log_level<0) {
+				configuration->log_level = 0;
 			}
-			configuration.log_level_overridden = 1;
+			configuration->log_level_overridden = 1;
 			break;
 		default:
 			break;
@@ -241,8 +241,8 @@ static int read_args (int argc, char *argv[]) {
  */
 static void print_version(const char *me) {
 	printf("%s version "__CPUFREQD_VERSION__".\n", me);
-	printf("Copyright 2002,2003,2004 Mattia Dongili <"__CPUFREQD_MAINTAINER__">\n"
-	       "                         George Staikos <staikos@0wned.org>\n");
+	printf("Copyright 2002-2006 Mattia Dongili <"__CPUFREQD_MAINTAINER__">\n"
+	       "                    George Staikos <staikos@0wned.org>\n");
 }
 
 /*  void print_help(const char *me)
@@ -314,9 +314,10 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 		clog(LOG_DEBUG, "New Rule (\"%s\"), applying.\n", 
 				best_rule->name);
 		/* pre change event */
-		if (current != NULL && best_rule->directives.first != NULL) {
+		if (best_rule->directives.first != NULL) {
 			TRIGGER_EVENT(rule_pre_change, &best_rule->directives, d,
-					&current->prof->policy, &best_rule->prof->policy);
+					current != NULL ? &current->prof->policy : NULL,
+					&best_rule->prof->policy);
 		}
 
 		/* change frequency */
@@ -330,9 +331,10 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 		}
 
 		/* post change event */
-		if (current != NULL && best_rule->directives.first != NULL) {
+		if (best_rule->directives.first != NULL) {
 			TRIGGER_EVENT(rule_post_change, &best_rule->directives, d,
-					&current->prof->policy, &best_rule->prof->policy);
+					current != NULL ? &current->prof->policy : NULL,
+					&best_rule->prof->policy);
 		}
 
 	} else {
@@ -450,6 +452,13 @@ int main (int argc, char *argv[]) {
 	int cpufreqd_sock = -1, peer_sock = -1; /* input pipe */
 	char dirname[MAX_PATH_LEN];
 	int ret = 0;
+	
+	configuration = malloc(sizeof(struct cpufreqd_conf));
+	if (configuration == NULL) {
+		ret = ENOMEM;
+		goto out;
+	}
+	memcpy(configuration, &default_configuration, sizeof(struct cpufreqd_conf));
 
 	/* 
 	 *  check perms
@@ -457,8 +466,8 @@ int main (int argc, char *argv[]) {
 #if 1
 	if (geteuid() != 0) {
 		cpufreqd_log(LOG_CRIT, "%s: must be run as root.\n", argv[0]);
-		ret = 1;
-		goto out;
+		ret = EACCES;
+		goto out_config;
 	}
 #endif
 
@@ -467,16 +476,16 @@ int main (int argc, char *argv[]) {
 	 */
 	if (read_args(argc, argv)!=0) {
 		cpufreqd_log(LOG_CRIT, "Unable parse command line parameters, exiting.\n");
-		ret = 1;
+		ret = EINVAL;
 		goto out;
 	}
-	if (configuration.print_help) {
+	if (configuration->print_help) {
 		print_help(argv[0]);
-		goto out;
+		goto out_config;
 	}
-	if (configuration.print_version) {
+	if (configuration->print_version) {
 		print_version(argv[0]);
-		goto out;
+		goto out_config;
 	}
 
 	/* setup signal handlers */
@@ -506,70 +515,70 @@ int main (int argc, char *argv[]) {
 	/*
 	 *  read how many cpus are available here
 	 */
-	configuration.cpu_num = get_cpu_num();
+	configuration->cpu_num = get_cpu_num();
 
 	/*
 	 *  find cpufreq information about each cpu
 	 */
-	if ((configuration.sys_info = malloc(configuration.cpu_num * sizeof(struct cpufreq_sys_info))) == NULL) {
+	if ((configuration->sys_info = malloc(configuration->cpu_num * sizeof(struct cpufreq_sys_info))) == NULL) {
 		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
-		ret = 1;
-		goto out;
+		ret = ENOMEM;
+		goto out_config;
 	}
-	for (i=0; i<configuration.cpu_num; i++) {
-		(configuration.sys_info+i)->affected_cpus = cpufreq_get_affected_cpus(i);
-		(configuration.sys_info+i)->governors = cpufreq_get_available_governors(i);
-		(configuration.sys_info+i)->frequencies = cpufreq_get_available_frequencies(i);
+	for (i=0; i<configuration->cpu_num; i++) {
+		(configuration->sys_info+i)->affected_cpus = cpufreq_get_affected_cpus(i);
+		(configuration->sys_info+i)->governors = cpufreq_get_available_governors(i);
+		(configuration->sys_info+i)->frequencies = cpufreq_get_available_frequencies(i);
 	}
 
 	/* SMP: with different speed cpus */
-	if ((configuration.limits = malloc(configuration.cpu_num * sizeof(struct cpufreq_limits))) == NULL) {
+	if ((configuration->limits = malloc(configuration->cpu_num * sizeof(struct cpufreq_limits))) == NULL) {
 		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
-		ret = 1;
+		ret = ENOMEM;
 		goto out_sys_info;
 	}
-	memset(configuration.limits, 0, configuration.cpu_num * sizeof(struct cpufreq_limits));
-	for (i=0; i<configuration.cpu_num; i++) {
+	memset(configuration->limits, 0, configuration->cpu_num * sizeof(struct cpufreq_limits));
+	for (i=0; i<configuration->cpu_num; i++) {
 		/* if one of the probes fails remove all the others also */
 		if (cpufreq_get_hardware_limits(i,
-					&((configuration.limits+i)->min), &((configuration.limits+i)->max))!=0) {
+					&((configuration->limits+i)->min), &((configuration->limits+i)->max))!=0) {
 			/* TODO: if libcpufreq fails try to read /proc/cpuinfo
 			 * and warn about this not being reliable
 			 */
 			clog(LOG_WARNING, "Unable to get hardware frequency limits for CPU%d.\n", i);
-			free(configuration.limits);
-			configuration.limits = NULL;
+			free(configuration->limits);
+			configuration->limits = NULL;
 			break;
 		} else {
 			clog(LOG_INFO, "Limits for cpu%d: MIN=%lu - MAX=%lu\n", i, 
-					(configuration.limits+i)->min, (configuration.limits+i)->max);
+					(configuration->limits+i)->min, (configuration->limits+i)->max);
 		}
 	}
 
 	/*
 	 *  daemonize if necessary
 	 */
-	if (configuration.no_daemon==0 && daemonize()!=0) {
+	if (configuration->no_daemon==0 && daemonize()!=0) {
 		clog(LOG_CRIT, "Unable to go background, exiting.\n");
-		ret = 1;
+		ret = ECHILD;
 		goto out_limits;
 	}
 
 cpufreqd_start:
 
-	if (init_configuration(&configuration) < 0) {
-		clog(LOG_CRIT, "Unable to parse config file: %s\n", configuration.config_file);
-		ret = 1;
+	if (init_configuration(configuration) < 0) {
+		clog(LOG_CRIT, "Unable to parse config file: %s\n", configuration->config_file);
+		ret = EINVAL;
 		goto out_config_read;
 	}
 
 	/* setup UNIX socket if necessary */
-	if (configuration.enable_remote) {
+	if (configuration->enable_remote) {
 		dirname[0] = '\0';
-		if (create_temp_dir(dirname, configuration.remote_gid) == NULL) {
+		if (create_temp_dir(dirname, configuration->remote_gid) == NULL) {
 			clog(LOG_ERR, "Couldn't create temporary directory %s\n", dirname);
 			cpufreqd_sock = -1;
-		} else if ((cpufreqd_sock = open_unix_sock(dirname, configuration.remote_gid)) == -1) {
+		} else if ((cpufreqd_sock = open_unix_sock(dirname, configuration->remote_gid)) == -1) {
 			delete_temp_dir(dirname);
 			clog(LOG_ERR, "Couldn't open socket, remote controls disabled\n");
 		} else {
@@ -578,18 +587,18 @@ cpufreqd_start:
 	}
 
 	/* Validate plugins, if none left exit.... */
-	if (validate_plugins(&configuration.plugins) == 0) {
+	if (validate_plugins(&configuration->plugins) == 0) {
 		cpufreqd_log(LOG_CRIT, "Hey! all the plugins I loaded are useless, "
 				"maybe your configuration needs some rework.\n"
 				"Exiting.\n");
-		ret = 1;
+		ret = EINVAL;
 		goto out_socket;
 	}
 
 	/* write pidfile */
-	if (write_cpufreqd_pid(configuration.pidfile) < 0) {
-		clog(LOG_CRIT, "Unable to write pid file: %s\n", configuration.pidfile);
-		ret = 1;
+	if (write_cpufreqd_pid(configuration->pidfile) < 0) {
+		clog(LOG_CRIT, "Unable to write pid file: %s\n", configuration->pidfile);
+		ret = EINVAL;
 		goto out_socket;
 	}
 
@@ -619,18 +628,18 @@ cpufreqd_start:
 		 * if running in DYNAMIC mode AND the timer is expired
 		 */
 		if (cpufreqd_mode == ARG_DYNAMIC && timer_expired) {
-			new_timer.it_interval.tv_usec = 0;
-			new_timer.it_interval.tv_sec = 0;
-			new_timer.it_value.tv_usec = configuration.poll_intv.tv_usec;
-			new_timer.it_value.tv_sec = configuration.poll_intv.tv_sec;
-			current_rule = cpufreqd_loop(&configuration, current_rule);
+			new_timer.it_interval.tv_usec = configuration->poll_intv.tv_usec;
+			new_timer.it_interval.tv_sec = configuration->poll_intv.tv_sec;
+			new_timer.it_value.tv_usec = configuration->poll_intv.tv_usec;
+			new_timer.it_value.tv_sec = configuration->poll_intv.tv_sec;
+			current_rule = cpufreqd_loop(configuration, current_rule);
 			/* set next alarm */
 			if (setitimer(ITIMER_REAL, &new_timer, 0) < 0) {
+				ret = errno;
 				clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
-				ret = 1;
 				break;
 			}
-			/* can safely reset the expierd flag */
+			/* can safely reset the expired flag now */
 			timer_expired = 0;
 		}
 
@@ -644,10 +653,10 @@ cpufreqd_start:
 				switch (pselect(cpufreqd_sock+1, &rfds, NULL, NULL, NULL, &old_sigmask)) {
 					case 0:
 						/* timed out. check to see if things have changed */
-						/* should never happen actually */
+						/* will never happen actually... */
 						break;
 					case -1:
-						/* caused by SIGALARM (mostly) */
+						/* caused by SIGALARM (mostly) log if not so */
 						if (errno != EINTR)
 							clog(LOG_NOTICE, "pselect(): %s.\n", strerror(errno));
 						break;
@@ -658,7 +667,7 @@ cpufreqd_start:
 							clog(LOG_ALERT, "Unable to accept connection: "
 									" %s\n", strerror(errno));
 						}
-						execute_command(peer_sock, &configuration);
+						execute_command(peer_sock, configuration);
 						close(peer_sock);
 						peer_sock = -1;
 						break;
@@ -679,7 +688,7 @@ cpufreqd_start:
 	/*
 	 * Clean pidfile
 	 */
-	clear_cpufreqd_pid(configuration.pidfile);
+	clear_cpufreqd_pid(configuration->pidfile);
 
 	/* close socket */
 out_socket:
@@ -692,7 +701,7 @@ out_socket:
 	 *  Free configuration structures
 	 */
 out_config_read:
-	free_configuration(&configuration);
+	free_configuration(configuration);
 	if (force_reinit && !force_exit) {
 		force_reinit = 0;
 		cpufreqd_log(LOG_INFO, "Restarting cpufreqd\n");
@@ -700,22 +709,24 @@ out_config_read:
 	}
 
 out_limits:
-	if (configuration.limits != NULL)
-		free(configuration.limits);
+	if (configuration->limits != NULL)
+		free(configuration->limits);
 
 out_sys_info:
-	if (configuration.sys_info != NULL) {
-		for (i=0; i<configuration.cpu_num; i++) {
-			if ((configuration.sys_info+i)->governors!=NULL)
-				cpufreq_put_available_governors((configuration.sys_info+i)->governors);
-			if ((configuration.sys_info+i)->affected_cpus!=NULL)
-				cpufreq_put_affected_cpus((configuration.sys_info+i)->affected_cpus);
-			if ((configuration.sys_info+i)->frequencies!=NULL)
-				cpufreq_put_available_frequencies((configuration.sys_info+i)->frequencies);
+	if (configuration->sys_info != NULL) {
+		for (i=0; i<configuration->cpu_num; i++) {
+			if ((configuration->sys_info+i)->governors!=NULL)
+				cpufreq_put_available_governors((configuration->sys_info+i)->governors);
+			if ((configuration->sys_info+i)->affected_cpus!=NULL)
+				cpufreq_put_affected_cpus((configuration->sys_info+i)->affected_cpus);
+			if ((configuration->sys_info+i)->frequencies!=NULL)
+				cpufreq_put_available_frequencies((configuration->sys_info+i)->frequencies);
 		}
-		free(configuration.sys_info);
+		free(configuration->sys_info);
 	}
 
+out_config:
+	free(configuration);
 	/*
 	 *  bye bye  
 	 */
