@@ -61,13 +61,13 @@ static int acpi_event_conf (const char *key, const char *value) {
 }
 
 /*  Waits for ACPI events on the file descriptor opened previously.
- *  This function uses select(2) to wait for readable data in order
+ *  This function uses poll(2) to wait for readable data in order
  *  to only wake cpufreqd once in case multiple events are available.
  */
-static void *event_wait (void *arg) {
+static void *event_wait (void __UNUSED__ *arg) {
 	struct pollfd rfd;
 	char buf[MAX_STRING_LEN];
-	int read_chars = 0;
+	int read_chars = 0, ret = 0;
 
 	clog(LOG_DEBUG, "event thread running.\n");
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -77,7 +77,18 @@ static void *event_wait (void *arg) {
 	rfd.events = POLLIN | POLLPRI;
 	rfd.revents = 0;
 	
-	while (poll(&rfd, 1, -1) > 0) {
+	while (1) {
+		ret = poll(&rfd, 1, -1);
+
+		if (ret < 0 && errno == EINTR)
+			continue;
+
+		else if (ret < 0) {
+			clog(LOG_ERR, "Error polling ACPI Event handler: %s\n",
+					strerror(errno));
+			break;
+		}
+		
 		/* barf and exit on any error condition */
 		if (rfd.revents & ~POLLIN) {
 			clog(LOG_ERR, "Error polling ACPI Event handler (0x%.4x).\n",
@@ -88,6 +99,7 @@ static void *event_wait (void *arg) {
 			buf[read_chars-1] = '\0';
 			clog(LOG_DEBUG, "%s (%d)\n", buf, read_chars);
 		}
+
 		if (read_chars < 0 && errno != EAGAIN && errno != EINTR) {
 			clog(LOG_DEBUG, "Error reading the ACPI event handler (%d)\n",
 					strerror(errno), read_chars);
@@ -101,7 +113,6 @@ static void *event_wait (void *arg) {
 		wake_cpufreqd();
 		rfd.revents = 0;
 	}
-
 	return NULL;
 }
 
@@ -167,15 +178,28 @@ static int acpi_event_exit (void) {
 		if (ret != 0)
 			clog(LOG_ERR, "Couldn't join exec thread (%s).\n",
 					strerror(ret));
+		event_thread = 0;
 	}
 	
 	if (event_fd) {
 		clog(LOG_DEBUG, "closing event handle.\n");
 		close(event_fd);
+		event_fd = 0;
 	}
 	
+	clog(LOG_INFO, "acpi_event configured.\n");
 	return 0;
 }
+
+#if 0
+static int acpi_event_update(void) {
+	if (!event_fd && !event_thread) {
+		acpi_event_exit();
+		acpi_event_init();
+	}
+	return 0;
+}
+#endif
 
 static struct cpufreqd_keyword kw[] =  {
 	{ .word = NULL, }
@@ -186,7 +210,7 @@ static struct cpufreqd_plugin plugin =  {
 	.keywords = kw,
 	.plugin_init = NULL,
 	.plugin_exit = &acpi_event_exit,
-	.plugin_update = NULL,
+	.plugin_update = NULL, /*&acpi_event_update,*/
 	.plugin_conf = &acpi_event_conf,
 	.plugin_post_conf = &acpi_event_init,
 };
