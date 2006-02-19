@@ -101,7 +101,9 @@ static int nvclock_parse(const char *ev, void **obj) {
 }
 
 
-static void nvcore_change(void *obj, const struct cpufreq_policy *old, const struct cpufreq_policy *new) {
+static void nvcore_change(void *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
+		const struct cpufreq_policy __UNUSED__ *new) {
 	struct nvclock_elem *nv = obj;
 	
 	if (nv->card < nvclock.num_cards) {
@@ -113,7 +115,9 @@ static void nvcore_change(void *obj, const struct cpufreq_policy *old, const str
 	}
 }
 
-static void nvmem_change(void *obj, const struct cpufreq_policy *old, const struct cpufreq_policy *new) {
+static void nvmem_change(void *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
+		const struct cpufreq_policy __UNUSED__ *new) {
 	struct nvclock_elem *nv = obj;
 	
 	if (nv->card < nvclock.num_cards) {

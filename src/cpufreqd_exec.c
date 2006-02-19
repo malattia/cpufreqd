@@ -59,7 +59,7 @@ static int exec_parse (const char *line, void **obj) {
 
 /* Grab a command from the queue and execute it
  */
-static void *queue_launcher (void *arg) {
+static void *queue_launcher (void __UNUSED__ *arg) {
 	struct exec_cmd *etemp = NULL;
 	pid_t child_pid = 0;
 	int child_ret = 0;
@@ -105,7 +105,7 @@ static void *queue_launcher (void *arg) {
 					/* perhaps we don't need that, beacause exit status will be logged*/
 					child_ret = execl("/bin/sh", "/bin/sh", "-c", etemp->cmd, NULL);
 					clog(LOG_ERR, "Unable to execl new process: %s\n",
-							strerror(child_ret));
+							strerror(errno));
 					exit(1);
 				default:
 					waitpid(child_pid, &child_ret, 0);
@@ -156,8 +156,9 @@ static void exec_enqueue (const char *cmd) {
 	pthread_mutex_unlock(&exe_q_mtx);
 }
 
-static void change (void *obj, const struct cpufreq_policy *old,
-			const struct cpufreq_policy *new) {
+static void change (void *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
+		const struct cpufreq_policy __UNUSED__ *new) {
 	exec_enqueue((char *)obj);
 }
 

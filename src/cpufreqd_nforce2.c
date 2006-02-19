@@ -127,7 +127,8 @@ static int vcore_parse(const char *ev, void **obj) {
 
 static unsigned int cur_freq = 0;
 
-static void vcore_pre_change(void *obj, const struct cpufreq_policy *old,
+static void vcore_pre_change(void *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
 		const struct cpufreq_policy *new) {
 	
 	cur_freq = cpufreq_get(0);
@@ -140,7 +141,8 @@ static void vcore_pre_change(void *obj, const struct cpufreq_policy *old,
 	}
 }
 
-static void vcore_post_change(void *obj, const struct cpufreq_policy *old,
+static void vcore_post_change(void *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
 		const struct cpufreq_policy *new) {
 	
 	if (cur_freq > new->max) {
