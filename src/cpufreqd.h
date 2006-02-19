@@ -23,24 +23,30 @@
 #define __CPUFREQD_VERSION__	"2.0.0"
 #define __CPUFREQD_MAINTAINER__	"malattia@linux.it"
 
+#ifdef __GNUC__
+#  define __UNUSED__	__attribute__((unused))
+#else
+#  define __UNUSED__
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #ifndef CPUFREQD_CONFDIR
-#define CPUFREQD_CONFDIR  "/etc/"
+#  define CPUFREQD_CONFDIR  "/etc/"
 #endif
 
 #ifndef CPUFREQD_LIBDIR
-#define CPUFREQD_LIBDIR   "/usr/lib/cpufreqd/"
+#  define CPUFREQD_LIBDIR   "/usr/lib/cpufreqd/"
 #endif
 
 #ifndef CPUFREQD_STATEDIR
-#define CPUFREQD_STATEDIR   "/var/"
+#  define CPUFREQD_STATEDIR   "/var/"
 #endif
 
 #define CPUFREQD_CONFIG		CPUFREQD_CONFDIR"cpufreqd.conf"
-#define CPUFREQD_PIDFILE	CPUFREQD_STATEDIR"run/cpufreqd.pid"
+#  define CPUFREQD_PIDFILE	CPUFREQD_STATEDIR"run/cpufreqd.pid"
 #define CPUFREQD_SOCKFILE	"/tmp/cpufreqd.sock"
 
 
