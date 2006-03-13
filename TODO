@@ -1,14 +1,20 @@
+- correctly use "struct cpufreqd_info" still missing some information kept up to date
+
+- cpufreqd_date
+
+- merge cpufreqd_acpi_* into a single plugin to share useful data (now that event 
+  is available one can avoid polling some devices)
+
+- cpufreqd_cpu: make it aware of single cpu loads
+
+------------
 - make cpufreqd really SMP aware: 
     each rule could address more than one policy telling a policy for each addressed cpu
       or
     policy is relative to one or more cpus
   CONS: complex configurations
 
-- execute program after policy (will do in a plugin)
-
 - implement a delayed profile change or anyway smooth transitions by interpolation (possible?)
 
 - write an autocpu rule/plugin
-
-- more plugins
 

@@ -643,7 +643,7 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 /* intialize the cpufreqd_conf object 
  * by reading the configuration file
  */
-int init_configuration(struct cpufreqd_conf *configuration)
+int init_configuration(struct cpufreqd_conf *configuration, struct cpufreqd_info *info)
 {
 	FILE *fp_config = NULL;
 	struct NODE *n = NULL;
@@ -712,7 +712,7 @@ int init_configuration(struct cpufreqd_conf *configuration)
 			}
 			/* create governor string */
 			tmp_profile = (struct profile *)n->content;
-			if ((tmp_profile->policy.governor = malloc(MAX_STRING_LEN*sizeof(char))) ==NULL) {
+			if ((tmp_profile->policy.governor = calloc(MAX_STRING_LEN, sizeof(char))) ==NULL) {
 				clog(LOG_ERR, "cannot make enough room for a new Profile governor (%s)\n",
 						strerror(errno));
 				node_free(n);
@@ -721,7 +721,7 @@ int init_configuration(struct cpufreqd_conf *configuration)
 			}
 
 			if (parse_config_profile(fp_config, tmp_profile, &configuration->plugins, 
-					configuration->limits, configuration->sys_info->frequencies) < 0) {
+					info->limits, info->sys_info->frequencies) < 0) {
 				clog(LOG_CRIT, "[Profile] error parsing %s, see logs for details.\n",
 						configuration->config_file);
 				node_free(n);
@@ -894,8 +894,6 @@ void free_configuration(struct cpufreqd_conf *configuration)
 	configuration->poll_intv.tv_sec = DEFAULT_POLL;
 	configuration->has_sysfs = 0;
 	configuration->enable_remote = 0;
-	configuration->cpu_min_freq = 0;
-	configuration->cpu_max_freq = 0;
 
 	if (!configuration->log_level_overridden)
 		configuration->log_level = DEFAULT_VERBOSITY;

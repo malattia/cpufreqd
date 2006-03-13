@@ -49,23 +49,11 @@ struct rule {
 	unsigned int directives_count;
 };
 
-struct cpufreq_sys_info {
-	struct cpufreq_available_governors *governors;
-	struct cpufreq_available_frequencies *frequencies;
-	struct cpufreq_affected_cpus *affected_cpus;
-};
-
-struct cpufreq_limits {
-	unsigned long min;
-	unsigned long max;
-};
-
 struct cpufreqd_conf {
 
 	char config_file[MAX_PATH_LEN];
 	char pidfile[MAX_PATH_LEN];
 	int log_level;
-	unsigned int cpu_num;
 	unsigned int enable_remote;
 	gid_t remote_gid;
 	unsigned int double_check;
@@ -75,11 +63,6 @@ struct cpufreqd_conf {
 	unsigned int log_level_overridden;
 	unsigned int print_help;
 	unsigned int print_version;
-	unsigned long cpu_min_freq;
-	unsigned long cpu_max_freq;
-
-	struct cpufreq_limits *limits;
-	struct cpufreq_sys_info *sys_info;
 
 	struct LIST rules; /* list of configured struct rule */
 	struct LIST profiles; /* list of configured struct profile */
@@ -87,7 +70,7 @@ struct cpufreqd_conf {
 
 };
 
-int	init_configuration	(struct cpufreqd_conf *config);
+int	init_configuration	(struct cpufreqd_conf *config, struct cpufreqd_info *info);
 void	free_configuration	(struct cpufreqd_conf *config);
 
 #endif /* _CONFIG_PARSER_H */

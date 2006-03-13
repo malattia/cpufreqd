@@ -83,6 +83,7 @@ static int acpi_ac_exit(void) {
  *  reads temperature valuse ant compute a medium value
  */
 static int acpi_ac_update(void) {
+	struct cpufreqd_info const *info = NULL;
 	char temp[50];
 	int i=0;
 	FILE *fp = NULL;
@@ -104,6 +105,7 @@ static int acpi_ac_update(void) {
 
 	clog(LOG_INFO, "ac_adapter is %s\n",
 			ac_state==PLUGGED ? "on-line" : "off-line");
+
 	return 0;
 }
 

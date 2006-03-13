@@ -54,12 +54,18 @@ do { \
 	} \
 } while (0);
 
-struct cpufreqd_conf *configuration;
+static struct cpufreqd_info *cpufreqd_info;
+static struct rule *current_rule;
+static struct profile *current_profile;
+static int force_reinit = 0;
+static int force_exit = 0;
+static int timer_expired = 1; /* expired in order to run on the first loop */
+static int cpufreqd_mode = ARG_DYNAMIC; /* operation mode (manual / dynamic) */
+
 /* default configuration */
 static struct cpufreqd_conf default_configuration = {
 	.config_file		= CPUFREQD_CONFDIR"cpufreqd.conf",
 	.pidfile		= CPUFREQD_STATEDIR"cpufreqd.pid",
-	.cpu_num		= 1,
 	.poll_intv		= { .tv_sec = DEFAULT_POLL, .tv_usec = 0 },
 	.has_sysfs		= 1,
 	.no_daemon		= 0,
@@ -71,12 +77,7 @@ static struct cpufreqd_conf default_configuration = {
 	.print_help		= 0,
 	.print_version		= 0
 };
-static struct rule *current_rule;
-static struct profile *current_profile;
-static int force_reinit = 0;
-static int force_exit = 0;
-static int timer_expired = 1; /* expired in order to run on the first loop */
-static int cpufreqd_mode = ARG_DYNAMIC; /* operation mode (manual / dynamic) */
+struct cpufreqd_conf *configuration;
 
 /*
  * Evaluates the full rule and returns the percentage score
@@ -143,7 +144,7 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 				old!=NULL? &old->policy : NULL, &new->policy);
 	}
 	/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
-	for (i=0; i<configuration->cpu_num; i++) {
+	for (i = 0; i < cpufreqd_info->cpus; i++) {
 		if (cpufreq_set_policy(i, &(new->policy)) == 0) {
 			clog(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
 			/* double check if everything is OK (configurable) */
@@ -195,12 +196,13 @@ static int read_args (int argc, char *argv[]) {
 		{ "version", 0, 0, 'v' }, 
 		{ "file", 1, 0, 'f' },
 		{ "no-daemon", 0, 0, 'D' },
+		{ "manual", 0, 0, 'm' },
 		{ "verbosity", 1, 0, 'V' },
 		{ 0, 0, 0, 0 }, 
 	};
 	int ch,option_index = 0;
 
-	while ((ch = getopt_long(argc, argv, "hvf:DV:", long_options, &option_index)) != -1) {
+	while ((ch = getopt_long(argc, argv, "hvf:DmV:", long_options, &option_index)) != -1) {
 		switch (ch) {
 		case '?':
 		case 'h':
@@ -220,6 +222,9 @@ static int read_args (int argc, char *argv[]) {
 		case 'D':
 			configuration->no_daemon = 1;
 			break;
+		case 'm':
+			cpufreqd_mode = ARG_MANUAL;
+			return 0;
 		case 'V':
 			configuration->log_level = atoi(optarg);
 			if (configuration->log_level>7) {
@@ -254,6 +259,7 @@ static void print_help(const char *me) {
 			"  -v, --version                display version information and exit\n"
 			"  -f, --file                   config file (default: "CPUFREQD_CONFIG")\n"
 			"  -D, --no-daemon              stay in foreground and print log to stdout (used to debug)\n"
+			"  -m, --manual                 start in manual mode (ignored if the enable_remote is 0)\n"
 			"  -V, --verbosity              verbosity level from 0 (less verbose) to 7 (most verbose)\n"
 			"\n"
 			"Report bugs to Mattia Dongili <malattia@linux.it>.\n", me);
@@ -397,6 +403,13 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 			case CMD_SET_MODE:
 				clog(LOG_DEBUG, "CMD_SET_MODE\n");
 				cpufreqd_mode = REMOTE_ARG(command);
+				if (cpufreqd_mode == ARG_MANUAL) {
+					/* reset alarm */
+					if (setitimer(ITIMER_REAL, NULL, 0) < 0)
+						clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
+				} else {
+					timer_expired = 1;
+				}
 				break;
 			case CMD_SET_PROFILE:
 				clog(LOG_DEBUG, "CMD_SET_PROFILE\n");
@@ -437,6 +450,11 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 	}
 }
 
+
+struct cpufreqd_info const * get_cpufreqd_info (void) {
+	return cpufreqd_info;
+}
+
 /*
  *  main !
  *  Let's go
@@ -460,6 +478,13 @@ int main (int argc, char *argv[]) {
 	}
 	memcpy(configuration, &default_configuration, sizeof(struct cpufreqd_conf));
 
+	cpufreqd_info = malloc(sizeof(struct cpufreqd_info));
+	if (cpufreqd_info == NULL) {
+		ret = ENOMEM;
+		goto out;
+	}
+	memset(cpufreqd_info, 0, sizeof(struct cpufreqd_info));
+
 	/* 
 	 *  check perms
 	 */
@@ -467,7 +492,7 @@ int main (int argc, char *argv[]) {
 	if (geteuid() != 0) {
 		cpufreqd_log(LOG_CRIT, "%s: must be run as root.\n", argv[0]);
 		ret = EACCES;
-		goto out_config;
+		goto out;
 	}
 #endif
 
@@ -481,11 +506,11 @@ int main (int argc, char *argv[]) {
 	}
 	if (configuration->print_help) {
 		print_help(argv[0]);
-		goto out_config;
+		goto out;
 	}
 	if (configuration->print_version) {
 		print_version(argv[0]);
-		goto out_config;
+		goto out;
 	}
 
 	/* setup signal handlers */
@@ -515,43 +540,44 @@ int main (int argc, char *argv[]) {
 	/*
 	 *  read how many cpus are available here
 	 */
-	configuration->cpu_num = get_cpu_num();
+	cpufreqd_info->cpus = get_cpu_num();
 
 	/*
 	 *  find cpufreq information about each cpu
 	 */
-	if ((configuration->sys_info = malloc(configuration->cpu_num * sizeof(struct cpufreq_sys_info))) == NULL) {
+	cpufreqd_info->sys_info = calloc(1, cpufreqd_info->cpus * sizeof(struct cpufreq_sys_info));
+	if (cpufreqd_info->sys_info == NULL) {
 		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
 		ret = ENOMEM;
-		goto out_config;
+		goto out;
 	}
-	for (i=0; i<configuration->cpu_num; i++) {
-		(configuration->sys_info+i)->affected_cpus = cpufreq_get_affected_cpus(i);
-		(configuration->sys_info+i)->governors = cpufreq_get_available_governors(i);
-		(configuration->sys_info+i)->frequencies = cpufreq_get_available_frequencies(i);
+	for (i = 0; i < cpufreqd_info->cpus; i++) {
+		(cpufreqd_info->sys_info+i)->affected_cpus = cpufreq_get_affected_cpus(i);
+		(cpufreqd_info->sys_info+i)->governors = cpufreq_get_available_governors(i);
+		(cpufreqd_info->sys_info+i)->frequencies = cpufreq_get_available_frequencies(i);
 	}
 
 	/* SMP: with different speed cpus */
-	if ((configuration->limits = malloc(configuration->cpu_num * sizeof(struct cpufreq_limits))) == NULL) {
+	cpufreqd_info->limits = calloc(1, cpufreqd_info->cpus * sizeof(struct cpufreq_limits));
+	if (cpufreqd_info->limits == NULL) {
 		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
 		ret = ENOMEM;
 		goto out_sys_info;
 	}
-	memset(configuration->limits, 0, configuration->cpu_num * sizeof(struct cpufreq_limits));
-	for (i=0; i<configuration->cpu_num; i++) {
+	for (i = 0; i < cpufreqd_info->cpus; i++) {
 		/* if one of the probes fails remove all the others also */
-		if (cpufreq_get_hardware_limits(i,
-					&((configuration->limits+i)->min), &((configuration->limits+i)->max))!=0) {
+		struct cpufreq_limits *tmp_lim = cpufreqd_info->limits+i;
+		if (cpufreq_get_hardware_limits(i, &tmp_lim->min, &tmp_lim->max) != 0) {
 			/* TODO: if libcpufreq fails try to read /proc/cpuinfo
 			 * and warn about this not being reliable
 			 */
 			clog(LOG_WARNING, "Unable to get hardware frequency limits for CPU%d.\n", i);
-			free(configuration->limits);
-			configuration->limits = NULL;
+			free(cpufreqd_info->limits);
+			cpufreqd_info->limits = NULL;
 			break;
 		} else {
 			clog(LOG_INFO, "Limits for cpu%d: MIN=%lu - MAX=%lu\n", i, 
-					(configuration->limits+i)->min, (configuration->limits+i)->max);
+					tmp_lim->min, tmp_lim->max);
 		}
 	}
 
@@ -566,7 +592,7 @@ int main (int argc, char *argv[]) {
 
 cpufreqd_start:
 
-	if (init_configuration(configuration) < 0) {
+	if (init_configuration(configuration, cpufreqd_info) < 0) {
 		clog(LOG_CRIT, "Unable to parse config file: %s\n", configuration->config_file);
 		ret = EINVAL;
 		goto out_config_read;
@@ -583,8 +609,11 @@ cpufreqd_start:
 			clog(LOG_ERR, "Couldn't open socket, remote controls disabled\n");
 		} else {
 			clog(LOG_INFO, "Remote controls enabled\n");
+			if (cpufreqd_mode == ARG_MANUAL)
+				clog(LOG_INFO, "Starting in manual mode\n");
 		}
-	}
+	} else
+		cpufreqd_mode = ARG_DYNAMIC;
 
 	/* Validate plugins, if none left exit.... */
 	if (validate_plugins(&configuration->plugins) == 0) {
@@ -709,27 +738,29 @@ out_config_read:
 	}
 
 out_limits:
-	if (configuration->limits != NULL)
-		free(configuration->limits);
+	if (cpufreqd_info->limits != NULL)
+		free(cpufreqd_info->limits);
 
 out_sys_info:
-	if (configuration->sys_info != NULL) {
-		for (i=0; i<configuration->cpu_num; i++) {
-			if ((configuration->sys_info+i)->governors!=NULL)
-				cpufreq_put_available_governors((configuration->sys_info+i)->governors);
-			if ((configuration->sys_info+i)->affected_cpus!=NULL)
-				cpufreq_put_affected_cpus((configuration->sys_info+i)->affected_cpus);
-			if ((configuration->sys_info+i)->frequencies!=NULL)
-				cpufreq_put_available_frequencies((configuration->sys_info+i)->frequencies);
+	if (cpufreqd_info->sys_info != NULL) {
+		for (i=0; i<cpufreqd_info->cpus; i++) {
+			if ((cpufreqd_info->sys_info+i)->governors!=NULL)
+				cpufreq_put_available_governors((cpufreqd_info->sys_info+i)->governors);
+			if ((cpufreqd_info->sys_info+i)->affected_cpus!=NULL)
+				cpufreq_put_affected_cpus((cpufreqd_info->sys_info+i)->affected_cpus);
+			if ((cpufreqd_info->sys_info+i)->frequencies!=NULL)
+				cpufreq_put_available_frequencies((cpufreqd_info->sys_info+i)->frequencies);
 		}
-		free(configuration->sys_info);
+		free(cpufreqd_info->sys_info);
 	}
 
-out_config:
-	free(configuration);
+out:
+	if (cpufreqd_info != NULL)
+		free(cpufreqd_info);
+	if (configuration != NULL)
+		free(configuration);
 	/*
 	 *  bye bye  
 	 */
-out:
 	return ret;
 }

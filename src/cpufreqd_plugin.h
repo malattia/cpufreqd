@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,10 +27,47 @@
 #include "cpufreqd.h"
 #include "cpufreqd_log.h"
 
-#define MATCH       1
+#define FALSE	0
+#define TRUE	1
 #define DONT_MATCH  0
+#define MATCH       1
+
+#define KERNEL_VERSION_26	1
+#define KERNEL_VERSION_24	2
 
 #define wake_cpufreqd()	kill(getpid(), SIGALRM)
+
+/*
+ *  Shared struct containing useful global informations
+ *  probed from the core cpufreqd at noostrap time.
+ */
+
+struct cpufreq_limits {
+	unsigned long min;
+	unsigned long max;
+};
+
+struct cpufreq_sys_info {
+	struct cpufreq_available_governors *governors;
+	struct cpufreq_available_frequencies *frequencies;
+	struct cpufreq_affected_cpus *affected_cpus;
+};
+
+struct cpufreqd_info {
+	unsigned int kernel_version;
+	unsigned int cpus;
+	struct cpufreq_policy *cur_policy;
+	struct cpufreq_limits *limits;
+	struct cpufreq_sys_info *sys_info;
+	long timestamp; /* ?? */
+
+	/* running on battery? 
+	 * Must return TRUE or FALSE
+	 */
+	int (*on_battery) (void);
+	
+};
+struct cpufreqd_info const * get_cpufreqd_info (void);
 
 struct cpufreqd_plugin;
 
@@ -163,6 +200,12 @@ struct cpufreqd_plugin {
 	 */
 	int (*plugin_post_conf) (void);
 
+	/* Allow plugins to make some data available to others.
+	 * This data can be retrieved using 
+	 * void *get_plugin_data(const char *name)
+	 * exported by the core cpufreqd.
+	 */
+	void *data;
 };
 
 /*
@@ -170,5 +213,14 @@ struct cpufreqd_plugin {
  *  core cpufreqd with the correct struct cpufreqd_plugin structure
  */
 struct cpufreqd_plugin *create_plugin(void);
+
+#if 0
+/*  This is a hack to enable plugin cooperation. A plugin can read 
+ *  some status data from another one.
+ *  Tha name "core" is reserved for cpufreqd core data (current 
+ *  policy, current cpu speed, ...)
+ */
+extern void *get_plugin_data(const char *name);
+#endif
 
 #endif

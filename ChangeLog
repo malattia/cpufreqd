@@ -1,3 +1,10 @@
+version 2.1.0
+-------------
+* grouped some useful info in struct cpufreqd_info to let plugins peek important data
+* added -m switch to start cpufreqd in manual mode
+* reset timer when entering manual mode
+* forcing update when exiting manual mode
+
 version 2.0.0
 -------------
 * 2.0.0 final
