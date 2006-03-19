@@ -6,7 +6,7 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-Waggregate-return \
 	-std=c99 -pedantic \
 	-D_POSIX_SOURCE -D_GNU_SOURCE \
-	-I${top_builddir}/src
+	-I${top_srcdir}/src
 
 bin_PROGRAMS = cpufreqd-set cpufreqd-get
 

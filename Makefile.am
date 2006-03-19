@@ -25,7 +25,7 @@ install-data-local:
 	if [ -f $(DESTDIR)/$(sysconfdir)/cpufreqd.conf ]; then \
 	 echo "** preserving old configuration file **"; \
 	else \
- 	 install -Dm 0644 -o root -g root cpufreqd.conf $(DESTDIR)/$(sysconfdir)/cpufreqd.conf; \
+	 install -Dm 0644 $(top_srcdir)/cpufreqd.conf $(DESTDIR)/$(sysconfdir)/cpufreqd.conf; \
 	fi;
 
 tags:

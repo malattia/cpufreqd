@@ -7,7 +7,7 @@ AM_CFLAGS = -W -Wall -Wshadow -W -Wpointer-arith \
 	-std=c99 \
 	-D_POSIX_SOURCE -D_GNU_SOURCE \
 	-I${top_builddir}
-	
+
 sbin_PROGRAMS = cpufreqd
 
 cpufreqd_SOURCES = \
@@ -93,7 +93,7 @@ cpufreqd_acpi_ac_la_SOURCES = \
 
 cpufreqd_acpi_ac_la_LDFLAGS = \
 		-module -avoid-version
-								
+
 cpufreqd_acpi_temperature_la_SOURCES = \
 		cpufreqd_acpi_temperature.c
 
@@ -145,7 +145,7 @@ cpufreqd_sensors_la_SOURCES = \
 
 cpufreqd_sensors_la_CFLAGS = \
 		$(AM_CFLAGS) -I/@SENSORS_SRCDIR@/include
-		
+
 cpufreqd_sensors_la_LDFLAGS = \
 		-module -avoid-version -L/@SENSORS_SRCDIR@/lib -lsensors
 endif
