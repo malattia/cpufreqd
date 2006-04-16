@@ -325,6 +325,24 @@ else
 	DISABLED_PLUGINS="$DISABLED_PLUGINS exec"
 fi
 
+################################
+#  Governor parameters support #
+################################
+AC_ARG_ENABLE([governor-parameters],
+	[AS_HELP_STRING(
+		[--enable-governor-parameters],
+		[governor parameters plugin - support for setting governor parameters in profiles [default=disabled]])
+	],
+	[governor_parameters_enable=$enableval],
+	[governor_parameters_enable=no]
+	)
+AM_CONDITIONAL(GOVERNOR_PARAMETERS_PLUGIN, test x"${governor_parameters_enable}" = xyes)
+if test x"${governor_parameters_enable}" = xyes; then
+	ENABLED_PLUGINS="$ENABLED_PLUGINS governor_parameters"
+else
+	DISABLED_PLUGINS="$DISABLED_PLUGINS governor_parameters"
+fi
+
 # Defines two useful paths in order to remove hardcoded paths
 if test "x$prefix" = xNONE; then
   prefix="${ac_default_prefix}"

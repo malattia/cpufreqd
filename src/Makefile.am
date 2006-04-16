@@ -50,6 +50,9 @@ endif
 if EXEC_PLUGIN
 BUILD_PLUGINS += cpufreqd_exec.la
 endif
+if GOVERNOR_PARAMETERS_PLUGIN
+BUILD_PLUGINS += cpufreqd_governor_parameters.la
+endif
 lib_LTLIBRARIES = $(BUILD_PLUGINS)
 
 if NFORCE2_PLUGIN
@@ -148,6 +151,17 @@ cpufreqd_sensors_la_CFLAGS = \
 
 cpufreqd_sensors_la_LDFLAGS = \
 		-module -avoid-version -L/@SENSORS_SRCDIR@/lib -lsensors
+endif
+
+if GOVERNOR_PARAMETERS_PLUGIN
+cpufreqd_governor_parameters_la_SOURCES = \
+		cpufreqd_governor_parameters.c
+
+cpufreqd_governor_parameters_la_CFLAGS = \
+		$(AM_CFLAGS) -I/usr/include/sysfs
+
+cpufreqd_governor_parameters_la_LDFLAGS = \
+		-module -avoid-version -lsysfs
 endif
 
 noinst_HEADERS = \

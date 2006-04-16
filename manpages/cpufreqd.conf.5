@@ -305,6 +305,62 @@ between the two defined. Must be of the form %s:%f-%f where the string
 represents the feature name and the two decimal numbers the interval into which
 the directive is valid (e.g.: sensor=temp1:0-50).
 
+.PP
+.SS "governor_parameters plugin"
+Allows you to specify parameters for governors in [Profile] sections.
+Currently only the `ondemand' and `conservative' governors support
+parameters.  The description of the parameters below is basically a
+summary of the information found in the file `governors.txt' in the
+documentation of kernel versions 2.6.16 or later.
+.TP
+.B "sampling_rate"
+How often the governor checks the CPU usage.  Specify in micro-seconds
+or percentage of mimimum and maximum available values. Supported suffixes:
+.B "`%'"
+for a percentage,
+.B "`s'"
+for a value in seconds,
+.B "`m'"
+for a value in milli-seconds, or
+.B "`u'"
+for a value in micro-seconds (the default),
+.TP
+.B "up_threshold"
+What the average CPU usage needs be at least to make the governor
+decide to switch to a higher frequency.  Though the value is
+interpreted as percentage by the governor, you should not append a `%'
+in cpufreqd.conf for this parameter.
+.TP
+.BR "down_threshold" " (`conservative' governor only)"
+What the average CPU usage needs be at most to make the governor
+decide to switch to a lower frequency.  This is the opposite of
+.B
+up_threshold
+(see above).
+.TP
+.B "sampling_down_factor"
+How quickly the frequency will be decreased in respect to how quickly
+it will be increased.  E.g. when set to 5, the frequency will go down
+5 times `less easy' than it will go up.
+.TP
+.B "ignore_nice"
+Whether `nice' processes should be considered as CPU usage by the
+governor.  This is a boolean value (e.g. value is either 0 or 1).
+When set to 1 `nice' processes will not be counted as CPU usage by the
+governor.
+.B Note:
+Use `ignore_nice_load' instead when running kernel versions 2.6.16 or above.
+.TP
+.BR "freq_step" " (`conservative' governor only)"
+How much the frequency should be changed (up or down) each time the
+governor decides the frequency should go up or down.  The value is the
+percentage of the maximum available frequency you want the frequency
+to increase or decrease each time.  The actual frequency your CPU runs
+at will only change when the desired frequency reaches the next
+available frequency.  Though the value is interpreted as percentage by
+the governor, you should not append a `%' in cpufreqd.conf for this
+parameter.
+
 .SH EXAMPLE
 .nf
 .ne 7
@@ -313,7 +369,7 @@ the directive is valid (e.g.: sensor=temp1:0-50).
 [General]
 pidfile=/var/run/cpufreqd.pid
 poll_interval=2
-enable_plugins=acpi_battery, acpi_ac, acpi_temperature, programs, cpu
+enable_plugins=acpi_battery, acpi_ac, acpi_temperature, programs, cpu, governor_parameters
 verbosity=5 #(if you want a minimal logging)
 [/General]
 
@@ -350,6 +406,8 @@ name=ondemand_lo
 minfreq=0%
 maxfreq=66%
 policy=ondemand
+ignore_nice=1
+sampling_rate=80%
 [/Profile]
 
 # full power when AC
