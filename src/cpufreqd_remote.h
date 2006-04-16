@@ -40,8 +40,8 @@
 #define CMD_SET_MODE		6 /* <mode> */
 
 #define ARG_MASK		0x0000ffff
-#define ARG_DYNAMIC		(1)
-#define ARG_MANUAL		(2)
+#define MODE_DYNAMIC		(1)
+#define MODE_MANUAL		(2)
 
 #define REMOTE_CMD(c)		(c >> CMD_SHIFT)
 #define REMOTE_ARG(c)		(c & ARG_MASK)

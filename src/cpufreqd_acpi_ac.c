@@ -83,7 +83,6 @@ static int acpi_ac_exit(void) {
  *  reads temperature valuse ant compute a medium value
  */
 static int acpi_ac_update(void) {
-	struct cpufreqd_info const *info = NULL;
 	char temp[50];
 	int i=0;
 	FILE *fp = NULL;

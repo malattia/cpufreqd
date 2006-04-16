@@ -60,7 +60,7 @@ static struct profile *current_profile;
 static int force_reinit = 0;
 static int force_exit = 0;
 static int timer_expired = 1; /* expired in order to run on the first loop */
-static int cpufreqd_mode = ARG_DYNAMIC; /* operation mode (manual / dynamic) */
+static int cpufreqd_mode = MODE_DYNAMIC; /* operation mode (manual / dynamic) */
 
 /* default configuration */
 static struct cpufreqd_conf default_configuration = {
@@ -75,7 +75,7 @@ static struct cpufreqd_conf default_configuration = {
 	.remote_gid		= 0,
 	.double_check		= 0,
 	.print_help		= 0,
-	.print_version		= 0
+	.print_version		= 0,
 };
 struct cpufreqd_conf *configuration;
 
@@ -185,6 +185,34 @@ static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
 	return 0;
 }
 
+static int set_cpufreqd_runmode(int mode) {
+	if (mode == MODE_DYNAMIC) {
+		struct itimerval new_timer;
+		new_timer.it_interval.tv_usec = configuration->poll_intv.tv_usec;
+		new_timer.it_interval.tv_sec = configuration->poll_intv.tv_sec;
+		new_timer.it_value.tv_usec = configuration->poll_intv.tv_usec;
+		new_timer.it_value.tv_sec = configuration->poll_intv.tv_sec;
+		/* set next alarm */
+		if (setitimer(ITIMER_REAL, &new_timer, 0) < 0) {
+			clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
+			return errno;
+		}
+		timer_expired = 1;
+	} 
+	else if (mode == MODE_MANUAL) {
+		/* reset alarm */
+		if (setitimer(ITIMER_REAL, NULL, 0) < 0) {
+			clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
+			return errno;
+		}
+	}
+	else {
+		clog(LOG_WARNING, "Unknown mode %d\n", mode);
+		return EINVAL;
+	}
+	cpufreqd_mode = mode;
+	return 0;
+}
 
 /*  int read_args (int argc, char *argv[])
  *  Reads command line arguments
@@ -223,7 +251,7 @@ static int read_args (int argc, char *argv[]) {
 			configuration->no_daemon = 1;
 			break;
 		case 'm':
-			cpufreqd_mode = ARG_MANUAL;
+			cpufreqd_mode = MODE_MANUAL;
 			return 0;
 		case 'V':
 			configuration->log_level = atoi(optarg);
@@ -402,18 +430,21 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 				break;
 			case CMD_SET_MODE:
 				clog(LOG_DEBUG, "CMD_SET_MODE\n");
+				set_cpufreqd_runmode((int)REMOTE_ARG(command));
+#if 0
 				cpufreqd_mode = REMOTE_ARG(command);
-				if (cpufreqd_mode == ARG_MANUAL) {
+				if (cpufreqd_mode == MODE_MANUAL) {
 					/* reset alarm */
 					if (setitimer(ITIMER_REAL, NULL, 0) < 0)
 						clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
 				} else {
 					timer_expired = 1;
 				}
+#endif
 				break;
 			case CMD_SET_PROFILE:
 				clog(LOG_DEBUG, "CMD_SET_PROFILE\n");
-				if (cpufreqd_mode == ARG_DYNAMIC) {
+				if (cpufreqd_mode == MODE_DYNAMIC) {
 					clog(LOG_ERR, "Couldn't set profile while running "
 							"in DYNAMIC mode.\n");
 					break;
@@ -464,8 +495,9 @@ int main (int argc, char *argv[]) {
 	struct sigaction signal_action;
 	sigset_t old_sigmask;
 	fd_set rfds;
+#if 0
 	struct itimerval new_timer;
-
+#endif
 	unsigned int i = 0;
 	int cpufreqd_sock = -1, peer_sock = -1; /* input pipe */
 	char dirname[MAX_PATH_LEN];
@@ -609,11 +641,11 @@ cpufreqd_start:
 			clog(LOG_ERR, "Couldn't open socket, remote controls disabled\n");
 		} else {
 			clog(LOG_INFO, "Remote controls enabled\n");
-			if (cpufreqd_mode == ARG_MANUAL)
+			if (cpufreqd_mode == MODE_MANUAL)
 				clog(LOG_INFO, "Starting in manual mode\n");
 		}
 	} else
-		cpufreqd_mode = ARG_DYNAMIC;
+		cpufreqd_mode = MODE_DYNAMIC;
 
 	/* Validate plugins, if none left exit.... */
 	if (validate_plugins(&configuration->plugins) == 0) {
@@ -648,6 +680,7 @@ cpufreqd_start:
 		sigprocmask(SIG_BLOCK, &signal_action.sa_mask, &old_sigmask);
 	}
 	
+	set_cpufreqd_runmode(cpufreqd_mode);
 	/*
 	 *  Looooooooop
 	 */
@@ -656,18 +689,22 @@ cpufreqd_start:
 		 * Run the system scan and rule selection and set timer
 		 * if running in DYNAMIC mode AND the timer is expired
 		 */
-		if (cpufreqd_mode == ARG_DYNAMIC && timer_expired) {
+		if (cpufreqd_mode == MODE_DYNAMIC && timer_expired) {
+#if 0
 			new_timer.it_interval.tv_usec = configuration->poll_intv.tv_usec;
 			new_timer.it_interval.tv_sec = configuration->poll_intv.tv_sec;
 			new_timer.it_value.tv_usec = configuration->poll_intv.tv_usec;
 			new_timer.it_value.tv_sec = configuration->poll_intv.tv_sec;
+#endif
 			current_rule = cpufreqd_loop(configuration, current_rule);
+#if 0
 			/* set next alarm */
 			if (setitimer(ITIMER_REAL, &new_timer, 0) < 0) {
 				ret = errno;
 				clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
 				break;
 			}
+#endif
 			/* can safely reset the expired flag now */
 			timer_expired = 0;
 		}
@@ -678,7 +715,7 @@ cpufreqd_start:
 			FD_ZERO(&rfds);
 			FD_SET(cpufreqd_sock, &rfds);
 			
-			if (!timer_expired || cpufreqd_mode == ARG_MANUAL) {
+			if (!timer_expired || cpufreqd_mode == MODE_MANUAL) {
 				switch (pselect(cpufreqd_sock+1, &rfds, NULL, NULL, NULL, &old_sigmask)) {
 					case 0:
 						/* timed out. check to see if things have changed */

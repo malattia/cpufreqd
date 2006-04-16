@@ -69,9 +69,9 @@ int main(int argc, char *argv[])
 
 
 	if (!strcmp(argv[1], "dynamic"))
-		cmd = MAKE_COMMAND(CMD_SET_MODE, ARG_DYNAMIC);
+		cmd = MAKE_COMMAND(CMD_SET_MODE, MODE_DYNAMIC);
 	else if (!strcmp(argv[1], "manual"))
-		cmd = MAKE_COMMAND(CMD_SET_MODE, ARG_MANUAL);
+		cmd = MAKE_COMMAND(CMD_SET_MODE, MODE_MANUAL);
 	else {
 		n = strtol(argv[1], &endptr, 10);
 		if (errno == ERANGE) {
