@@ -343,13 +343,15 @@ How quickly the frequency will be decreased in respect to how quickly
 it will be increased.  E.g. when set to 5, the frequency will go down
 5 times `less easy' than it will go up.
 .TP
-.B "ignore_nice"
+.B "ignore_nice, ignore_nice_load"
 Whether `nice' processes should be considered as CPU usage by the
 governor.  This is a boolean value (e.g. value is either 0 or 1).
 When set to 1 `nice' processes will not be counted as CPU usage by the
 governor.
 .B Note:
-Use `ignore_nice_load' instead when running kernel versions 2.6.16 or above.
+`ignore_nice' was renamed to `ignore_nice_load' in kernel version 2.6.16.
+Both names are accepted in cpufreqd.conf, regardless the version of the
+running kernel.
 .TP
 .BR "freq_step" " (`conservative' governor only)"
 How much the frequency should be changed (up or down) each time the
