@@ -22,6 +22,7 @@
 
 #include <cpufreq.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <signal.h>
 #include <unistd.h>
 #include "cpufreqd.h"
@@ -59,15 +60,10 @@ struct cpufreqd_info {
 	struct cpufreq_policy *cur_policy;
 	struct cpufreq_limits *limits;
 	struct cpufreq_sys_info *sys_info;
-	long timestamp; /* ?? */
-
-	/* running on battery? 
-	 * Must return TRUE or FALSE
-	 */
-	int (*on_battery) (void);
-	
+	/* last update, IOW las call to cpufreqd_loop (see main.h)*/
+	struct timeval timestamp;
 };
-struct cpufreqd_info const * get_cpufreqd_info (void);
+struct cpufreqd_info * get_cpufreqd_info (void);
 
 struct cpufreqd_plugin;
 

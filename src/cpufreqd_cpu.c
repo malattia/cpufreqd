@@ -23,9 +23,6 @@
 #include <string.h>
 #include "cpufreqd_plugin.h"
 
-#define KVER_26 0
-#define KVER_24 1
-
 struct cpu_interval {
 	int min;
 	int max;
@@ -36,43 +33,10 @@ static unsigned int c_user, c_nice, c_sys, c_time;
 static unsigned int c_user_old, c_nice_old, c_sys_old, c_time_old;
 static unsigned int delta_time, kernel_version;
 
-/*
- *  Reads kernel version for use when parsing /proc/stat output
- */
-static int get_kversion(void) {
-	FILE *fp;
-	char kver[256];
-	int f = 0;
-
-	fp = fopen ("/proc/version", "r");
-	if (!fp) {
-		clog(LOG_ERR, "/proc/version: %s\n", strerror(errno));
-		return -1;
-	}
-	do {
-		f = fscanf (fp, "Linux version %s", kver);
-	} while (f != 1);
-	fclose(fp);
-	kver[255] = '\0';
-
-	clog(LOG_INFO, "read kernel version %s.\n", kver);
-
-	if (strstr(kver, "2.6") == kver) {
-		clog(LOG_DEBUG, "kernel version is 2.6.\n");
-		return KVER_26;
-	} else if (strstr(kver, "2.4") == kver) {
-		clog(LOG_DEBUG, "kernel version is 2.4.\n");
-		return KVER_24;
-	} else {
-		clog(LOG_WARNING, "Unknown kernel version let's try to continue assuming a 2.6 kernel.\n");
-		return KVER_26;
-	}
-
-}
-
 static int cpufreqd_cpu_init(void) {
+	struct cpufreqd_info *cinfo = get_cpufreqd_info();
 	clog(LOG_INFO, "called\n");
-	kernel_version = get_kversion();
+	kernel_version = cinfo->kernel_version;
 	return 0;
 }
 
@@ -165,7 +129,8 @@ static int get_cpu(void) {
 				"cpu  %u %u %u %lu %lu %lu %lu",
 				&c_user, &c_nice, &c_sys, &c_idle, &c_iowait, &c_irq, &c_softirq);
 
-	} while ((f!=4 && kernel_version==KVER_24) || (f!=7 && kernel_version==KVER_26));
+	} while ((f != 4 && kernel_version == KERNEL_VERSION_24)
+			|| (f != 7 && kernel_version == KERNEL_VERSION_26));
 	fclose(fp);
 
 	clog(LOG_INFO, "CPU c_user=%d c_nice=%d c_sys=%d c_idle=%d "

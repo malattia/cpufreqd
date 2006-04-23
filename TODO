@@ -1,11 +1,10 @@
-- correctly use "struct cpufreqd_info" still missing some information kept up to date
-
-- cpufreqd_date
 
 - merge cpufreqd_acpi_* into a single plugin to share useful data (now that event 
   is available one can avoid polling some devices)
 
 - cpufreqd_cpu: make it aware of single cpu loads
+
+- cpufreqd_date
 
 ------------
 - make cpufreqd really SMP aware: 

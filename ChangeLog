@@ -4,6 +4,10 @@ version 2.1.0
 * added -m switch to start cpufreqd in manual mode
 * reset timer when entering manual mode
 * forcing update when exiting manual mode
+* sanitized set/reset of SIGALRM
+* added cpufreqd_exec plugin
+* added cpufreqd_acpi_event plugin
+* added cpufreqd_governor_parameters plugin
 
 version 2.0.0
 -------------
