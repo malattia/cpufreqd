@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi_battery.h"
 
 #define ACPI_BATTERY_DIR        "/proc/acpi/battery/"
 #define ACPI_BATTERY_STATE_FILE "/state"
@@ -103,12 +104,11 @@ static int check_battery(struct battery_info *info) {
 	return (tmp_capacity != 0) ? 1 : 0;
 }
 
-
 /*  static int acpi_battery_init(void)
  *
  *  test if BATTERY dirs are present
  */
-static int acpi_battery_init(void) {
+int acpi_battery_init(void) {
 	struct dirent **namelist = NULL;
 	int n = 0;
 
@@ -139,7 +139,7 @@ static int acpi_battery_init(void) {
 		clog(LOG_ERR, "error, acpi_battery module not compiled or inserted (%s: %s)?\n",
 				ACPI_BATTERY_DIR, strerror(errno));
 		clog(LOG_ERR, "exiting.\n");
-		return -1;   
+		return -1;
 
 	} else {
 		clog(LOG_ERR, "no batteries found, not a laptop?\n");
@@ -150,7 +150,7 @@ static int acpi_battery_init(void) {
 	return 0;
 }
 
-static int acpi_battery_exit(void) {
+int acpi_battery_exit(void) {
 	if (infos != NULL) {
 		free(infos);
 	}
@@ -161,7 +161,7 @@ static int acpi_battery_exit(void) {
 /*
  *  Parses entries of the form %d-%d (min-max)
  */
-static int acpi_battery_parse(const char *ev, void **obj) {
+int acpi_battery_parse(const char *ev, void **obj) {
 	char battery_name[32];
 	struct battery_interval *ret = calloc(1, sizeof(struct battery_interval));
 	if (ret == NULL) {
@@ -217,7 +217,7 @@ static int acpi_battery_parse(const char *ev, void **obj) {
 }
 
 
-static int acpi_battery_evaluate(const void *s) {
+int acpi_battery_evaluate(const void *s) {
 	const struct battery_interval *bi = (const struct battery_interval *)s;
 	int level = battery_level;
 
@@ -235,7 +235,7 @@ static int acpi_battery_evaluate(const void *s) {
  *  
  *  reads temperature valuse ant compute a medium value
  */
-static int acpi_battery_update(void) {
+int acpi_battery_update(void) {
 	FILE *fp;
 	char ignore[100];
 	char file_name[256];
@@ -292,6 +292,8 @@ static int acpi_battery_update(void) {
 	return 0;
 }
 
+
+#if 0
 static struct cpufreqd_keyword kw[] = {
 	{ .word = "battery_interval", .parse = &acpi_battery_parse, .evaluate = &acpi_battery_evaluate },
 	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
@@ -308,3 +310,4 @@ static struct cpufreqd_plugin acpi_battery = {
 struct cpufreqd_plugin *create_plugin (void) {
 	return &acpi_battery;
 }
+#endif

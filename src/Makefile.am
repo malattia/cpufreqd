@@ -27,10 +27,11 @@ BUILD_PLUGINS = \
 		cpufreqd_cpu.la
 
 if ACPI_PLUGIN
-BUILD_PLUGINS += cpufreqd_acpi_battery.la \
-		 cpufreqd_acpi_temperature.la \
-		 cpufreqd_acpi_event.la \
-		 cpufreqd_acpi_ac.la
+#BUILD_PLUGINS += cpufreqd_acpi_battery.la \
+#		 cpufreqd_acpi_temperature.la \
+#		 cpufreqd_acpi_event.la \
+#		 cpufreqd_acpi_ac.la
+BUILD_PLUGINS += cpufreqd_acpi.la
 endif
 if NFORCE2_PLUGIN
 BUILD_PLUGINS += cpufreqd_nforce2.la
@@ -91,32 +92,45 @@ cpufreqd_apm_la_LDFLAGS = \
 endif
 
 if ACPI_PLUGIN
-cpufreqd_acpi_ac_la_SOURCES = \
-		cpufreqd_acpi_ac.c
-
-cpufreqd_acpi_ac_la_LDFLAGS = \
-		-module -avoid-version
-
-cpufreqd_acpi_temperature_la_SOURCES = \
+cpufreqd_acpi_la_SOURCES = \
+		cpufreqd_acpi.c \
+		cpufreqd_acpi_ac.c \
+		cpufreqd_acpi_battery.c \
+		cpufreqd_acpi_event.c \
 		cpufreqd_acpi_temperature.c
 
-cpufreqd_acpi_temperature_la_LDFLAGS = \
-		-module -avoid-version
-
-cpufreqd_acpi_event_la_SOURCES = \
-		cpufreqd_acpi_event.c
-
-cpufreqd_acpi_event_la_CFLAGS = \
+cpufreqd_acpi_la_CFLAGS = \
 		$(AM_CFLAGS) -I/@PTHREAD_SRCDIR@/include
 
-cpufreqd_acpi_event_la_LDFLAGS = \
+cpufreqd_acpi_la_LDFLAGS = \
 		-module -avoid-version -L/@PTHREAD_SRCDIR@/lib -lpthread
 
-cpufreqd_acpi_battery_la_SOURCES = \
-		cpufreqd_acpi_battery.c
-
-cpufreqd_acpi_battery_la_LDFLAGS = \
-		-module -avoid-version
+#cpufreqd_acpi_ac_la_SOURCES = \
+#		cpufreqd_acpi_ac.c
+#
+#cpufreqd_acpi_ac_la_LDFLAGS = \
+#		-module -avoid-version
+#
+#cpufreqd_acpi_temperature_la_SOURCES = \
+#		cpufreqd_acpi_temperature.c
+#
+#cpufreqd_acpi_temperature_la_LDFLAGS = \
+#		-module -avoid-version
+#
+#cpufreqd_acpi_event_la_SOURCES = \
+#		cpufreqd_acpi_event.c
+#
+#cpufreqd_acpi_event_la_CFLAGS = \
+#		$(AM_CFLAGS) -I/@PTHREAD_SRCDIR@/include
+#
+#cpufreqd_acpi_event_la_LDFLAGS = \
+#		-module -avoid-version -L/@PTHREAD_SRCDIR@/lib -lpthread
+#
+#cpufreqd_acpi_battery_la_SOURCES = \
+#		cpufreqd_acpi_battery.c
+#
+#cpufreqd_acpi_battery_la_LDFLAGS = \
+#		-module -avoid-version
 endif
 
 cpufreqd_cpu_la_SOURCES = \
@@ -168,6 +182,10 @@ noinst_HEADERS = \
 		cpufreqd.h \
 		cpufreqd_plugin.h \
 		cpufreqd_log.h \
+		cpufreqd_acpi_ac.h \
+		cpufreqd_acpi_battery.h \
+		cpufreqd_acpi_event.h \
+		cpufreqd_acpi_temperature.h \
 		cpufreq_utils.h \
 		daemon_utils.h \
 		plugin_utils.h \

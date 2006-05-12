@@ -35,6 +35,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi_event.h"
 
 struct acpi_event {
 	char *device_class;
@@ -45,20 +46,10 @@ struct acpi_event {
 };
 
 static pthread_t event_thread;
+static pthread_mutex_t event_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int event_fd;
+static short event_pending;
 static char acpid_sock_path[MAX_PATH_LEN];
-
-/*  Gather global config data
- */
-static int acpi_event_conf (const char *key, const char *value) {
-	
-	if (strncmp(key, "acpid_socket", 12) == 0 && value !=NULL) {
-		snprintf(acpid_sock_path, MAX_PATH_LEN, "%s", value);
-		clog(LOG_DEBUG, "acpid_socket is %s.\n", acpid_sock_path);
-		return 0;
-	}
-	return -1;
-}
 
 /*  Waits for ACPI events on the file descriptor opened previously.
  *  This function uses poll(2) to wait for readable data in order
@@ -109,6 +100,10 @@ static void *event_wait (void __UNUSED__ *arg) {
 			break;
 		}
 
+		/* mark pending event */
+		acpi_event_lock();
+		event_pending = 1;
+		acpi_event_unlock();
 		/* Ring the bell!! */
 		wake_cpufreqd();
 		rfd.revents = 0;
@@ -116,10 +111,40 @@ static void *event_wait (void __UNUSED__ *arg) {
 	return NULL;
 }
 
+int is_event_pending(void) {
+	return event_pending;
+}
+
+void reset_event(void) {
+	event_pending = 0;
+}
+
+int acpi_event_lock (void) {
+	return pthread_mutex_lock(&event_mutex);
+}
+
+int acpi_event_unlock (void) {
+	return pthread_mutex_unlock(&event_mutex);
+}
+
+/*  Gather global config data
+ */
+int acpi_event_conf (const char *key, const char *value) {
+	
+	if (strncmp(key, "acpid_socket", 12) == 0 && value !=NULL) {
+		snprintf(acpid_sock_path, MAX_PATH_LEN, "%s", value);
+		clog(LOG_DEBUG, "acpid_socket is %s.\n", acpid_sock_path);
+		return 0;
+	}
+	return -1;
+}
+
 /* Launch the thread that will wait for acpi events
  */
-static int acpi_event_init (void) {
+int acpi_event_init (void) {
 	int ret = 0;
+
+	event_pending = 1;
 
 	/* try to open /proc/acpi/event */
 	event_fd = open("/proc/acpi/event", O_RDONLY);
@@ -163,20 +188,20 @@ static int acpi_event_init (void) {
 	return 0;
 }
 
-static int acpi_event_exit (void) {
+int acpi_event_exit (void) {
 	int ret = 0;
 
 	if (event_thread) {
 		clog(LOG_DEBUG, "killing event thread.\n");
 		ret = pthread_cancel(event_thread);
 		if (ret != 0)
-			clog(LOG_ERR, "Couldn't cancel exec thread (%s).\n",
+			clog(LOG_ERR, "Couldn't cancel event thread (%s).\n",
 					strerror(ret));
 		
 		/* cleanup */
 		ret = pthread_join(event_thread, NULL);
 		if (ret != 0)
-			clog(LOG_ERR, "Couldn't join exec thread (%s).\n",
+			clog(LOG_ERR, "Couldn't join event thread (%s).\n",
 					strerror(ret));
 		event_thread = 0;
 	}
@@ -187,7 +212,7 @@ static int acpi_event_exit (void) {
 		event_fd = 0;
 	}
 	
-	clog(LOG_INFO, "acpi_event configured.\n");
+	clog(LOG_INFO, "acpi_event exited.\n");
 	return 0;
 }
 
@@ -201,6 +226,7 @@ static int acpi_event_update(void) {
 }
 #endif
 
+#if 0
 static struct cpufreqd_keyword kw[] =  {
 	{ .word = NULL, }
 };
@@ -222,4 +248,4 @@ static struct cpufreqd_plugin plugin =  {
 struct cpufreqd_plugin *create_plugin(void) {
 	return &plugin;
 }
-
+#endif

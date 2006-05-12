@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi_ac.h"
 
 #define ACPI_AC_DIR "/proc/acpi/ac_adapter/"
 #define ACPI_AC_FILE "/state"
@@ -43,7 +44,7 @@ static int no_dots(const struct dirent *d) {
  *
  *  test if AC dirs are present
  */
-static int acpi_ac_init(void) {
+int acpi_ac_init(void) {
 	struct dirent **namelist = NULL;
 	int n = 0;
 
@@ -71,7 +72,7 @@ static int acpi_ac_init(void) {
 	return 0;
 }
 
-static int acpi_ac_exit(void) {
+int acpi_ac_exit(void) {
 	if (ac_filelist != NULL)
 		free(*ac_filelist);
 	clog(LOG_INFO, "exited.\n");
@@ -82,7 +83,7 @@ static int acpi_ac_exit(void) {
  *  
  *  reads temperature valuse ant compute a medium value
  */
-static int acpi_ac_update(void) {
+int acpi_ac_update(void) {
 	char temp[50];
 	int i=0;
 	FILE *fp = NULL;
@@ -111,7 +112,7 @@ static int acpi_ac_update(void) {
 /*
  *  parse the 'ac' keywork
  */
-static int acpi_ac_parse(const char *ev, void **obj) {
+int acpi_ac_parse(const char *ev, void **obj) {
 	int *ret = malloc(sizeof(int));
 	if (ret == NULL) {
 		clog(LOG_ERR, "couldn't make enough room for ac_status (%s)\n",
@@ -142,7 +143,7 @@ static int acpi_ac_parse(const char *ev, void **obj) {
 /*
  *  evaluate the 'ac' keywork
  */
-static int acpi_ac_evaluate(const void *s) {
+int acpi_ac_evaluate(const void *s) {
 	const int *ac = (const int *)s;
 
 	clog(LOG_DEBUG, "called: %s [%s]\n",
@@ -151,6 +152,7 @@ static int acpi_ac_evaluate(const void *s) {
 	return (*ac == ac_state) ? MATCH : DONT_MATCH;
 }
 
+#if 0
 static struct cpufreqd_keyword kw[] = {
 	{ .word = "ac", .parse = &acpi_ac_parse, .evaluate = &acpi_ac_evaluate },
 	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
@@ -167,3 +169,4 @@ static struct cpufreqd_plugin acpi_ac = {
 struct cpufreqd_plugin *create_plugin (void) {
 	return &acpi_ac;
 }
+#endif

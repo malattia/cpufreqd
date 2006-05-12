@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi_temperature.h"
 
 #define ACPI_TEMPERATURE_DIR "/proc/acpi/thermal_zone/"
 #define ACPI_TEMPERATURE_FILE "temperature"
@@ -67,7 +68,7 @@ static struct thermal_zone *get_thermal_zone(const char *name)
  *  test if ATZ dirs are present and read their 
  *  path for usage when parsing rules
  */
-static int acpi_temperature_init(void)
+int acpi_temperature_init(void)
 {
 	struct dirent **namelist = NULL;
 	int n = 0;
@@ -101,7 +102,7 @@ static int acpi_temperature_init(void)
 	return 0;
 }
 
-static int acpi_temperature_exit(void) 
+int acpi_temperature_exit(void) 
 {
 	if (atz_list != NULL)
 		free(atz_list);
@@ -109,7 +110,7 @@ static int acpi_temperature_exit(void)
 	return 0;
 }
 
-static int acpi_temperature_parse(const char *ev, void **obj)
+int acpi_temperature_parse(const char *ev, void **obj)
 {
 	char atz_name[32];
 	struct temperature_interval *ret = calloc(1, sizeof(struct temperature_interval));
@@ -164,7 +165,7 @@ static int acpi_temperature_parse(const char *ev, void **obj)
 	return 0;
 }
 
-static int acpi_temperature_evaluate(const void *s)
+int acpi_temperature_evaluate(const void *s)
 {
 	const struct temperature_interval *ti = (const struct temperature_interval *)s;
 	long int temp = temperature;
@@ -182,7 +183,7 @@ static int acpi_temperature_evaluate(const void *s)
  *  
  *  reads temperature valuse ant compute a medium value
  */
-static int acpi_temperature_update(void)
+int acpi_temperature_update(void)
 {
 	char fname[256];
 	int count = 0, i = 0;
@@ -220,6 +221,7 @@ static int acpi_temperature_update(void)
 	return 0;
 }
 
+#if 0
 static struct cpufreqd_keyword kw[] = {
 	{ .word = "acpi_temperature", .parse = &acpi_temperature_parse,   .evaluate = &acpi_temperature_evaluate },
 	{ .word = NULL,               .parse = NULL,                      .evaluate = NULL }
@@ -237,3 +239,4 @@ struct cpufreqd_plugin *create_plugin (void)
 {
 	return &acpi_temperature;
 }
+#endif

@@ -136,7 +136,10 @@ static unsigned int rule_score(struct rule *rule) {
 			}
 		}
 	} /* end foreach rule entry */
-	return hits + (100 * hits / directives);
+	if (directives > 0)
+		return hits + (100 * hits / directives);
+	clog(LOG_INFO, "No evaulatable directives in Rule \"%s\".\n", rule->name);
+	return 0;
 }
 
 /*  struct rule *update_rule_scores(struct LIST *rules)
