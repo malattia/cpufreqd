@@ -16,7 +16,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi.h"
 #include "cpufreqd_acpi_ac.h"
 #include "cpufreqd_acpi_battery.h"
 #include "cpufreqd_acpi_event.h"
@@ -26,7 +30,9 @@ static short acpi_ac_failed;
 static short acpi_batt_failed;
 static short acpi_ev_failed;
 static short acpi_temp_failed;
+struct acpi_configuration acpi_config;
 
+#if 0
 static int acpi_init (void) {
 	clog(LOG_DEBUG, "Initializing AC\n");
 	acpi_ac_failed = acpi_ac_init();
@@ -34,13 +40,52 @@ static int acpi_init (void) {
 	acpi_batt_failed = acpi_battery_init();
 	clog(LOG_DEBUG, "Initializing TEMPERATURE\n");
 	acpi_temp_failed = acpi_temperature_init();
-	return acpi_ac_failed || acpi_batt_failed || acpi_temp_failed;
+	
+	/* return error _only_ if all components failed (this will prevent also
+	 * the acpi_event component to run
+	 */
+	return acpi_ac_failed && acpi_batt_failed && acpi_temp_failed;
+}
+#endif
+
+/*  Gather global config data
+ */
+static int acpi_conf (const char *key, const char *value) {
+
+	if (strncmp(key, "acpid_socket", 12) == 0 && value !=NULL) {
+		snprintf(acpi_config.acpid_sock_path, MAX_PATH_LEN, "%s", value);
+		clog(LOG_DEBUG, "acpid_socket is %s.\n", acpi_config.acpid_sock_path);
+	}
+
+	if (strncmp(key, "battery_update_interval", 12) == 0 && value !=NULL) {
+		if (sscanf(value, "%d", &acpi_config.battery_update_interval) == 1) {
+			sscanf(value, "%d", &acpi_config.battery_update_interval);
+			clog(LOG_DEBUG, "battery update interval is %d.\n",
+					acpi_config.battery_update_interval);
+		} else {
+			clog(LOG_WARNING, "battery_update_interval needs a value in seconds (%s).\n",
+					value);
+		}
+	}
+	return 0;
 }
 
+
 static int acpi_post_conf (void) {
+	if (acpi_config.battery_update_interval <= 0) {
+		/* default to 5 minutes */
+		acpi_config.battery_update_interval = 5*60;
+	}
+	clog(LOG_DEBUG, "Initializing AC\n");
+	acpi_ac_failed = acpi_ac_init();
+	clog(LOG_DEBUG, "Initializing BATTERY\n");
+	acpi_batt_failed = acpi_battery_init();
+	clog(LOG_DEBUG, "Initializing TEMPERATURE\n");
+	acpi_temp_failed = acpi_temperature_init();
 	clog(LOG_DEBUG, "Initializing EVENT\n");
 	acpi_ev_failed = acpi_event_init();
-	return acpi_ev_failed;
+	/* return error _only_ if all components failed */
+	return acpi_ev_failed && acpi_ac_failed && acpi_batt_failed && acpi_temp_failed;
 }
 
 static int acpi_exit (void) {
@@ -62,7 +107,7 @@ static int acpi_update(void) {
 	if (!acpi_ac_failed && !acpi_ev_failed && is_event_pending())
 		acpi_ac_update();
 
-	if (!acpi_batt_failed && !acpi_ev_failed && is_event_pending())
+	if (!acpi_batt_failed && !acpi_ev_failed)
 		acpi_battery_update();
 
 	reset_event();
@@ -83,10 +128,12 @@ static struct cpufreqd_keyword kw[] = {
 static struct cpufreqd_plugin acpi = {
 	.plugin_name	= "acpi",	/* plugin_name */
 	.keywords	= kw,			/* config_keywords */
+#if 0
 	.plugin_init	= &acpi_init,		/* plugin_init */
+#endif
 	.plugin_exit	= &acpi_exit,		/* plugin_exit */
 	.plugin_update	= &acpi_update,		/* plugin_update */
-	.plugin_conf	= &acpi_event_conf,
+	.plugin_conf	= &acpi_conf,
 	.plugin_post_conf = &acpi_post_conf,
 };
 

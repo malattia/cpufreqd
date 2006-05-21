@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi.h"
+#include "cpufreqd_acpi_event.h"
 #include "cpufreqd_acpi_battery.h"
 
 #define ACPI_BATTERY_DIR        "/proc/acpi/battery/"
@@ -30,10 +32,16 @@
 #define ACPI_BATTERY_INFO_FILE  "/info"
 #define ACPI_BATTERY_FULL_CAPACITY_FMT  "last full capacity:      %d %sh\n"
 #define ACPI_BATTERY_REM_CAPACITY_FMT   "remaining capacity:      %d %sh\n"
+#define ACPI_BATTERY_PRESENT_RATE	"present rate:            %d %s\n"
+#define ACPI_BATTERY_DISCHARGING	"charging state:          discharging\n"
+#define ACPI_BATTERY_CHARGING		"charging state:          charging\n"
 
 struct battery_info {
 	int capacity;
+	float remaining;
+	int present_rate;
 	int present;
+	int discharging;
 	int level;
 	char name[32];
 	char path[100];
@@ -44,9 +52,12 @@ struct battery_interval {
 	struct battery_info *bat;
 };
 
-static struct battery_info *infos   = 0L;
-static int bat_num                  = 0;
-static int battery_level            = 0;
+static struct battery_info *infos;
+static int bat_num;
+static int battery_level;
+static double check_timeout;
+static double old_time;
+extern struct acpi_configuration acpi_config;
 
 /* int no_dots(const struct dirent *d)
  * 
@@ -74,34 +85,35 @@ static struct battery_info *get_battery_info(const char *name)
 
 /*  static int check_battery(char *dirname)
  *
- *  check if the battery is present and read its capacity.
- *  Returns 1 if the battery is there and has been able
- *  to read its capacity, 0 otherwise.
+ *  check if the battery is present and read infos.
  */
-static int check_battery(struct battery_info *info) {
+static void check_battery(struct battery_info *info) {
 	FILE *fp;
 	char file_name[256];
 	char ignore[100];
 	char line[100];
-	int tmp_capacity;
+	int tmp;
 
 	snprintf(file_name, 256, "%s%s", info->path, ACPI_BATTERY_INFO_FILE);
 	/** /proc/acpi/battery/.../info **/
 	fp = fopen(file_name, "r");
 	if (!fp) {
 		clog(LOG_ERR , "%s: %s\n", file_name, strerror(errno));
-		return 0;
+		return;
 	}
 
+	/* reset some info */
+	info->present = 0;
+
 	while (fgets(line, 100, fp)) {
-		if(sscanf(line, ACPI_BATTERY_FULL_CAPACITY_FMT, &tmp_capacity, ignore) == 2) {
-			info->capacity = tmp_capacity;
+		if(sscanf(line, ACPI_BATTERY_FULL_CAPACITY_FMT, &tmp, ignore) == 2) {
+			info->capacity = tmp;
+			clog(LOG_DEBUG, "%s - capacity: %d\n", info->name,
+					info->capacity);
 			info->present = 1;
 		}
 	}
 	fclose(fp);
-
-	return (tmp_capacity != 0) ? 1 : 0;
 }
 
 /*  static int acpi_battery_init(void)
@@ -240,50 +252,99 @@ int acpi_battery_update(void) {
 	char ignore[100];
 	char file_name[256];
 	char line[100];
-	int i=0, capacity=0, remaining=0, tmp_remaining=0, n_read=0;
+	int i=0, total_capacity=0, total_remaining=0, tmp=0, n_read=0;
+	double elapsed_time = 0.0;
+	double current_time = 0.0;
+#if 0
+	int remaining_hours=0, remaining_minutes=0;
+	double remaining_secs = 0.0;
+#endif
+	struct cpufreqd_info * cinfo = get_cpufreqd_info();
+	
+	if (check_timeout <= 0)
+		check_timeout = acpi_config.battery_update_interval;
+
+	current_time = (double)cinfo->timestamp.tv_sec + (cinfo->timestamp.tv_usec/1000000.0);
+	elapsed_time = current_time - old_time;
+	old_time = current_time;
+	/* decrement timeout */
+	check_timeout -= elapsed_time;
 
 	/* Read battery informations */
 	for (i=0; i<bat_num; i++) {
-#if 0
-		/* avoid reading the info file if configured */
-		if (!configuration->acpi_workaround) {
-			check_battery(&infos[i]);
-		}
-#endif
 
 		/* if battery not present skip to the next one */
 		if (!infos[i].present || infos[i].capacity <= 0) {
 			continue;
 		}
-		/**
-		 ** /proc/acpi/battery/.../state
-		 **/
-		snprintf(file_name, 256, "%s%s", infos[i].path, ACPI_BATTERY_STATE_FILE);
-		fp = fopen(file_name, "r");
-		if (!fp) {
-			clog(LOG_ERR, "%s: %s\n", file_name, strerror(errno));
-			clog(LOG_INFO, "battery path %s disappeared? "
-					"send SIGHUP to re-read batteries\n",
-					infos[i].path);
-			continue;
+
+		/* if check_timeout is expired or an event is pending read battery */
+		if (check_timeout <= 0 || is_event_pending()) {
+			clog(LOG_DEBUG, "%s - reading battery\n", infos[i].name);
+			/**
+			 ** /proc/acpi/battery/.../state
+			 **/
+			snprintf(file_name, 256, "%s%s", infos[i].path, ACPI_BATTERY_STATE_FILE);
+			fp = fopen(file_name, "r");
+			if (!fp) {
+				clog(LOG_ERR, "%s: %s\n", file_name, strerror(errno));
+				clog(LOG_INFO, "battery path %s disappeared? "
+						"send SIGHUP to re-read batteries\n",
+						infos[i].path);
+				continue;
+			}
+
+			infos[i].discharging = 0;
+			while (fgets(line, 100, fp)) {
+				if (sscanf(line, ACPI_BATTERY_REM_CAPACITY_FMT, &tmp, ignore) == 2) {
+					infos[i].remaining = tmp;
+					total_remaining += infos[i].remaining;
+					total_capacity += infos[i].capacity;
+					n_read++;
+					clog(LOG_DEBUG, "%s - remaining capacity: %.2f\n",
+							infos[i].name, infos[i].remaining);
+				}
+				if(sscanf(line, ACPI_BATTERY_PRESENT_RATE, &tmp, ignore) == 2) {
+					infos[i].present_rate = tmp;
+					clog(LOG_DEBUG, "%s - present rate: %d\n",
+							infos[i].name, infos[i].present_rate);
+				}
+				if(strstr(line, ACPI_BATTERY_DISCHARGING) != NULL) {
+					infos[i].discharging = 1;
+				}
+			}
+			fclose(fp);
+		} else {
+			/* estimate battery life */
+			clog(LOG_DEBUG, "%s - estimating battery life (timeout: %0.2f)\n",
+					infos[i].name, check_timeout);
+			if (infos[i].discharging)
+				infos[i].remaining -= ((float)infos[i].present_rate * elapsed_time) / 3600.0;
+			else if ((int)infos[i].remaining < infos[i].capacity)
+				infos[i].remaining += ((float)infos[i].present_rate * elapsed_time) / 3600.0;
+			total_remaining += infos[i].remaining;
+			total_capacity += infos[i].capacity;
+			n_read++;
+			clog(LOG_DEBUG, "%s - remaining capacity: %.2f\n",
+					infos[i].name, infos[i].remaining);
 		}
 
-		while (fgets(line, 100, fp)) {
-			if (sscanf(line, ACPI_BATTERY_REM_CAPACITY_FMT, &tmp_remaining, ignore) == 2) {
-				remaining += tmp_remaining;
-				capacity += infos[i].capacity;
-				infos[i].level = 100 * (tmp_remaining / (double)infos[i].capacity);
-				n_read++;
-				clog(LOG_INFO, "battery life for %s is %d%%\n",
-						infos[i].name, infos[i].level);
-			}
+		infos[i].level = 100 * (infos[i].remaining / (double)infos[i].capacity);
+		clog(LOG_INFO, "battery life for %s is %d%%\n", infos[i].name, infos[i].level);
+#if 0
+		if (infos[i].present_rate > 0) {
+			remaining_secs = 3600 * infos[i].remaining / infos[i].present_rate;
+			remaining_hours = (int) remaining_secs / 3600;
+			remaining_minutes = (remaining_secs - (remaining_hours * 3600)) / 60;
+			clog(LOG_INFO, "battery time for %s is %d:%0.2d\n",
+					infos[i].name, remaining_hours, remaining_minutes);
 		}
-		fclose(fp);
+#endif
 	} /* end infos loop */
 
 	/* calculates medium battery life between all batteries */
-	if (capacity > 0)
-		battery_level = 100 * (remaining / (double)capacity);
+	if (total_capacity > 0)
+		battery_level = 100 * (total_remaining / (double)total_capacity);
 	else
 		battery_level = -1;
 

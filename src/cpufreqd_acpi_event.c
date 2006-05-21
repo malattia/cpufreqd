@@ -35,6 +35,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi.h"
 #include "cpufreqd_acpi_event.h"
 
 struct acpi_event {
@@ -49,7 +50,7 @@ static pthread_t event_thread;
 static pthread_mutex_t event_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int event_fd;
 static short event_pending;
-static char acpid_sock_path[MAX_PATH_LEN];
+extern struct acpi_configuration acpi_config;
 
 /*  Waits for ACPI events on the file descriptor opened previously.
  *  This function uses poll(2) to wait for readable data in order
@@ -127,18 +128,6 @@ int acpi_event_unlock (void) {
 	return pthread_mutex_unlock(&event_mutex);
 }
 
-/*  Gather global config data
- */
-int acpi_event_conf (const char *key, const char *value) {
-	
-	if (strncmp(key, "acpid_socket", 12) == 0 && value !=NULL) {
-		snprintf(acpid_sock_path, MAX_PATH_LEN, "%s", value);
-		clog(LOG_DEBUG, "acpid_socket is %s.\n", acpid_sock_path);
-		return 0;
-	}
-	return -1;
-}
-
 /* Launch the thread that will wait for acpi events
  */
 int acpi_event_init (void) {
@@ -147,13 +136,15 @@ int acpi_event_init (void) {
 	event_pending = 1;
 
 	/* try to open /proc/acpi/event */
+#if 0
 	event_fd = open("/proc/acpi/event", O_RDONLY);
+#endif
 	
 	/* or fallback to the acpid socket */
-	if (event_fd == -1 && acpid_sock_path[0]) {
+	if (event_fd <= 0 && acpi_config.acpid_sock_path[0]) {
 		struct sockaddr_un sck;
 		sck.sun_family = AF_UNIX;
-		strncpy(sck.sun_path, acpid_sock_path, 108);
+		strncpy(sck.sun_path, acpi_config.acpid_sock_path, 108);
 		sck.sun_path[107] = '\0';
 
 		if ((event_fd = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
@@ -167,9 +158,12 @@ int acpi_event_init (void) {
 					strerror(errno));
 			return -1;
 		}
-	} else if (event_fd == -1) {
+	} else if (event_fd <= 0) {
 		clog(LOG_ERR, "Couldn't open ACPI event device (%s).\n",
 				strerror(errno));
+		return -1;
+	} else {
+		clog(LOG_ERR, "No acpid socket given.\n");
 		return -1;
 	}
 

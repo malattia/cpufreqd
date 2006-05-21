@@ -8,6 +8,10 @@ version 2.1.0
 * added cpufreqd_exec plugin
 * added cpufreqd_acpi_event plugin
 * added cpufreqd_governor_parameters plugin
+* merged all ACPI plugins into one to let them cohoperate (eg: wait for events)
+* acpi_battery now can read /proc/acpi files at longer intervals and estimates
+battery level in between them
+* acpi_ac waits for ACPI events instead of polling
 
 version 2.0.0
 -------------

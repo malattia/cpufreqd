@@ -365,6 +365,15 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 	struct rule *best_rule = NULL;
 	struct directive *d;
 	
+	/* update timestamp */
+	if (gettimeofday(&cpufreqd_info->timestamp, NULL) < 0) {
+		clog(LOG_ERR, "Couldn't read current time: %s\n", strerror(errno));
+	} else {
+		clog(LOG_DEBUG, "Current time is: %lu::%lu\n",
+				cpufreqd_info->timestamp.tv_sec,
+				cpufreqd_info->timestamp.tv_usec);
+	}
+
 	update_plugin_states(&conf->plugins);
 	best_rule = update_rule_scores(&conf->rules);
 
@@ -415,13 +424,6 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 		/* nothing new happened */
 		clog(LOG_DEBUG, "Rule unchanged (\"%s\"), doing nothing.\n", 
 				current->name);
-	}
-	if (gettimeofday(&cpufreqd_info->timestamp, NULL) < 0) {
-		clog(LOG_ERR, "Couldn't read current time: %s\n", strerror(errno));
-	} else {
-		clog(LOG_DEBUG, "Current time is: %lu::%lu\n",
-				cpufreqd_info->timestamp.tv_sec,
-				cpufreqd_info->timestamp.tv_usec);
 	}
 	return best_rule;
 }
