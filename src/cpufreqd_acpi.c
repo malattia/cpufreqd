@@ -32,21 +32,14 @@ static short acpi_ev_failed;
 static short acpi_temp_failed;
 struct acpi_configuration acpi_config;
 
-#if 0
+/*
+ * init default values
+ */
 static int acpi_init (void) {
-	clog(LOG_DEBUG, "Initializing AC\n");
-	acpi_ac_failed = acpi_ac_init();
-	clog(LOG_DEBUG, "Initializing BATTERY\n");
-	acpi_batt_failed = acpi_battery_init();
-	clog(LOG_DEBUG, "Initializing TEMPERATURE\n");
-	acpi_temp_failed = acpi_temperature_init();
-	
-	/* return error _only_ if all components failed (this will prevent also
-	 * the acpi_event component to run
-	 */
-	return acpi_ac_failed && acpi_batt_failed && acpi_temp_failed;
+	strncpy(acpi_config.acpid_sock_path, "/var/run/acpid.socket", MAX_PATH_LEN);
+	acpi_config.battery_update_interval = 30;
+	return 0;
 }
-#endif
 
 /*  Gather global config data
  */
@@ -90,30 +83,40 @@ static int acpi_post_conf (void) {
 
 static int acpi_exit (void) {
 	int ret = 0;
-	clog(LOG_DEBUG, "Closing AC\n");
-	ret |= acpi_ac_exit();
-	clog(LOG_DEBUG, "Closing BATTERY\n");
-	ret |= acpi_battery_exit();
-	clog(LOG_DEBUG, "Closing TEMPERATURE\n");
-	ret |= acpi_temperature_exit();
-	clog(LOG_DEBUG, "Closing EVENT\n");
-	ret |= acpi_event_exit();
+	if (!acpi_ac_failed) {
+		clog(LOG_DEBUG, "Closing AC\n");
+		ret |= acpi_ac_exit();
+	}
+	if (!acpi_batt_failed) {
+		clog(LOG_DEBUG, "Closing BATTERY\n");
+		ret |= acpi_battery_exit();
+	}
+	if (!acpi_temp_failed) {
+		clog(LOG_DEBUG, "Closing TEMPERATURE\n");
+		ret |= acpi_temperature_exit();
+	}
+	if (!acpi_ev_failed) {
+		clog(LOG_DEBUG, "Closing EVENT\n");
+		ret |= acpi_event_exit();
+	}
 	return ret;
 }
 
 static int acpi_update(void) {
 
 	acpi_event_lock();
-	if (!acpi_ac_failed && !acpi_ev_failed && is_event_pending())
+	if ((!acpi_ac_failed && acpi_ev_failed)
+			|| (!acpi_ac_failed && !acpi_ev_failed && is_event_pending()))
 		acpi_ac_update();
 
-	if (!acpi_batt_failed && !acpi_ev_failed)
+	if (!acpi_batt_failed)
 		acpi_battery_update();
 
 	reset_event();
 	acpi_event_unlock();
 	
-	acpi_temperature_update();
+	if (!acpi_temp_failed)
+		acpi_temperature_update();
 
 	return 0;
 }
@@ -128,9 +131,7 @@ static struct cpufreqd_keyword kw[] = {
 static struct cpufreqd_plugin acpi = {
 	.plugin_name	= "acpi",	/* plugin_name */
 	.keywords	= kw,			/* config_keywords */
-#if 0
 	.plugin_init	= &acpi_init,		/* plugin_init */
-#endif
 	.plugin_exit	= &acpi_exit,		/* plugin_exit */
 	.plugin_update	= &acpi_update,		/* plugin_update */
 	.plugin_conf	= &acpi_conf,
