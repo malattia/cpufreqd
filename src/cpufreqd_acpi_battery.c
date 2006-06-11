@@ -261,9 +261,6 @@ int acpi_battery_update(void) {
 #endif
 	struct cpufreqd_info * cinfo = get_cpufreqd_info();
 	
-	if (check_timeout <= 0)
-		check_timeout = acpi_config.battery_update_interval;
-
 	current_time = (double)cinfo->timestamp.tv_sec + (cinfo->timestamp.tv_usec/1000000.0);
 	elapsed_time = current_time - old_time;
 	old_time = current_time;
@@ -281,6 +278,7 @@ int acpi_battery_update(void) {
 		/* if check_timeout is expired or an event is pending read battery */
 		if (check_timeout <= 0 || is_event_pending()) {
 			clog(LOG_DEBUG, "%s - reading battery\n", infos[i].name);
+			check_timeout = acpi_config.battery_update_interval;
 			/**
 			 ** /proc/acpi/battery/.../state
 			 **/
