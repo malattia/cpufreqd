@@ -154,8 +154,8 @@ int acpi_event_init (void) {
 		}
 
 		if (connect(event_fd, (struct sockaddr *)&sck, sizeof(sck)) == -1) {
-			clog(LOG_ERR, "Couldn't connect to acpid socket (%s).\n",
-					strerror(errno));
+			clog(LOG_ERR, "Couldn't connect to acpid socket %s (%s).\n",
+					acpi_config.acpid_sock_path, strerror(errno));
 			return -1;
 		}
 	} else if (event_fd <= 0) {
