@@ -12,7 +12,7 @@
 .SH NAME
 cpufreqd \- intelligently monitor and manipulate CPU frequency
 .SH SYNOPSIS
-.B "cpufreqd [-Dhv] [-f filename] [-V verbosity]"
+.B "cpufreqd [-Dmhv] [-f filename] [-V verbosity]"
 .SH DESCRIPTION
 .B cpufreqd
 is used to monitor the status of the system and adjust the frequency of the
@@ -22,6 +22,9 @@ configurable. Logs are reported through syslogd.
 .TP
 .B "-D, --no-daemon"
 stay in foreground (used to debug).
+.TP
+.B "-m, --manual"
+start in manual mode.
 .TP
 .B "-f filename, --file=filename"
 Specify the configuration file to read.  The default is 
