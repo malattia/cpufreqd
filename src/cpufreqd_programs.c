@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2005  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -306,7 +306,7 @@ static int programs_update(void) {
 
 			if (n_chars < 0) {
 				/* probably this process is a kernel process or 
-				 * user cannot read thie link or
+				 * user cannot read the link or
 				 * has disappeared while scanning, don't worry */
 #if 0
 				clog(LOG_DEBUG, "%s: %s\n", file, strerror(errno));
