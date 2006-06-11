@@ -113,9 +113,6 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 	struct group *grp = NULL;
 	long int gid = 0;
 	fpos_t pos;
-	int duplicate = 0;
-	struct plugin_obj o_plugin;
-	struct NODE *n_plugin;
 
 	while (!feof(config)) {
 
@@ -194,42 +191,9 @@ static int parse_config_general (FILE *config, struct cpufreqd_conf *configurati
 		}
 
 		if (strcmp(name,"enable_plugins") == 0) {
-			/*
-			 *  tokenize the value and set the list of plugins
-			 */
-			token = strtok(value,",");
-			do {
-				o_plugin.library = NULL;
-				o_plugin.plugin = NULL;
-				o_plugin.used = 0;
-				o_plugin.configured = 0;
-				duplicate = 0;
-				token = clean_config_line(token);
-				if (token == NULL)
-					continue;
-
-				strncpy(o_plugin.name, token, MAX_STRING_LEN);
-				o_plugin.name[MAX_STRING_LEN - 1] = '\0';
-
-				LIST_FOREACH_NODE(node, &configuration->plugins) {
-					struct plugin_obj *op = (struct plugin_obj *) node->content;
-					if (strncmp(op->name, o_plugin.name, MAX_STRING_LEN) == 0) {
-						clog(LOG_WARNING, "Plugin \"%s\" already present, "
-								"discarding.\n", o_plugin.name);
-						duplicate = 1;
-						break;
-					}
-				}
-
-				if (!duplicate) {
-					n_plugin = node_new(&o_plugin, sizeof(struct plugin_obj));
-					list_append(&(configuration->plugins), n_plugin);
-					clog(LOG_DEBUG, "read plugin: %s\n", token);
-				}
-
-			} while ((token = strtok(NULL,",")) != NULL);
+			clog(LOG_WARNING, "WARNING! \"enable_plugins\" is now deprecated and "
+					"ignored, see man 5 cpufreqd.conf\n");
 			continue;
-
 		}
 
 		if (strcmp(name,"pidfile") == 0) {
@@ -662,6 +626,9 @@ int init_configuration(struct cpufreqd_conf *configuration, struct cpufreqd_info
 		return -1;
 	}
 
+	discover_plugins(&configuration->plugins);
+	load_plugin_list(&configuration->plugins);
+
 	while (!feof(fp_config)) {
 		
 		*buf = '\0';
@@ -677,7 +644,7 @@ int init_configuration(struct cpufreqd_conf *configuration, struct cpufreqd_info
 				fclose(fp_config);
 				return -1;
 			}
-
+#if 0
 			/* backward compatibility: if no plugins have
 			 * been configured, then discover them.
 			 * Plugin intialization is safe enough
@@ -692,6 +659,7 @@ int init_configuration(struct cpufreqd_conf *configuration, struct cpufreqd_info
 			 *  options with them.
 			 */
 			load_plugin_list(&configuration->plugins);
+#endif
 			continue;
 		}
 
