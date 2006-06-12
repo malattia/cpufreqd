@@ -48,7 +48,8 @@ static unsigned int kernel_version;
 static struct cpu_usage *cusage;
 static struct cpu_usage *cusage_old;
 
-static void free_cpu_intervals(struct cpu_interval *ci) {
+static void free_cpu_intervals(void *obj) {
+	struct cpu_interval *ci = (struct cpu_interval *) obj;
 	struct cpu_interval *temp = NULL;
 	while ((temp = ci) != NULL) {
 		ci = ci->next;
@@ -327,16 +328,16 @@ static int get_cpu(void) {
 }
 
 static struct cpufreqd_keyword kw[] = {
-	{ .word = "cpu_interval", .parse = &cpu_parse, .evaluate = &cpu_evaluate },
+	{ .word = "cpu_interval", .parse = &cpu_parse, .evaluate = &cpu_evaluate, .free = &free_cpu_intervals, },
 	{ .word = NULL, .parse = NULL, .evaluate = NULL, .free = NULL }
 };
 
 static struct cpufreqd_plugin cpu_plugin = {
-	.plugin_name      = "cpu_plugin",		/* plugin_name */
+	.plugin_name      = "cpu_plugin",	/* plugin_name */
 	.keywords         = kw,			/* config_keywords */
 	.plugin_init      = &cpufreqd_cpu_init,	/* plugin_init */
 	.plugin_exit      = &cpufreqd_cpu_exit,	/* plugin_exit */
-	.plugin_update    = &get_cpu			/* plugin_update */
+	.plugin_update    = &get_cpu		/* plugin_update */
 };
 
 /* MUST DEFINE THIS ONE */
