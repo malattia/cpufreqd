@@ -182,6 +182,7 @@ noinst_HEADERS = \
 		cpufreqd.h \
 		cpufreqd_plugin.h \
 		cpufreqd_log.h \
+		cpufreqd_acpi.h \
 		cpufreqd_acpi_ac.h \
 		cpufreqd_acpi_battery.h \
 		cpufreqd_acpi_event.h \
