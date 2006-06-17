@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Mattia Dongili <malattia@debian.org>
 Build-Depends: debhelper (>= 4.1.16), debconf (>= 1.2.9), libsensors-dev (>= 1:2.9.1), libcpufreq-dev
-Standards-Version: 3.6.2
+Standards-Version: 3.7.2
 
 Package: cpufreqd
 Architecture: any
