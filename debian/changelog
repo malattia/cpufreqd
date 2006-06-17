@@ -8,8 +8,9 @@ cpufreqd (2.1.0-1) unstable; urgency=low
   * Added Hungarian debconf messages, thanks to SZERVÑC Attila.
   * Updated Swedish debconf messages, thanks to Daniel Nylander
     (Closes: #374179).
+  * Updated Czech debconf messages, thanks to Miroslav Kure.
   * provide support for loading CPUFreq cpu and governor modules
-    (Closes: #342013) (Closes: #342014).
+    through an /etc/default file (Closes: #342013) (Closes: #342014).
 
  -- Mattia Dongili <malattia@debian.org>  Sat, 17 Jun 2006 13:35:53 +0200
 
