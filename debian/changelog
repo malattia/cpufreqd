@@ -1,5 +1,17 @@
 cpufreqd (2.0.0-1) unstable; urgency=low
   
+  * New upstream release:
+    - fixes race in SIGLARM handling that prevented functioning after 
+      suspend (Closes: #350736).
+  * Added Portuguese debconf messages ,thanks to Miguel Figueiredo
+    (Closes: #362986).
+  * provide support for loading CPUFreq cpu and governor modules
+    (Closes: #342013) (Closes: #342014).
+
+ -- Mattia Dongili <malattia@debian.org>  Sat, 17 Jun 2006 13:35:53 +0200
+
+cpufreqd (2.0.0-1) unstable; urgency=low
+  
   * New upstream release.
   * cpufreqd.init: exit succesfully in case a stop is issued and
     cpufreqd is found running as requested by LSB thus making it

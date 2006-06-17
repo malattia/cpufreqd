@@ -9,6 +9,28 @@ If the install process fails to detect proper cpufreq support it will warn
 through debconf with a low priority. Startup links are created and the startup
 script will try to give useful hints.
 
+Cpufreqd provides support to automatically load necessary kernel modules on startup,
+see /etc/default/cpufreqd comments for more
+
+CPUFreq support
+---------------
+To enable the CpuFreq interface, you may need to configure your kernel
+appropriately (normally not necessary for stock Debian kernels) and load
+appropriate modules.
+Try loading the modules under
+/lib/modules/<kernel-version>/kernel/arch/<architecture>/kernel/cpu/cpufreq/
+for governors and /lib/modules/<kernel-version>/kernel/drivers/cpufreq (replace
+<kernel-version> and <architecture> with the values of your system) to see the
+right one for your cpu.
+
+ACPI, APM or PMU support
+------------------------
+To enable ACPI or APM, you may need to configure your kernel appropriately
+(not normally necessary for stock Debian kernels) and load appropriate
+modules.  It is recommended to install the package acpid or apmd
+respectively, which will automatically load the required modules.  ACPI is
+more powerful than APM, so you should generally try it first.
+
 Note for the NVclock plugin
 ---------------------------
 The binary package doesn't currently provide the nvclock plugin since an

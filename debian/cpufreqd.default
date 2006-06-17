@@ -1,0 +1,13 @@
+# Cpufreqd startup configuration
+
+# CPU kernel module.
+# Leave empty if you which to load the modules in different ways
+# of CPUFreq support for your cpu is built in.
+CPUFREQ_CPU_MODULE=""
+
+# Governor modules.
+# A list separated by spaces. They are needed by cpufreqd 
+# to load your policies. The init script can automatically
+# try to load them. Leave empty to disable loading governor
+# modules at all, use "auto" to let the script do the job.
+CPUFREQ_GOV_MODULES="auto"

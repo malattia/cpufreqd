@@ -1,33 +1,24 @@
-#
-#    Translators, if you are not familiar with the PO format, gettext
-#    documentation is worth reading, especially sections dedicated to
-#    this format, e.g. by running:
-#         info -n '(gettext)PO Files'
-#         info -n '(gettext)Header Entry'
-#
-#    Some information specific to po-debconf are available at
-#            /usr/share/doc/po-debconf/README-trans
-#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-#
-#    Developers do not need to manually edit POT or PO files.
+# Portuguese translation for cpufreqd
+# This file is distributed under the same license as the cpufreqd package.
+# AndrÃ© Costa <skit@argon.ath.cx>, 2006
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: cpufreqd\n"
 "Report-Msgid-Bugs-To: malattia@debian.org\n"
 "POT-Creation-Date: 2006-06-17 17:43+0200\n"
-"PO-Revision-Date: 2004-10-08 14:56+0200\n"
-"Last-Translator: Jan Outrata <outrataj@upcase.inf.upol.cz>\n"
-"Language-Team: Czech <provoz@debian.cz>\n"
+"PO-Revision-Date: 2006-04-16 22:58+0000\n"
+"Last-Translator: AndrÃ© Costa <skit@argon.ath.cx>\n"
+"Language-Team: Portuguese <traduz@debianpt.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: note
 #. Description
 #: ../templates:4
 msgid "Unable to find a Power Management interface in your kernel."
-msgstr "Nelze nalézt rozhraní Power Management ve va¹em jádøe."
+msgstr "ImpossÃ­vel encontrar uma interface de GestÃ£o de Energia no seu kernel."
 
 #. Type: note
 #. Description
@@ -41,15 +32,18 @@ msgid ""
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-" Cpufreqd nebude spu¹tìn, povolte ACPI, APM nabo PMU v jádøe a\n"
-" 1. spus»te dpkg-reconfigure cpufreqd pro jednoduchou autokonfiguraci nebo\n"
-" 2. upravte /etc/cpufreqd.conf ruènì a spus»te dpkg-reconfigure cpufreqd."
+"O Cpufreqd nÃ£o serÃ¡ iniciado, por favor active o ACPI, APM ou PMU no seu "
+"kernel e\n"
+"1. corra o dpkg-reconfigure cpufreqd para obter uma auto-configuraÃ§Ã£o "
+"simples ou\n"
+"2. edite manualmente o /etc/cpufreqd.conf e corra o dpkg-reconfigure "
+"cpufreqd."
 
 #. Type: note
 #. Description
 #: ../templates:14
 msgid "Unable to find a CpuFreq interface in your kernel."
-msgstr "Nelze nalézt rozhraní CpuFreq ve va¹em jádøe."
+msgstr "ImpossÃ­vel encontrar uma interface CpuFreq no seu kernel."
 
 #. Type: note
 #. Description
@@ -63,6 +57,9 @@ msgid ""
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-" Cpufreqd nebude spu¹tìn, povolte ovladaè CpuFreq v jádøe a\n"
-" 1. spus»te dpkg-reconfigure cpufreqd pro jednoduchou autokonfiguraci nebo\n"
-" 2. upravte /etc/cpufreqd.conf ruènì a spus»te dpkg-reconfigure cpufreqd."
+"O Cpufreqd nÃ£o serÃ¡ iniciado, por favor active um driver CpuFreq no seu "
+"kernel e\n"
+" 1. corra o dpkg-reconfigure cpufreqd para obter uma auto-configuraÃ§Ã£o "
+"simples ou\n"
+" 2. edite manualmente o /etc/cpufreqd.conf e corra o dpkg-reconfigure "
+"cpufreqd."

@@ -13,8 +13,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: cpufreqd 1.2.3-3\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-31 18:48+0200\n"
+"Report-Msgid-Bugs-To: malattia@debian.org\n"
+"POT-Creation-Date: 2006-06-17 17:43+0200\n"
 "PO-Revision-Date: 2005-10-10 21:59+0200\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <sv@li.org>\n"
@@ -31,11 +31,14 @@ msgstr "Kunde inte hitta ett gränssnitt för Power Management i din kärna."
 #. Type: note
 #. Description
 #: ../templates:4
+#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
-" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
 " CpuFreqd kommer inte att startas, vänligen aktivera ACPI, APM eller PMU i "
 "din kärna och\n"
@@ -45,18 +48,21 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../templates:12
+#: ../templates:14
 msgid "Unable to find a CpuFreq interface in your kernel."
 msgstr "Kunde inte hitta ett CpuFreq-gränssnitt i din kärna."
 
 #. Type: note
 #. Description
-#: ../templates:12
+#: ../templates:14
+#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
-" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
 " CpuFreqd kommer inte att startas, vänligen aktivera en drivrutin för "
 "CpuFreq i din kärna och\n"

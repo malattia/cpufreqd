@@ -26,8 +26,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: cpufreqd\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-31 18:48+0200\n"
+"Report-Msgid-Bugs-To: malattia@debian.org\n"
+"POT-Creation-Date: 2006-06-17 17:43+0200\n"
 "PO-Revision-Date: 2005-10-11 18:09+0100\n"
 "Last-Translator: César Gómez Martín <cesar.gomez@gmail.com>\n"
 "Language-Team: Debian l10n spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -47,11 +47,14 @@ msgstr "No se pudo encontrar una interfaz de gestión de energía en su núcleo.
 #. Type: note
 #. Description
 #: ../templates:4
+#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
-" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
 "Cpufreqd no se arrancará, por favor, active ACPI, APM o PMU en su núcleo y\n"
 " 1. ejecute dpkg-reconfigure cpufreqd para tener una configuración "
@@ -60,18 +63,21 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../templates:12
+#: ../templates:14
 msgid "Unable to find a CpuFreq interface in your kernel."
 msgstr "No se pudo encontrar una interfaz CpuFreq en su núcleo."
 
 #. Type: note
 #. Description
-#: ../templates:12
+#: ../templates:14
+#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
-" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
 "Cpufreqd no se arrancará, por favor, active un controlador CpuFreq en su "
 "núcleo y\n"

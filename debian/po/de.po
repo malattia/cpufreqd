@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: cpufreqd_1.1.2-1_templates\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-31 18:48+0200\n"
+"Report-Msgid-Bugs-To: malattia@debian.org\n"
+"POT-Creation-Date: 2006-06-17 17:43+0200\n"
 "PO-Revision-Date: 2004-05-29 22:11+0200\n"
 "Last-Translator: Erik Schanze <mail@erikschanze.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -33,11 +33,14 @@ msgstr "Keine Kernel-Schnittstelle zur Energiekontrolle gefunden"
 #. Type: note
 #. Description
 #: ../templates:4
+#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
-" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
 " Cpufreqd wird nicht gestartet, bitte aktivieren Sie ACPI, APM oder PMU in "
 "Ihrem Kernel und\n"
@@ -48,18 +51,21 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../templates:12
+#: ../templates:14
 msgid "Unable to find a CpuFreq interface in your kernel."
 msgstr "CpuFreq-Schnittstelle im Kernel nicht gefunden"
 
 #. Type: note
 #. Description
-#: ../templates:12
+#: ../templates:14
+#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
-" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
 " Cpufreqd wird nicht gestartet, bitte aktivieren Sie die CpuFreq-"
 "Schnittstelle in Ihrem Kernel und\n"
