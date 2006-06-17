@@ -3,9 +3,11 @@ cpufreqd (2.1.0-1) unstable; urgency=low
   * New upstream release:
     - fixes race in SIGLARM handling that prevented functioning after 
       suspend (Closes: #350736).
-  * Added Portuguese debconf messages, thanks to Miguel Figueiredo
+  * Added Portuguese debconf messages, thanks to André Costa
     (Closes: #362986).
   * Added Hungarian debconf messages, thanks to SZERVÃ‘C Attila.
+  * Updated Swedish debconf messages, thanks to Daniel Nylander
+    (Closes: #374179).
   * provide support for loading CPUFreq cpu and governor modules
     (Closes: #342013) (Closes: #342014).
 
