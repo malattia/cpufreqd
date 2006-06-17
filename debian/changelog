@@ -5,7 +5,7 @@ cpufreqd (2.1.0-1) unstable; urgency=low
       suspend (Closes: #350736).
   * Added Portuguese debconf messages, thanks to Miguel Figueiredo
     (Closes: #362986).
-  * Added Hungarian debconf messages, thanks to SZERVÑC Attila.
+  * Added Hungarian debconf messages, thanks to SZERVÃ‘C Attila.
   * provide support for loading CPUFreq cpu and governor modules
     (Closes: #342013) (Closes: #342014).
 
