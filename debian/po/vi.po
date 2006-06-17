@@ -18,8 +18,8 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:4
-msgid "Unable to find a Power Management interface in your kernel."
-msgstr "Không tìm thấy giao diện Quản lý Năng lượng trong hạt nhân bạn."
+msgid "Unable to find a Power Management interface in your kernel"
+msgstr "Không tìm thấy giao diện Quản lý Năng lượng trong hạt nhân bạn"
 
 #. Type: note
 #. Description
@@ -42,8 +42,8 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:14
-msgid "Unable to find a CpuFreq interface in your kernel."
-msgstr "Không tìm thấy giao diện CpuFreq trong hạt nhận bạn."
+msgid "Unable to find a CpuFreq interface in your kernel"
+msgstr "Không tìm thấy giao diện CpuFreq trong hạt nhận bạn"
 
 #. Type: note
 #. Description

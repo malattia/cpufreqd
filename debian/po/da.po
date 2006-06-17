@@ -27,8 +27,8 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:4
-msgid "Unable to find a Power Management interface in your kernel."
-msgstr "Kan ikke finde en strømstyrings-grænseflade i din kerne."
+msgid "Unable to find a Power Management interface in your kernel"
+msgstr "Kan ikke finde en strømstyrings-grænseflade i din kerne"
 
 #. Type: note
 #. Description
@@ -51,8 +51,8 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:14
-msgid "Unable to find a CpuFreq interface in your kernel."
-msgstr "Kunne ikke finde en CpuFreq-grænseflade i din kerne."
+msgid "Unable to find a CpuFreq interface in your kernel"
+msgstr "Kunne ikke finde en CpuFreq-grænseflade i din kerne"
 
 #. Type: note
 #. Description

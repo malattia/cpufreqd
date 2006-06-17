@@ -26,8 +26,8 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:4
-msgid "Unable to find a Power Management interface in your kernel."
-msgstr "Nelze nalézt rozhraní Power Management ve va¹em jádøe."
+msgid "Unable to find a Power Management interface in your kernel"
+msgstr "Nelze nalézt rozhraní Power Management ve va¹em jádøe"
 
 #. Type: note
 #. Description
@@ -48,8 +48,8 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:14
-msgid "Unable to find a CpuFreq interface in your kernel."
-msgstr "Nelze nalézt rozhraní CpuFreq ve va¹em jádøe."
+msgid "Unable to find a CpuFreq interface in your kernel"
+msgstr "Nelze nalézt rozhraní CpuFreq ve va¹em jádøe"
 
 #. Type: note
 #. Description

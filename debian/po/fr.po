@@ -26,7 +26,7 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:4
-msgid "Unable to find a Power Management interface in your kernel."
+msgid "Unable to find a Power Management interface in your kernel"
 msgstr "Pas d'interface de gestion d'énergie dans votre noyau"
 
 #. Type: note
@@ -51,7 +51,7 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:14
-msgid "Unable to find a CpuFreq interface in your kernel."
+msgid "Unable to find a CpuFreq interface in your kernel"
 msgstr ""
 "Aucune interface de gestion de la fréquence processeur dans votre noyau"
 
