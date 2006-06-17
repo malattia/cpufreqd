@@ -30,7 +30,7 @@ DESC="CPU Frequency daemon"
 . /lib/lsb/init-functions
 
 # load defaults file
-. /etc/defaults/cpufreqd
+. /etc/default/cpufreqd
 
 # abort if no executable exists
 test -x $DAEMON || exit 0
@@ -50,6 +50,7 @@ load_governor_modules() {
 		;;
 		*)
 		;;
+	esac
 #	if [ -z "$CPUFREQ_GOV_MODULES" ] ; then
 #		return
 #
@@ -58,7 +59,7 @@ load_governor_modules() {
 #					sed -ne 's/^policy=\(\w*\)/cpufreq_\1/p' | \
 #					uniq | xargs)
 #	fi
-	modprobe -qa $CPUFREQ_GOV_MODULES
+	modprobe -qa $CPUFREQ_GOV_MODULES || /bin/true
 }
 
 load_cpu_module() {
