@@ -1,4 +1,4 @@
-cpufreqd (2.0.0-1) unstable; urgency=low
+cpufreqd (2.1.0-1) unstable; urgency=low
   
   * New upstream release:
     - fixes race in SIGLARM handling that prevented functioning after 
