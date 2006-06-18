@@ -14,6 +14,7 @@ cpufreqd (2.1.0-1) unstable; urgency=low
     - Danish, thanks to Claus Hindsgaul
     - Swedish, thanks to Daniel Nylander (Closes: #374179)
     - German, thanks to Helge Kreutzmann
+    - Japanese, thanks to Osamu Aoki
     - Italian, thanks to myself!!
   * provide support for loading CPUFreq cpu and governor modules
     through an /etc/default file (Closes: #342013) (Closes: #342014).

@@ -33,7 +33,6 @@ msgstr "カーネルにパワーマネジメントのインターフェイスが見つかりません"
 #. Type: note
 #. Description
 #: ../templates:4
-#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
@@ -46,7 +45,10 @@ msgstr ""
 "行ってください\n"
 " 1. 簡単な自動設定を行うために dpkg-reconfigure cpufreqd を実行する\n"
 " 2. または /etc/cpufreqd.conf を手で編集し、dpkg-reconfigure cpufreqd を実行"
-"する"
+"する\n"
+"このフィーチャーをアクティベートするには追加のコンフィギュレーション"
+"が必要かもしれません。\n"
+"詳しくは /usr/share/doc/cpufreqd/README.Debianを参照ください。"
 
 #. Type: note
 #. Description
@@ -57,7 +59,6 @@ msgstr "カーネルに CpuFreq インターフェイスが見つかりません"
 #. Type: note
 #. Description
 #: ../templates:14
-#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
@@ -70,4 +71,7 @@ msgstr ""
 "てください\n"
 " 1. 簡単な自動設定を行うために dpkg-reconfigure cpufreqd を実行する\n"
 " 2. または /etc/cpufreqd.conf を手で編集し、dpkg-reconfigure cpufreqd を実行"
-"する"
+"する\n"
+"このフィーチャーをアクティベートするには追加のコンフィギュレーション"
+"が必要かもしれません。\n"
+"詳しくは /usr/share/doc/cpufreqd/README.Debianを参照ください。"
