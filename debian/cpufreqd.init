@@ -51,20 +51,12 @@ load_governor_modules() {
 		*)
 		;;
 	esac
-#	if [ -z "$CPUFREQ_GOV_MODULES" ] ; then
-#		return
-#
-#	else if [ "x$CPUFREQ_GOV_MODULES" = "xauto" ] ; then
-#		CPUFREQ_GOV_MODULES=$(cat /etc/cpufreqd.conf | \
-#					sed -ne 's/^policy=\(\w*\)/cpufreq_\1/p' | \
-#					uniq | xargs)
-#	fi
 	modprobe -qa $CPUFREQ_GOV_MODULES || /bin/true
 }
 
 load_cpu_module() {
 	if [ -n "$CPUFREQ_CPU_MODULE" ] ; then
-		modprobe -q $CPUFREQ_CPU_MODULE
+		modprobe -q $CPUFREQ_CPU_MODULE || /bin/true
 	fi
 }
 

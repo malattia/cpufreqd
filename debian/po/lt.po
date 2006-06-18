@@ -1,0 +1,56 @@
+# translation of templates.po to Lithuanian
+# Gintautas Miliauskas <gintas@akl.lt>, 2006.
+msgid ""
+msgstr ""
+"Project-Id-Version: cpufreqd\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-03-31 18:48+0200\n"
+"PO-Revision-Date: 2006-06-18 14:58+0300\n"
+"Last-Translator: Gintautas Miliauskas <gintas@akl.lt>\n"
+"Language-Team: Lithuanian <komp_lt@konferencijos.lt>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.2\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. Type: note
+#. Description
+#: ../templates:4
+msgid "Unable to find a Power Management interface in your kernel."
+msgstr "Sistemos branduolyje nepavyko rasti energijos naudojimo valdymo sąsajos."
+
+#. Type: note
+#. Description
+#: ../templates:4
+msgid ""
+" Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
+"and\n"
+" 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+msgstr ""
+" Cpufreqd nebus paleistas. Įjunkite ACPI, APM arba PMU palaikymą branduolyje ir\n"
+" įvykdykite „dpkg-reconfigure cpufreqd“, bus sukurta paprasta konfigūracija\n"
+"  arba\n"
+" paredaguokite /etc/cpufreqd.conf ir įvykdykite dpkg-reconfigure cpufreqd."
+
+#. Type: note
+#. Description
+#: ../templates:12
+msgid "Unable to find a CpuFreq interface in your kernel."
+msgstr "Nepavyko rasti CpuFreq sąsajos sistemos branduolyje."
+
+#. Type: note
+#. Description
+#: ../templates:12
+msgid ""
+" Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
+"and\n"
+" 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+msgstr ""
+" Cpufreqd nebus paleistas. Įjunkite CpuFreq tvarkyklę branduolyje ir\n"
+" įvykdykite „dpkg-reconfigure cpufreqd“, bus sukurta paprasta konfigūracija\n"
+"  arba\n"
+" paredaguokite /etc/cpufreqd.conf ir įvykdykite dpkg-reconfigure cpufreqd."
+

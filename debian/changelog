@@ -3,16 +3,22 @@ cpufreqd (2.1.0-1) unstable; urgency=low
   * New upstream release:
     - fixes race in SIGLARM handling that prevented functioning after 
       suspend (Closes: #350736).
-  * Added Portuguese debconf messages, thanks to André Costa
-    (Closes: #362986).
-  * Added Hungarian debconf messages, thanks to SZERVÃ‘C Attila.
-  * Updated Swedish debconf messages, thanks to Daniel Nylander
-    (Closes: #374179).
-  * Updated Czech debconf messages, thanks to Miroslav Kure.
+  * Added debconf message:
+    - Portuguese, thanks to André Costa (Closes: #362986)
+    - Hungarian, thanks to SZERVÃ‘C Attila (Closes: #374179)
+    - Basque, thanks to Piarres Beobide
+    - Romanian, thanks to Eddy Petrisor
+    - Lithuanian, thanks to Gintautas Miliauskas (Closes: #374291)
+  * Updated debconf messages:
+    - Czech, thanks to Miroslav Kure
+    - Danish, thanks to Claus Hindsgaul
+    - Swedish, thanks to Daniel Nylander (Closes: #374179)
+    - German, thanks to Helge Kreutzmann
+    - Italian, thanks to myself!!
   * provide support for loading CPUFreq cpu and governor modules
     through an /etc/default file (Closes: #342013) (Closes: #342014).
 
- -- Mattia Dongili <malattia@debian.org>  Sat, 17 Jun 2006 13:35:53 +0200
+ -- Mattia Dongili <malattia@debian.org>  Sun, 18 Jun 2006 16:19:24 +0200
 
 cpufreqd (2.0.0-1) unstable; urgency=low
   
