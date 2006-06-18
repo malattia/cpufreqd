@@ -4,10 +4,10 @@ cpufreqd (2.1.0-1) unstable; urgency=low
     - fixes race in SIGLARM handling that prevented functioning after 
       suspend (Closes: #350736).
   * Added debconf message:
-    - Portuguese, thanks to André Costa (Closes: #362986)
-    - Hungarian, thanks to SZERVÃC Attila (Closes: #374179)
+    - Portuguese, thanks to AndrÃ© Costa (Closes: #362986)
+    - Hungarian, thanks to SZERVÃÂC Attila (Closes: #374179)
     - Basque, thanks to Piarres Beobide
-    - Romanian, thanks to Eddy Petrisor
+    - Romanian, thanks to Eddy Petrisor (Closes: #374333)
     - Lithuanian, thanks to Gintautas Miliauskas (Closes: #374291)
   * Updated debconf messages:
     - Czech, thanks to Miroslav Kure
