@@ -100,7 +100,7 @@ static int cpu_parse(const char *ev, void **obj)
 	unsigned int cpu_num = 0;
 	unsigned int min = 0;
 	unsigned int max = 0;
-	float nice_scale = 0.0;
+	float nice_scale = 0.0f;
 	struct cpu_interval *ret = NULL, **temp_cint = NULL;
 	struct cpufreqd_info *cinfo = get_cpufreqd_info();
 
@@ -116,7 +116,7 @@ static int cpu_parse(const char *ev, void **obj)
 		cpu_num = cinfo->cpus;
 		min = 0;
 		max = 0;
-		nice_scale = 3.0;
+		nice_scale = 3.0f;
 
 		/* parse formats */
 		if ((sscanf(cpu_cmd, "%d:%d-%d,%f", &cpu_num, &min, &max, &nice_scale) == 4 
@@ -124,7 +124,7 @@ static int cpu_parse(const char *ev, void **obj)
 		}
 		else if (sscanf(cpu_cmd, "%d:%d-%d", &cpu_num, &min, &max) == 3 
 				&& cpu_num < cinfo->cpus) {
-			nice_scale = 3.0;
+			nice_scale = 3.0f;
 		}
 		/* ALL or ANY cpus */
 		else if (sscanf(cpu_cmd, "%3[a-zA-Z]:%d-%d,%f", wcards, &min, &max, &nice_scale) == 4) {
@@ -154,7 +154,7 @@ static int cpu_parse(const char *ev, void **obj)
 		}
 		else if (sscanf(cpu_cmd, "%d-%d", &min, &max) == 2) {
 			cpu_num = cinfo->cpus;
-			nice_scale = 3.0;
+			nice_scale = 3.0f;
 		}
 		else {
 			clog(LOG_ERR, "Discarded wrong format for cpu_interval: %s\n", cpu_cmd);
@@ -164,11 +164,11 @@ static int cpu_parse(const char *ev, void **obj)
 				cpu_num, min, max, nice_scale);
 
 		/* validate values */
-		if (nice_scale <= 0.0) {
+		if (nice_scale <= 0.0f) {
 			clog(LOG_WARNING, "nice_scale value out of range(%.2f), "
 					"resetting to the default value(3).\n",
 					nice_scale);
-			nice_scale = 3;
+			nice_scale = 3.0f;
 		}
 
 		if (min > max) {
@@ -197,7 +197,7 @@ static int cpu_parse(const char *ev, void **obj)
 	return 0;
 }
 
-static int calculate_cpu_usage(struct cpu_usage *cur, struct cpu_usage *old, float nice_scale) {
+static int calculate_cpu_usage(struct cpu_usage *cur, struct cpu_usage *old, double nice_scale) {
 	unsigned long weighted_activity = cur->c_user + cur->c_nice / nice_scale + cur->c_sys;
 	unsigned long weighted_activity_old = old->c_user + old->c_nice / nice_scale + old->c_sys;
 	unsigned long delta_activity = weighted_activity - weighted_activity_old;
