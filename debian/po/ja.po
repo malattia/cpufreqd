@@ -21,18 +21,19 @@ msgstr ""
 "Last-Translator: Hideki Yamane <henrich@samba.gr.jp>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=EUC-JP\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: note
 #. Description
 #: ../templates:4
 msgid "Unable to find a Power Management interface in your kernel"
-msgstr "¥«¡¼¥Í¥ë¤Ë¥Ñ¥ï¡¼¥Ş¥Í¥¸¥á¥ó¥È¤Î¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤¬¸«¤Ä¤«¤ê¤Ş¤»¤ó"
+msgstr "ã‚«ãƒ¼ãƒãƒ«ã«ãƒ‘ãƒ¯ãƒ¼ãƒãƒã‚¸ãƒ¡ãƒ³ãƒˆã®ã‚¤ãƒ³ã‚¿ãƒ¼ãƒ•ã‚§ã‚¤ã‚¹ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“"
 
 #. Type: note
 #. Description
 #: ../templates:4
+#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
@@ -41,24 +42,26 @@ msgid ""
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-"cpufreqd ¤Ïµ¯Æ°¤·¤Ş¤»¤ó¡£¥«¡¼¥Í¥ë¤Ç ACPI ¤« APM ¤« PMU ¤òÍ­¸ú¤Ë¤·¤Æ¡¢°Ê²¼¤ò"
-"¹Ô¤Ã¤Æ¤¯¤À¤µ¤¤\n"
-" 1. ´ÊÃ±¤Ê¼«Æ°ÀßÄê¤ò¹Ô¤¦¤¿¤á¤Ë dpkg-reconfigure cpufreqd ¤ò¼Â¹Ô¤¹¤ë\n"
-" 2. ¤Ş¤¿¤Ï /etc/cpufreqd.conf ¤ò¼ê¤ÇÊÔ½¸¤·¡¢dpkg-reconfigure cpufreqd ¤ò¼Â¹Ô"
-"¤¹¤ë\n"
-"¤³¤Î¥Õ¥£¡¼¥Á¥ã¡¼¤ò¥¢¥¯¥Æ¥£¥Ù¡¼¥È¤¹¤ë¤Ë¤ÏÄÉ²Ã¤Î¥³¥ó¥Õ¥£¥®¥å¥ì¡¼¥·¥ç¥ó"
-"¤¬É¬Í×¤«¤â¤·¤ì¤Ş¤»¤ó¡£\n"
-"¾Ü¤·¤¯¤Ï /usr/share/doc/cpufreqd/README.Debian¤ò»²¾È¤¯¤À¤µ¤¤¡£"
+"cpufreqd ã¯èµ·å‹•ã—ã¾ã›ã‚“ã€‚ã‚«ãƒ¼ãƒãƒ«ã§ ACPI ã‹ APM ã‹ PMU ã‚’æœ‰åŠ¹ã«ã—ã¦ã€ä»¥ä¸‹ã‚’"
+"è¡Œã£ã¦ãã ã•ã„\n"
+" 1. ç°¡å˜ãªè‡ªå‹•è¨­å®šã‚’è¡Œã†ãŸã‚ã« dpkg-reconfigure cpufreqd ã‚’å®Ÿè¡Œã™ã‚‹\n"
+" 2. ã¾ãŸã¯ /etc/cpufreqd.conf ã‚’æ‰‹ã§ç·¨é›†ã—ã€dpkg-reconfigure cpufreqd ã‚’å®Ÿè¡Œ"
+"ã™ã‚‹\n"
+"ã“ã®ãƒ•ã‚£ãƒ¼ãƒãƒ£ãƒ¼ã‚’ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆã™ã‚‹ã«ã¯è¿½åŠ ã®ã‚³ãƒ³ãƒ•ã‚£ã‚®ãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³"
+"ãŒå¿…è¦ã‹ã‚‚ã—ã‚Œã¾ã›ã‚“ã€‚\nè©³ã—ãã¯ /usr/share/doc/cpufreqd/README.Debian"
+"ã‚’å‚ç…§ãã ã•ã„ã€‚"
+
 
 #. Type: note
 #. Description
 #: ../templates:14
 msgid "Unable to find a CpuFreq interface in your kernel"
-msgstr "¥«¡¼¥Í¥ë¤Ë CpuFreq ¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤¬¸«¤Ä¤«¤ê¤Ş¤»¤ó"
+msgstr "ã‚«ãƒ¼ãƒãƒ«ã« CpuFreq ã‚¤ãƒ³ã‚¿ãƒ¼ãƒ•ã‚§ã‚¤ã‚¹ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“"
 
 #. Type: note
 #. Description
 #: ../templates:14
+#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
@@ -67,11 +70,12 @@ msgid ""
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-"cpufreqd ¤Ïµ¯Æ°¤·¤Ş¤»¤ó¡£¥«¡¼¥Í¥ë¤Ç CpuFreq ¥É¥é¥¤¥Ğ¤òÍ­¸ú¤Ë¤·¤Æ¡¢°Ê²¼¤ò¹Ô¤Ã"
-"¤Æ¤¯¤À¤µ¤¤\n"
-" 1. ´ÊÃ±¤Ê¼«Æ°ÀßÄê¤ò¹Ô¤¦¤¿¤á¤Ë dpkg-reconfigure cpufreqd ¤ò¼Â¹Ô¤¹¤ë\n"
-" 2. ¤Ş¤¿¤Ï /etc/cpufreqd.conf ¤ò¼ê¤ÇÊÔ½¸¤·¡¢dpkg-reconfigure cpufreqd ¤ò¼Â¹Ô"
-"¤¹¤ë\n"
-"¤³¤Î¥Õ¥£¡¼¥Á¥ã¡¼¤ò¥¢¥¯¥Æ¥£¥Ù¡¼¥È¤¹¤ë¤Ë¤ÏÄÉ²Ã¤Î¥³¥ó¥Õ¥£¥®¥å¥ì¡¼¥·¥ç¥ó"
-"¤¬É¬Í×¤«¤â¤·¤ì¤Ş¤»¤ó¡£\n"
-"¾Ü¤·¤¯¤Ï /usr/share/doc/cpufreqd/README.Debian¤ò»²¾È¤¯¤À¤µ¤¤¡£"
+"cpufreqd ã¯èµ·å‹•ã—ã¾ã›ã‚“ã€‚ã‚«ãƒ¼ãƒãƒ«ã§ CpuFreq ãƒ‰ãƒ©ã‚¤ãƒã‚’æœ‰åŠ¹ã«ã—ã¦ã€ä»¥ä¸‹ã‚’è¡Œã£"
+"ã¦ãã ã•ã„\n"
+" 1. ç°¡å˜ãªè‡ªå‹•è¨­å®šã‚’è¡Œã†ãŸã‚ã« dpkg-reconfigure cpufreqd ã‚’å®Ÿè¡Œã™ã‚‹\n"
+" 2. ã¾ãŸã¯ /etc/cpufreqd.conf ã‚’æ‰‹ã§ç·¨é›†ã—ã€dpkg-reconfigure cpufreqd ã‚’å®Ÿè¡Œ"
+"ã™ã‚‹\n"
+"ã“ã®ãƒ•ã‚£ãƒ¼ãƒãƒ£ãƒ¼ã‚’ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆã™ã‚‹ã«ã¯è¿½åŠ ã®ã‚³ãƒ³ãƒ•ã‚£ã‚®ãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³"
+"ãŒå¿…è¦ã‹ã‚‚ã—ã‚Œã¾ã›ã‚“ã€‚\nè©³ã—ãã¯ /usr/share/doc/cpufreqd/README.Debian"
+"ã‚’å‚ç…§ãã ã•ã„ã€‚"
+
