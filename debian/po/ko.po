@@ -1,0 +1,66 @@
+# translation of cpufreqd-ko.po to Korean
+# Korean translations for cpufreq package
+# cpufreq 패키지에 대한 한국어 번역문.
+# Copyright (C) 2006 THE cpufreq'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the cpufreq package.
+#
+# darehanl <darehanl@gmail.com>, 2006.
+msgid ""
+msgstr ""
+"Project-Id-Version: cpufreqd\n"
+"Report-Msgid-Bugs-To: malattia@debian.org\n"
+"POT-Creation-Date: 2006-06-17 17:43+0200\n"
+"PO-Revision-Date: 2006-06-18 23:41+0900\n"
+"Last-Translator: darehanl <darehanl@gmail.com>\n"
+"Language-Team: Korean <debian-l10n-korean@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: note
+#. Description
+#: ../templates:4
+msgid "Unable to find a Power Management interface in your kernel"
+msgstr "커널 내의 전원 관리 인터페이스를 찾을 수 없습니다."
+
+#. Type: note
+#. Description
+#: ../templates:4
+msgid ""
+" Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
+"and\n"
+" 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
+msgstr ""
+"Cpufreqd를 시작하지 않습니다. 커널에 있는 ACPI나 APM, PMU를 활성화 "
+"하시고,\n"
+" 1. 간단하게 자동 설정을 하려면 dpkg-reconfigure dpkg를 실행하시거나,\n"
+" 2. /etc/cpufreqd.conf를 직접 수정하시고 dpkg-reconfigure dpkg를 실행하십시오.\n"
+"자세한 정보는 /usr/share/doc/cpufreqd/README.Debian을 참조하십시오."
+
+#. Type: note
+#. Description
+#: ../templates:14
+msgid "Unable to find a CpuFreq interface in your kernel"
+msgstr "커널 내의 CpuFreq 인터페이스를 찾을 수 없습니다."
+
+#. Type: note
+#. Description
+#: ../templates:14
+msgid ""
+" Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
+"and\n"
+" 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
+msgstr ""
+"Cpufreqd를 시작하지 않습니다. 커널에 있는 CpuFreq 드라이버를 활성화 "
+"하시고,\n"
+" 1. 간단하게 자동 설정을 하려면 dpkg-reconfigure dpkg를 실행하시거나,\n"
+" 2. /etc/cpufreqd.conf를 직접 수정하시고 dpkg-reconfigure dpkg를 실행하십시오.\n"
+" 이 기능을 사용하려면 추가적으로 설정해야할 사항이 있을 수도 있습니다.\n"
+"자세한 정보는 /usr/share/doc/cpufreqd/README.Debian을 참조하십시오."
+

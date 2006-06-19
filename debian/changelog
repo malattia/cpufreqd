@@ -1,9 +1,10 @@
 cpufreqd (2.1.0-2) unstable; urgency=low
   
   * Added debconf message:
-    - Japanese, thanks to Osamu Aoki
-  * Updated debconf messages:
     - Korean, thanks to Sunjae Park (Closes: #374376)
+    - Hebrew, thanks to Lior Kaplan
+  * Updated debconf messages:
+    - Japanese, thanks to Osamu Aoki
 
  -- Mattia Dongili <malattia@debian.org>  Mon, 19 Jun 2006 18:32:43 +0200
 
