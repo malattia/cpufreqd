@@ -46,6 +46,8 @@ struct acpi_event {
 	struct acpi_event *next;
 };
 
+static int acpi_event_active;
+
 static pthread_t event_thread;
 static pthread_mutex_t event_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int event_fd;
@@ -109,11 +111,15 @@ static void *event_wait (void __UNUSED__ *arg) {
 		wake_cpufreqd();
 		rfd.revents = 0;
 	}
+
+	/* set acpi_event as inactive */
+	acpi_event_active = 0;
+
 	return NULL;
 }
 
 int is_event_pending(void) {
-	return event_pending;
+	return event_pending && acpi_event_active;
 }
 
 void reset_event(void) {
@@ -179,6 +185,7 @@ int acpi_event_init (void) {
 		clog(LOG_ERR, "Unable to launch thread: %s\n", strerror(ret));
 		return -1;
 	}
+	acpi_event_active = 1;
 	return 0;
 }
 

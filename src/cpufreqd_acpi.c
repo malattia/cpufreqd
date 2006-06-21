@@ -104,11 +104,10 @@ static int acpi_exit (void) {
 
 static int acpi_update(void) {
 
-	acpi_event_lock();
-	if ((!acpi_ac_failed && acpi_ev_failed)
-			|| (!acpi_ac_failed && !acpi_ev_failed && is_event_pending()))
+	if (!acpi_ac_failed)
 		acpi_ac_update();
 
+	acpi_event_lock();
 	if (!acpi_batt_failed)
 		acpi_battery_update();
 
