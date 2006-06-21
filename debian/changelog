@@ -1,12 +1,14 @@
-cpufreqd (2.1.0-2) unstable; urgency=low
+cpufreqd (2.1.1-1) unstable; urgency=low
   
+  * New upstream release.
   * Added debconf message:
     - Korean, thanks to Sunjae Park (Closes: #374376)
     - Hebrew, thanks to Lior Kaplan
   * Updated debconf messages:
     - Japanese, thanks to Osamu Aoki
+    - French, thanks to Florentin Duneau (Closes: #374563)
 
- -- Mattia Dongili <malattia@debian.org>  Mon, 19 Jun 2006 18:32:43 +0200
+ -- Mattia Dongili <malattia@debian.org>  Wed, 21 Jun 2006 22:55:22 +0200
 
 cpufreqd (2.1.0-1) unstable; urgency=low
   

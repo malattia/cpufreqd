@@ -11,13 +11,14 @@
 #
 #    Developers do not need to manually edit POT or PO files.
 #
+# Eric Madesclair <eric-m@wanadoo.fr> 2006
 msgid ""
 msgstr ""
 "Project-Id-Version: cpufreqd\n"
 "Report-Msgid-Bugs-To: malattia@debian.org\n"
 "POT-Creation-Date: 2006-06-17 17:43+0200\n"
-"PO-Revision-Date: 2004-02-16 18:42+0100\n"
-"Last-Translator: Eric Madesclair <eric-m@wanadoo.fr>\n"
+"PO-Revision-Date: 2006-06-19 14:35+0200\n"
+"Last-Translator: Florentin Duneau <f.baced@wanadoo.fr>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
@@ -27,12 +28,11 @@ msgstr ""
 #. Description
 #: ../templates:4
 msgid "Unable to find a Power Management interface in your kernel"
-msgstr "Pas d'interface de gestion d'énergie dans votre noyau"
+msgstr "Pas d'interface de gestion d'énergie dans le noyau"
 
 #. Type: note
 #. Description
 #: ../templates:4
-#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
@@ -41,24 +41,26 @@ msgid ""
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-"Cpufreqd ne démarrera pas tant que vous n'aurez pas activé l'ACPI, l'APM ou "
-"PMU dans le noyau. Il vous faudra ensuite :\n"
+"Cpufreqd ne démarrera pas tant que vous n'aurez pas activé la gestion "
+"d'ACPI, APM ou PMU dans le noyau. Il vous faudra ensuite :\n"
 " - soit exécuter « dpkg-reconfigure cpufreqd » pour avoir une\n"
-"   configuration par défaut \n"
-" - soit éditer le fichier /etc/cpufreqd.conf puis exécuter\n"
-"   « dpkg-reconfigure cpufreqd »."
+"   configuration par défaut ;\n"
+" - soit modifier le fichier /etc/cpufreqd.conf puis exécuter\n"
+"   « dpkg-reconfigure cpufreqd ».\n"
+"Une étape de configuration supplémentaire sera probablement nécessaire afin "
+"d'activer cette option.\n"
+"Veuillez consulter /usr/share/doc/cpufreqd/README.Debian pour plus "
+"d'informations."
 
 #. Type: note
 #. Description
 #: ../templates:14
 msgid "Unable to find a CpuFreq interface in your kernel"
-msgstr ""
-"Aucune interface de gestion de la fréquence processeur dans votre noyau"
+msgstr "Aucune interface de gestion de la fréquence processeur dans le noyau"
 
 #. Type: note
 #. Description
 #: ../templates:14
-#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
@@ -71,6 +73,10 @@ msgstr ""
 "gestion de la fréquence processeur dans votre noyau. Il vous faudra "
 "ensuite :\n"
 " - soit exécuter « dpkg-reconfigure cpufreqd » pour avoir une\n"
-"   configuration par défaut \n"
-" - soit éditer le fichier /etc/cpufreqd.conf puis exécuter\n"
-"   « dpkg-reconfigure cpufreqd »."
+"   configuration par défaut ;\n"
+" - soit modifier le fichier /etc/cpufreqd.conf puis exécuter\n"
+"   « dpkg-reconfigure cpufreqd ».\n"
+"Une étape de configuration supplémentaire sera probablement nécessaire afin "
+"d'activer cette option.\n"
+"Veuillez consulter /usr/share/doc/cpufreqd/README.Debian pour plus "
+"d'informations."
