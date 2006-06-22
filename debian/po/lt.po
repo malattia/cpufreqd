@@ -1,11 +1,11 @@
-# translation of templates.po to Lithuanian
+# translation of lt.po to Lithuanian
 # Gintautas Miliauskas <gintas@akl.lt>, 2006.
 msgid ""
 msgstr ""
-"Project-Id-Version: cpufreqd\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-31 18:48+0200\n"
-"PO-Revision-Date: 2006-06-18 14:58+0300\n"
+"Project-Id-Version: lt\n"
+"Report-Msgid-Bugs-To: malattia@debian.org\n"
+"POT-Creation-Date: 2006-06-17 17:43+0200\n"
+"PO-Revision-Date: 2006-06-22 14:18+0300\n"
 "Last-Translator: Gintautas Miliauskas <gintas@akl.lt>\n"
 "Language-Team: Lithuanian <komp_lt@konferencijos.lt>\n"
 "MIME-Version: 1.0\n"
@@ -17,8 +17,8 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../templates:4
-msgid "Unable to find a Power Management interface in your kernel."
-msgstr "Sistemos branduolyje nepavyko rasti energijos naudojimo valdymo sąsajos."
+msgid "Unable to find a Power Management interface in your kernel"
+msgstr "Sistemos branduolyje nepavyko rasti energijos naudojimo valdymo sąsajos"
 
 #. Type: note
 #. Description
@@ -27,30 +27,39 @@ msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
-" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-" Cpufreqd nebus paleistas. Įjunkite ACPI, APM arba PMU palaikymą branduolyje ir\n"
-" įvykdykite „dpkg-reconfigure cpufreqd“, bus sukurta paprasta konfigūracija\n"
-"  arba\n"
-" paredaguokite /etc/cpufreqd.conf ir įvykdykite dpkg-reconfigure cpufreqd."
+" Cpufreqd nebus paleistas. Įjunkite ACPI, APM arba PMU palaikymą\n"
+"branduolyje ir\n"
+" 1. įvykdykite „dpkg-reconfigure cpufreqd“, bus automatiškai sukurta\n"
+"paprasta konfigūracija, arba\n"
+" 2. paredaguokite /etc/cpufreqd.conf ir įvykdykite dpkg-reconfigure cpufreqd.\n"
+" Gali prireikti ir daugiau konfigūracijos.\n"
+" Daugiau informacijos rasite faile /usr/share/doc/cpufreqd/README.Debian."
 
 #. Type: note
 #. Description
-#: ../templates:12
-msgid "Unable to find a CpuFreq interface in your kernel."
-msgstr "Nepavyko rasti CpuFreq sąsajos sistemos branduolyje."
+#: ../templates:14
+msgid "Unable to find a CpuFreq interface in your kernel"
+msgstr "Nepavyko rasti CpuFreq sąsajos sistemos branduolyje"
 
 #. Type: note
 #. Description
-#: ../templates:12
+#: ../templates:14
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
 " 1. run dpkg-reconfigure cpufreqd to have a simple autoconfiguration or\n"
-" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd."
+" 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
+" Additional configuration may be needed to activate this feature.\n"
+" See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
 " Cpufreqd nebus paleistas. Įjunkite CpuFreq tvarkyklę branduolyje ir\n"
-" įvykdykite „dpkg-reconfigure cpufreqd“, bus sukurta paprasta konfigūracija\n"
-"  arba\n"
-" paredaguokite /etc/cpufreqd.conf ir įvykdykite dpkg-reconfigure cpufreqd."
+" 1. įvykdykite „dpkg-reconfigure cpufreqd“, bus automatiškai sukurta\n"
+"paprasta konfigūracija, arba\n"
+" 2. paredaguokite /etc/cpufreqd.conf ir įvykdykite dpkg-reconfigure cpufreqd.\n"
+" Gali prireikti ir daugiau konfigūracijos.\n"
+" Daugiau informacijos rasite faile /usr/share/doc/cpufreqd/README.Debian."
 

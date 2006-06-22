@@ -33,7 +33,6 @@ msgstr "カーネルにパワーマネジメントのインターフェイスが
 #. Type: note
 #. Description
 #: ../templates:4
-#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
@@ -61,7 +60,6 @@ msgstr "カーネルに CpuFreq インターフェイスが見つかりません
 #. Type: note
 #. Description
 #: ../templates:14
-#, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"

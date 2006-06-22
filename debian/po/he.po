@@ -15,7 +15,7 @@ msgstr ""
 "Language-Team: Hebrew\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit"
+"Content-Transfer-Encoding: 8bit\n"
 
 #. Type: note
 #. Description
@@ -62,4 +62,3 @@ msgstr ""
 " 2. ערוך את  /etc/cpufreqd.conf ידניות והרץ dpkg-reconfigure cpufreqd.\n"
 " קונפיגורציה נוספת אולי תהיה נדרשת כדי להפעיל את האפשרות הזאת.\n"
 "פרטים נוספים נמצאים בקובץ /usr/share/doc/cpufreqd/README.Debian"
-

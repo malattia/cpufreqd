@@ -1,14 +1,16 @@
 cpufreqd (2.1.1-1) unstable; urgency=low
   
-  * New upstream release.
+  * New upstream release:
+    - fix incorrect use of stdargs, thanks to Aurelien Jarno (Closes: #374579)
   * Added debconf message:
     - Korean, thanks to Sunjae Park (Closes: #374376)
     - Hebrew, thanks to Lior Kaplan
   * Updated debconf messages:
     - Japanese, thanks to Osamu Aoki
     - French, thanks to Florentin Duneau (Closes: #374563)
+    - Lithuanian, thanks to Gintautas Miliauskas (Closes: #374970)
 
- -- Mattia Dongili <malattia@debian.org>  Wed, 21 Jun 2006 22:55:22 +0200
+ -- Mattia Dongili <malattia@debian.org>  Thu, 22 Jun 2006 19:16:53 +0200
 
 cpufreqd (2.1.0-1) unstable; urgency=low
   
