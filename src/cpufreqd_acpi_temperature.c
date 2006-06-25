@@ -202,7 +202,7 @@ int acpi_temperature_update(void)
 				temperature += t;
 				atz_list[i].temperature = t;
 				clog(LOG_INFO, "temperature for %s is %ldC\n",
-						atz_list[i].name, temperature);
+						atz_list[i].name, atz_list[i].temperature);
 			}
 			fclose(fp);
 
