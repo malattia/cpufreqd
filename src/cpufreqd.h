@@ -20,7 +20,7 @@
 #ifndef __CPUFREQD_H__
 #define __CPUFREQD_H__
 
-#define __CPUFREQD_VERSION__	"2.1.0"
+#define __CPUFREQD_VERSION__	"2.1.1"
 #define __CPUFREQD_MAINTAINER__	"malattia@linux.it"
 
 #ifdef __GNUC__

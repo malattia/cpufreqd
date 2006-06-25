@@ -44,12 +44,14 @@ static unsigned int log_opened; /* syslog already opened */
  */
 void cpufreqd_log(int prio, const char *fmt, ...) {
 	va_list argp;
+	va_list argp2;
 
 	/* do we need to write? */
 	if (configuration->log_level < prio)
 		return;
 
 	va_start(argp, fmt);
+	va_copy(argp2, argp);
 
 	if (configuration->no_daemon) {
 		if (configuration->log_level <= LOG_ERR) {
@@ -67,9 +69,10 @@ void cpufreqd_log(int prio, const char *fmt, ...) {
 		}
 		vsyslog(prio, fmt, argp);
 		if (configuration->log_level <= LOG_ERR) {
-			vfprintf(stderr, fmt, argp);
+			vfprintf(stderr, fmt, argp2);
 			/* fflush(stderr); */
 		}
 	}
 	va_end(argp);
+	va_end(argp2);
 }

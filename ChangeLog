@@ -1,3 +1,9 @@
+version 2.1.1
+-------------
+* fixed incorrect use of va_args in cpufreqd_log
+* fix acpi_ac to not rely on acpi_events to poll the ac status
+* acpi: do not depend (that much) on acpi_events
+
 version 2.1.0
 -------------
 * grouped some useful info in struct cpufreqd_info to let plugins peek important data
