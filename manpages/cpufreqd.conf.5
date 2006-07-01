@@ -237,6 +237,20 @@ the form %d-%d,%f or %d:%d-%d,%f (e.g.: cpu_interval=1:70-100,1.5), default is
 Rules with overlapping cpu_intervals are allowed.
 
 .PP
+.SS "exec plugin"
+Executes command on Rule/Profile selection. Available Rule and Profile entries:
+.TP
+.B "exec_pre"
+.TP
+.B "exec_post"
+You can give commands that you want to be executed when a Rule or Profile is
+applied. As the names suggest,
+.B exec_pre
+will be run before a Rule or Profile is applied,
+.B exec_post
+will be run after.
+
+.PP
 .SS "programs plugin"
 Monitors active processes. Available entries:
 .TP
