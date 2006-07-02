@@ -18,7 +18,7 @@
  */
 
 #ifndef __CPUFREQD_PLUGIN_H__
-#define __CPUFREQD_PLUGIN_H__
+#define __CPUFREQD_PLUGIN_H__ 1
 
 #include <cpufreq.h>
 #include <sys/types.h>
@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include "cpufreqd.h"
+#include "config_parser.h"
 #include "cpufreqd_log.h"
 
 #define FALSE	0
@@ -42,7 +43,6 @@
  *  Shared struct containing useful global informations
  *  probed from the core cpufreqd at noostrap time.
  */
-
 struct cpufreq_limits {
 	unsigned long min;
 	unsigned long max;
@@ -66,6 +66,8 @@ struct cpufreqd_info {
 struct cpufreqd_info * get_cpufreqd_info (void);
 
 struct cpufreqd_plugin;
+
+struct rule;
 
 /* 
  *  A cpufreqd keyword consists of the proper word to match at the
@@ -113,7 +115,7 @@ struct cpufreqd_keyword {
 	 * Can be NULL.
 	 */
 	void (*profile_pre_change) (void *obj, const struct cpufreq_policy *old,
-			const struct cpufreq_policy *new);
+			const struct cpufreq_policy *new, const unsigned int cpu);
 
 	/* function pointer to the profile_post_change event. The same as
 	 * profile_pre_change applies except for the fact that everything is
@@ -122,7 +124,7 @@ struct cpufreqd_keyword {
 	 * Can be NULL.
 	 */
 	void (*profile_post_change) (void *obj, const struct cpufreq_policy *old,
-			const struct cpufreq_policy *new);
+			const struct cpufreq_policy *new, const unsigned int cpu);
 
 	/* function pointer to the rule_pre_change event. obj is the structure
 	 * previously provided by the parse function, old and new are the old
@@ -135,8 +137,8 @@ struct cpufreqd_keyword {
 	 *
 	 * Can be NULL.
 	 */
-	void (*rule_pre_change) (void *obj, const struct cpufreq_policy *old,
-			const struct cpufreq_policy *new);
+	void (*rule_pre_change) (void *obj, const struct rule *old,
+			const struct rule *new);
 
 	/* function pointer to the rule_post_change event. The same as
 	 * rule_pre_change applies except for the fact that everything is
@@ -144,8 +146,8 @@ struct cpufreqd_keyword {
 	 *
 	 * Can be NULL.
 	 */
-	void (*rule_post_change) (void *obj, const struct cpufreq_policy *old,
-			const struct cpufreq_policy *new);
+	void (*rule_post_change) (void *obj, const struct rule *old,
+			const struct rule *new);
 
 
 	/* Allows the owner to define a specific function to be called when freeing

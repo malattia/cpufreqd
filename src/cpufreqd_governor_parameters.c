@@ -92,86 +92,84 @@ static long int get_parameter(struct sysfs_device *govdev, const char *parameter
 
 /* Sets the value of 'parameter' of 'governor' to 'value'.
  */
-static void set_parameter(const char *governor, const char *parameter, long int value, int is_percentage)
+static void set_parameter(const unsigned int cpu, const char *governor, 
+		const char *parameter, long int value, int is_percentage)
 {
-	unsigned int cpu;
 	char value_str[BUFLEN_PARAMETER_VALUE];
 	struct sysfs_device *govdev = NULL;
 	struct sysfs_attribute *govattr = NULL;
 
 	/* For each CPU */
-	for (cpu = 0; cpu < number_of_cpus; ++cpu) {
-		govdev = open_governor_device(cpu, governor);
-		if (govdev == NULL) {
-			return;
-		}
-		if (is_percentage) {
-			long int min, max;
-			long long int abs_value;
-			char min_name[SYSFS_NAME_LEN];
-			char max_name[SYSFS_NAME_LEN];
-
-			/* Read minimum allowed value */
-			snprintf(min_name, SYSFS_NAME_LEN, "%s_min", parameter);
-			min = get_parameter(govdev, min_name);
-			if (min < 0) {
-				sysfs_close_device(govdev);
-				clog(LOG_WARNING, "warning: minimum value for %s could not be read: ignored.\n", parameter);
-				return;
-			}
-			clog(LOG_DEBUG, "minimum value for %s: %ld\n", parameter, min);
-
-			/* Read maximum allowed value */
-			snprintf(max_name, SYSFS_NAME_LEN, "%s_max", parameter);
-			max = get_parameter(govdev, max_name);
-			if (max < 0) {
-				sysfs_close_device(govdev);
-				clog(LOG_WARNING, "warning: maximum value for %s could not be read: ignored.\n", parameter);
-				return;
-			}
-			clog(LOG_DEBUG, "maximum value for %s: %ld\n", parameter, max);
-
-			/* Convert percentage to absolute value in a string */
-			abs_value = (long long int)value * (max - min) / 100 + min;
-			snprintf(value_str, BUFLEN_PARAMETER_VALUE, "%lu", (long int)abs_value);
-			clog(LOG_DEBUG, "converted percentage %ld to absolute value: %s\n", value, value_str);
-		} else {
-			/* Convert value to string */
-			snprintf(value_str, BUFLEN_PARAMETER_VALUE, "%lu", value);
-		}
-
-		/* Get sysfs attribute for the parameter */
-		govattr = sysfs_get_device_attr(govdev, parameter);
-
-		/* Kernel compatibility issue: 
-		 * The parameter name "ignore_nice" changed to "ignore_nice_load" in kernel >= 2.6.16.
-		 * We are accepting both names silently, regardless the kernel version by trying to get
-		 * a sysfs device for the other name when the specified name doesn't exist in sysfs.
-		 */
-		if (govattr == NULL) {
-			if (strcmp(parameter, "ignore_nice") == 0) {
-				govattr = sysfs_get_device_attr(govdev, "ignore_nice_load");
-			} else if (strcmp(parameter, "ignore_nice_load") == 0) {
-				govattr = sysfs_get_device_attr(govdev, "ignore_nice");
-			}
-		}			
-		if (govattr == NULL) {
-			sysfs_close_device(govdev);
-			clog(LOG_WARNING, "warning: attribute %s not found in sysfs.\n", parameter);
-			return;
-		}
-
-		/* Write new value to sysfs' parameter attribute */
-		if (sysfs_write_attribute(govattr, value_str, strlen(value_str)) < 0) {
-			clog(LOG_ERR, "ERROR: could not set parameter %s to %s for %s governor on cpu%u: %s\n",
-					parameter, value_str, governor, cpu, strerror(errno));
-		}
-		clog(LOG_DEBUG, "parameter %s set to %s for %s governor on cpu%u\n",
-				parameter, value_str, governor, cpu);
-
-		/* Close governor device. This will free all structures allocated by libsysfs */
-		sysfs_close_device(govdev);
+	govdev = open_governor_device(cpu, governor);
+	if (govdev == NULL) {
+		return;
 	}
+	if (is_percentage) {
+		long int min, max;
+		long long int abs_value;
+		char min_name[SYSFS_NAME_LEN];
+		char max_name[SYSFS_NAME_LEN];
+
+		/* Read minimum allowed value */
+		snprintf(min_name, SYSFS_NAME_LEN, "%s_min", parameter);
+		min = get_parameter(govdev, min_name);
+		if (min < 0) {
+			sysfs_close_device(govdev);
+			clog(LOG_WARNING, "warning: minimum value for %s could not be read: ignored.\n", parameter);
+			return;
+		}
+		clog(LOG_DEBUG, "minimum value for %s: %ld\n", parameter, min);
+
+		/* Read maximum allowed value */
+		snprintf(max_name, SYSFS_NAME_LEN, "%s_max", parameter);
+		max = get_parameter(govdev, max_name);
+		if (max < 0) {
+			sysfs_close_device(govdev);
+			clog(LOG_WARNING, "warning: maximum value for %s could not be read: ignored.\n", parameter);
+			return;
+		}
+		clog(LOG_DEBUG, "maximum value for %s: %ld\n", parameter, max);
+
+		/* Convert percentage to absolute value in a string */
+		abs_value = (long long int)value * (max - min) / 100 + min;
+		snprintf(value_str, BUFLEN_PARAMETER_VALUE, "%lu", (long int)abs_value);
+		clog(LOG_DEBUG, "converted percentage %ld to absolute value: %s\n", value, value_str);
+	} else {
+		/* Convert value to string */
+		snprintf(value_str, BUFLEN_PARAMETER_VALUE, "%lu", value);
+	}
+
+	/* Get sysfs attribute for the parameter */
+	govattr = sysfs_get_device_attr(govdev, parameter);
+
+	/* Kernel compatibility issue: 
+	 * The parameter name "ignore_nice" changed to "ignore_nice_load" in kernel >= 2.6.16.
+	 * We are accepting both names silently, regardless the kernel version by trying to get
+	 * a sysfs device for the other name when the specified name doesn't exist in sysfs.
+	 */
+	if (govattr == NULL) {
+		if (strcmp(parameter, "ignore_nice") == 0) {
+			govattr = sysfs_get_device_attr(govdev, "ignore_nice_load");
+		} else if (strcmp(parameter, "ignore_nice_load") == 0) {
+			govattr = sysfs_get_device_attr(govdev, "ignore_nice");
+		}
+	}			
+	if (govattr == NULL) {
+		sysfs_close_device(govdev);
+		clog(LOG_WARNING, "warning: attribute %s not found in sysfs.\n", parameter);
+		return;
+	}
+
+	/* Write new value to sysfs' parameter attribute */
+	if (sysfs_write_attribute(govattr, value_str, strlen(value_str)) < 0) {
+		clog(LOG_ERR, "ERROR: could not set parameter %s to %s for %s governor on cpu%u: %s\n",
+				parameter, value_str, governor, cpu, strerror(errno));
+	}
+	clog(LOG_DEBUG, "parameter %s set to %s for %s governor on cpu%u\n",
+			parameter, value_str, governor, cpu);
+
+	/* Close governor device. This will free all structures allocated by libsysfs */
+	sysfs_close_device(govdev);
 }
 
 
@@ -339,7 +337,7 @@ static int freq_step_parse(const char *value, void **obj)
  * Called when cpufreqd just changed the profile.
  */
 static void gov_parameter_post_change(void *obj, const struct cpufreq_policy *not_needed,
-		const struct cpufreq_policy *new_policy)
+		const struct cpufreq_policy *new_policy, const unsigned int cpu)
 {
 	int i;
 	const char *parameter;
@@ -360,7 +358,7 @@ static void gov_parameter_post_change(void *obj, const struct cpufreq_policy *no
 		if (strcmp(supported_governors[i], new_policy->governor) == 0) {
 			clog(LOG_INFO, "setting governor parameter %s = %ld%c\n",
 					parameter, value, is_percentage ? '%' : ' ');
-			set_parameter(new_policy->governor, parameter, value, is_percentage);
+			set_parameter(cpu, new_policy->governor, parameter, value, is_percentage);
 			return;
 		}
 		++i;

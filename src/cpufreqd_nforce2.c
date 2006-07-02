@@ -127,30 +127,49 @@ static int vcore_parse(const char *ev, void **obj) {
 
 static unsigned int cur_freq = 0;
 
+/* avoid being called for _every_ cpu switching freq,
+ * just run our stuff on the first one on -pre events,
+ * on the last one on -post events
+ */
+int vcore_profile_calls;
+
 static void vcore_pre_change(void *obj,
 		const struct cpufreq_policy __UNUSED__ *old,
-		const struct cpufreq_policy *new) {
-	
-	cur_freq = cpufreq_get(0);
-	
-	if (cur_freq <= new->max) {
-		int vcore = *(int *)obj;
+		const struct cpufreq_policy *new,
+		const unsigned int __UNUSED__ cpu) {
+
+	if (vcore_profile_calls == 0) {
+		cur_freq = cpufreq_get(0);
 		
-		clog(LOG_INFO, "Setting Vcore to (%d)\n", vcore);
-		set_vcore(vcore);
+		if (cur_freq <= new->max) {
+			int vcore = *(int *)obj;
+			
+			clog(LOG_INFO, "Setting Vcore to (%d)\n", vcore);
+			set_vcore(vcore);
+		}
 	}
+	vcore_profile_calls++;
 }
 
 static void vcore_post_change(void *obj,
 		const struct cpufreq_policy __UNUSED__ *old,
-		const struct cpufreq_policy *new) {
-	
-	if (cur_freq > new->max) {
-		int vcore = *(int *)obj;
-		
-		clog(LOG_INFO, "Setting Vcore to (%d)\n", vcore);
-		set_vcore(vcore);
+		const struct cpufreq_policy *new,
+		const unsigned int __UNUSED__ cpu) {
+
+	vcore_profile_calls--;
+	if (vcore_profile_calls == 0) {
+		if (cur_freq > new->max) {
+			int vcore = *(int *)obj;
+			
+			clog(LOG_INFO, "Setting Vcore to (%d)\n", vcore);
+			set_vcore(vcore);
+		}
 	}
+}
+
+static int nforce2_update(void) {
+	vcore_profile_calls = 0;
+	return 0;
 }
 
 static struct cpufreqd_keyword kw[] = {
@@ -166,10 +185,10 @@ static struct cpufreqd_plugin nforce2 = {
 	.plugin_name	= "nforce2_atxp1",
 	.keywords	= kw,
 	.plugin_init	= NULL,
-	.plugin_exit	= nforce2_exit,
-	.plugin_update	= NULL,
-	.plugin_conf	= nforce2_conf,
-	.plugin_post_conf= nforce2_post_conf,
+	.plugin_exit	= &nforce2_exit,
+	.plugin_update	= &nforce2_update,
+	.plugin_conf	= &nforce2_conf,
+	.plugin_post_conf= &nforce2_post_conf,
 };
 
 struct cpufreqd_plugin *create_plugin (void) {

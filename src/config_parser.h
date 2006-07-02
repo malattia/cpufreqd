@@ -42,9 +42,10 @@ struct profile {
 
 struct rule {
 	char name[MAX_STRING_LEN];
-	char profile_name[MAX_STRING_LEN];
+	char profile_name[MAX_STRING_LEN]; /* this is a list actually, eg: "CPU0:prof0;CPU1:prof1" */
 	struct LIST directives; /* list of struct directive */
-	struct profile *prof;
+	struct profile **prof; /* profiles per CPU */
+	unsigned long assigned_cpus; /* bit map holding which cpus have been assigned a Profile for this rule */
 	unsigned int score;
 	unsigned int directives_count;
 };
@@ -70,7 +71,7 @@ struct cpufreqd_conf {
 
 };
 
-int	init_configuration	(struct cpufreqd_conf *config, struct cpufreqd_info *info);
+int	init_configuration	(struct cpufreqd_conf *config);
 void	free_configuration	(struct cpufreqd_conf *config);
 
 #endif /* _CONFIG_PARSER_H */

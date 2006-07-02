@@ -498,6 +498,11 @@ static int parse_config_rule (FILE *config, struct rule *r, struct LIST *plugins
 			continue;
 
 		if (strcmp(name, "profile") == 0) {
+			/* allow associations for a single cpu
+			 * profile=CPU0:prof1;CPU1:prof2
+			 * keep it as-is, will parse the thing later
+			 * when associating Rules to Profiles.
+			 */
 			strncpy(r->profile_name, value, MAX_STRING_LEN);
 			r->profile_name[MAX_STRING_LEN - 1] = '\0';
 			state |= HAS_PROFILE;
@@ -607,7 +612,7 @@ static void configure_plugin(FILE *config, struct plugin_obj *plugin) {
 /* intialize the cpufreqd_conf object 
  * by reading the configuration file
  */
-int init_configuration(struct cpufreqd_conf *configuration, struct cpufreqd_info *info)
+int init_configuration(struct cpufreqd_conf *configuration)
 {
 	FILE *fp_config = NULL;
 	struct NODE *n = NULL;
@@ -616,7 +621,9 @@ int init_configuration(struct cpufreqd_conf *configuration, struct cpufreqd_info
 	struct plugin_obj *plugin = NULL;
 	char *clean = NULL;
 	char buf[256];
+	unsigned int i = 0;
 	int plugins_post_confed = 0; /* did I already run post_conf for all? */
+	struct cpufreqd_info *cinfo = get_cpufreqd_info();
 
 	/* configuration file */
 	clog(LOG_INFO, "reading configuration file %s\n", configuration->config_file);
@@ -689,7 +696,7 @@ int init_configuration(struct cpufreqd_conf *configuration, struct cpufreqd_info
 			}
 
 			if (parse_config_profile(fp_config, tmp_profile, &configuration->plugins, 
-					info->limits, info->sys_info->frequencies) < 0) {
+					cinfo->limits, cinfo->sys_info->frequencies) < 0) {
 				clog(LOG_CRIT, "[Profile] error parsing %s, see logs for details.\n",
 						configuration->config_file);
 				node_free(n);
@@ -786,32 +793,104 @@ int init_configuration(struct cpufreqd_conf *configuration, struct cpufreqd_info
 	 */
 	LIST_FOREACH_NODE(node, &configuration->rules) {
 		tmp_rule = (struct rule *)node->content;
+		char tmp_name[MAX_STRING_LEN]; 
+		char profile_name[MAX_STRING_LEN];
+		char *token;
+		unsigned int cpu_num = 0;
 		int profile_found = 0;
 
-		LIST_FOREACH_NODE(node1, &configuration->profiles) {
-			tmp_profile = (struct profile *)node1->content;
-			/* go through profiles */
-			if (strcmp(tmp_rule->profile_name, tmp_profile->name)==0) {
-				/* a profile is allowed to be addressed by more than 1 rule */
-				tmp_rule->prof = tmp_profile;
-				profile_found = 1;
-				break;
-			}
-		}
+		strncpy(tmp_name, tmp_rule->profile_name, MAX_STRING_LEN);
+		tmp_name[MAX_STRING_LEN - 1] = '\0';
 
-		if (!profile_found) {
-			clog(LOG_CRIT, "ERROR! no Profile section found for Rule \"%s\" "
-					"(requested Profile \"%s\")\n", 
-					tmp_rule->name, tmp_rule->profile_name);
+		/* this allocation can result being very piggy in large SMP systems */
+		tmp_rule->prof = calloc(cinfo->cpus, sizeof(struct profile *));
+		if (tmp_rule->prof == NULL) {
+			clog(LOG_CRIT, "ERROR! couldn't make room for the Rule/Profile "
+					" association, exiting.\n");
 			return -1;
 		}
+
+		/* split profile names and associate */
+		token = strtok(tmp_name, ";");
+		do {
+			if (strstr(token, "CPU") != token) {
+				
+				if (strstr(token, "ALL:") == token) {
+					strncpy(profile_name, token+4, MAX_STRING_LEN);
+				}
+				else {
+					strncpy(profile_name, token, MAX_STRING_LEN);
+				}
+				profile_name[MAX_STRING_LEN - 1] = '\0';
+				/* set this profile for all unassigned cpus */
+				LIST_FOREACH_NODE(node1, &configuration->profiles) {
+					tmp_profile = (struct profile *)node1->content;
+					if (strcmp(profile_name, tmp_profile->name) == 0) {
+						for (i = 0; i < cinfo->cpus; i++)
+							tmp_rule->prof[i] = tmp_profile;
+						profile_found = 1;
+						break;
+					}
+					tmp_profile = NULL;
+				}
+				if (tmp_profile == NULL) {
+					clog(LOG_ERR, "No Profile with name \"%s\" found for Rule \"%s\".\n",
+							profile_name, tmp_rule->name);
+					return -1;
+				}
+
+			}
+			else {
+				/* assign profile for a single CPU */
+				
+				if (sscanf(token, "CPU%d:%[a-zA-Z0-9 ]", &cpu_num, profile_name) != 2) {
+					clog(LOG_ERR, "Wrong format for Profile name \"%s\".\n",
+							token);
+					return -1;
+				}
+				if (cpu_num >= cinfo->cpus) {
+					clog(LOG_ERR, "Unknown cpu CPU%d for Rule \"%s\".\n",
+							cpu_num, tmp_rule->name);
+					return -1;
+				}
+
+				LIST_FOREACH_NODE(node1, &configuration->profiles) {
+					tmp_profile = (struct profile *)node1->content;
+
+					/* go through profiles */
+					if (strcmp(profile_name, tmp_profile->name) == 0) {
+						/* bail out if the rule has a profile already for that CPU */
+						if (tmp_rule->assigned_cpus & cpu_num) {
+							clog(LOG_ERR, "Rule \"%s\" has a Profile for "
+									"CPU%d already, exiting\n",
+									tmp_rule->name, cpu_num);
+							return -1;
+						}
+						tmp_rule->prof[cpu_num] = tmp_profile;
+						tmp_rule->assigned_cpus |= 1 << cpu_num;
+						break;
+					}
+					tmp_profile = NULL;
+
+				} /* end foreach profile */
+				if (tmp_profile == NULL) {
+					clog(LOG_ERR, "No Profile with name \"%s\" found for Rule \"%s\" "
+							"for CPU%d.\n", profile_name, tmp_rule->name, cpu_num);
+					return -1;
+				}
+			} 
+		} while ((token = strtok(NULL,";")) != NULL);
+
 	}
 
 	LIST_FOREACH_NODE(node, &configuration->rules) {
 		tmp_rule = (struct rule *)node->content;
-		clog(LOG_INFO, "Rule \"%s\" has Profile \"%s\"\n", 
-				tmp_rule->name, tmp_rule->prof->name);
+		clog(LOG_INFO, "Rule \"%s\" has Profiles ", tmp_rule->name);
+		for (i = 0; i < cinfo->cpus; i++)
+			cpufreqd_log(LOG_INFO, "CPU%d:%s ", i, tmp_rule->prof[i]->name);
+		cpufreqd_log(LOG_INFO, "\n");
 	}
+	/* TODO: spit a WARNING if no rule with a global cpu profile is found */
 	return 0;
 }
 
@@ -825,7 +904,7 @@ void free_configuration(struct cpufreqd_conf *configuration)
 	struct directive *tmp_directive;
 	struct plugin_obj *o_plugin;
 
-	/* cleanup rule directives */
+	/* cleanup rule directives and profile arrays */
 	clog(LOG_INFO, "freeing rules directives.\n");
 	LIST_FOREACH_NODE(node, &configuration->rules) {
 		tmp_rule = (struct rule *) node->content;
@@ -835,9 +914,10 @@ void free_configuration(struct cpufreqd_conf *configuration)
 			free_keyword_object(tmp_directive->keyword, tmp_directive->obj);
 		}
 		list_free_sublist(&tmp_rule->directives, tmp_rule->directives.first);
+		if (tmp_rule->prof)
+			free(tmp_rule->prof);
 	}
-
-	/* cleanup config structs */
+	/* cleanup rule structs */
 	clog(LOG_INFO, "freeing rules.\n"); 
 	list_free_sublist(&(configuration->rules), configuration->rules.first);
 	configuration->rules.first = configuration->rules.last = NULL;

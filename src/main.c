@@ -44,7 +44,7 @@
 #include "plugin_utils.h"
 #include "sock_utils.h"
 
-#define TRIGGER_EVENT(event_func, directives, dir, old, new) \
+#define TRIGGER_RULE_EVENT(event_func, directives, dir, old, new) \
 do { \
 	LIST_FOREACH_NODE(__node, (directives)) { \
 		dir = (struct directive *)__node->content; \
@@ -55,9 +55,20 @@ do { \
 	} \
 } while (0);
 
+#define TRIGGER_PROFILE_EVENT(event_func, directives, dir, old, new, cpu_num) \
+do { \
+	LIST_FOREACH_NODE(__node, (directives)) { \
+		dir = (struct directive *)__node->content; \
+		if (dir->keyword->event_func != NULL) { \
+			clog(LOG_DEBUG, "Triggering " #event_func " for %s\n", dir->keyword->word); \
+			dir->keyword->event_func(dir->obj, (old), (new), (cpu_num)); \
+		} \
+	} \
+} while (0);
+
 static struct cpufreqd_info *cpufreqd_info;
 static struct rule *current_rule;
-static struct profile *current_profile;
+static struct profile **current_profiles;
 static int force_reinit = 0;
 static int force_exit = 0;
 static int timer_expired = 1; /* expired in order to run on the first loop */
@@ -173,55 +184,73 @@ static struct rule *update_rule_scores(struct LIST *rule_list) {
  * Returns always 0 (success) except if double checking is enabled and setting
  * the policy fails in which case -1 is returned.
  */
-static int cpufreqd_set_profile (struct profile *old, struct profile *new) {
+static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 	unsigned int i;
 	struct directive *d;
+	struct profile *old_profile = NULL, *new_profile = NULL;
 
-	/* profile prechange event */
-	if (new->directives.first) {
-		TRIGGER_EVENT(profile_pre_change, &new->directives, d,
-				old!=NULL? &old->policy : NULL, &new->policy);
-	}
-	/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
 	for (i = 0; i < cpufreqd_info->cpus; i++) {
-		if (cpufreq_set_policy(i, &(new->policy)) == 0) {
-			clog(LOG_NOTICE, "Profile \"%s\" set for cpu%d\n", new->name, i);
+		new_profile = new[i];
+		if (old != NULL)
+			old_profile = old[i];
+
+		/* profile prechange event */
+		if (new_profile->directives.first) {
+			TRIGGER_PROFILE_EVENT(profile_pre_change, &new_profile->directives, d,
+					old_profile != NULL ? &old_profile->policy : NULL,
+					&new_profile->policy, i);
+		}
+
+		/* don't even try to set the profile if it hasn't changed */
+		if (new_profile == old_profile) {
+			clog(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), for CPU%d doing nothing.\n",
+					old_profile->name, new_profile->name, i);
+		}
+		/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
+		else if (cpufreq_set_policy(i, &(new_profile->policy)) == 0) {
+			clog(LOG_NOTICE, "Profile \"%s\" set for CPU%d\n", new_profile->name, i);
+
 			/* double check if everything is OK (configurable) */
 			if (configuration->double_check) {
 				struct cpufreq_policy *check = NULL;
 				check = cpufreq_get_policy(i);
-				if (check->max != new->policy.max || check->min != new->policy.min ||
-						strcmp(check->governor, new->policy.governor) != 0) {
+				if (check->max != new_profile->policy.max
+						|| check->min != new_profile->policy.min 
+						|| strcmp(check->governor, new_profile->policy.governor) != 0) {
 					/* written policy and subsequent read disagree */
 					clog(LOG_ERR, "I haven't been able to set the chosen policy "
 							"for CPU%d.\n"
 							"I set %d-%d-%s\n"
 							"System says %d-%d-%s\n",
-							i, new->policy.max, new->policy.min,
-							new->policy.governor, check->max, 
+							i, new_profile->policy.max, new_profile->policy.min,
+							new_profile->policy.governor, check->max, 
 							check->min, check->governor);
 					cpufreq_put_policy(check);
 					return -1;
 				} else {
 					clog(LOG_INFO, "Policy correctly set %d-%d-%s\n",
-							new->policy.max, new->policy.min, new->policy.governor);
+							new_profile->policy.max,
+							new_profile->policy.min,
+							new_profile->policy.governor);
 				}
 				cpufreq_put_policy(check);
-						
-			}
+			} /* end if double_check */
 		}
 		else {
-			clog(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n", new->name, i);
+			clog(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n",
+					new_profile->name, i);
 			return -1;
 		}
+
+		/* profile postchange event */
+		if (new_profile->directives.first) {
+			TRIGGER_PROFILE_EVENT(profile_post_change, &new_profile->directives, d,
+					old != NULL ? &old_profile->policy : NULL,
+					&new_profile->policy, i);
+		}
 	}
-	/* profile postchange event */
-	if (new->directives.first) {
-		TRIGGER_EVENT(profile_post_change, &new->directives, d,
-				old!=NULL? &old->policy : NULL, &new->policy);
-	}
-	current_profile = new;
-	cpufreqd_info->cur_policy = &new->policy;
+	current_profiles = new;
+	cpufreqd_info->cur_policy = &new_profile->policy;
 	return 0;
 }
 
@@ -363,7 +392,7 @@ static void pipe_handler(int signo) {
 
 static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *current) {
 	struct rule *best_rule = NULL;
-	struct directive *d;
+	struct directive *d = NULL;
 	
 	/* update timestamp */
 	if (gettimeofday(&cpufreqd_info->timestamp, NULL) < 0) {
@@ -398,9 +427,8 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 				best_rule->name);
 		/* pre change event */
 		if (best_rule->directives.first != NULL) {
-			TRIGGER_EVENT(rule_pre_change, &best_rule->directives, d,
-					current != NULL ? &current->prof->policy : NULL,
-					&best_rule->prof->policy);
+			TRIGGER_RULE_EVENT(rule_pre_change, &best_rule->directives, d,
+					current, best_rule);
 		}
 
 		/* change frequency */
@@ -408,16 +436,12 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 			cpufreqd_set_profile(NULL, best_rule->prof);
 		} else if (best_rule->prof != current->prof) {
 			cpufreqd_set_profile(current->prof, best_rule->prof);
-		} else {
-			clog(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), doing nothing.\n", 
-					current->prof->name, best_rule->prof->name);
 		}
 
 		/* post change event */
 		if (best_rule->directives.first != NULL) {
-			TRIGGER_EVENT(rule_post_change, &best_rule->directives, d,
-					current != NULL ? &current->prof->policy : NULL,
-					&best_rule->prof->policy);
+			TRIGGER_RULE_EVENT(rule_post_change, &best_rule->directives, d,
+					current, best_rule);
 		}
 
 	} else {
@@ -434,9 +458,11 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 static void execute_command(int sock, struct cpufreqd_conf *conf) {
 	struct pollfd fds;
 	char buf[MAX_STRING_LEN];
-	unsigned int buflen = 0, counter = 0;
-	struct profile *p;
+	unsigned int buflen = 0, counter = 0, i = 0;
+	struct profile *p = NULL, **pp = NULL;
 	uint32_t command = INVALID_CMD;
+	struct cpufreqd_info *cinfo = get_cpufreqd_info();
+
 	/* we have a valid sock, wait for command
 	 * don't wait more tha 0.5 sec
 	 */
@@ -465,11 +491,46 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 				clog(LOG_DEBUG, "CMD_LIST_PROFILES\n");
 				LIST_FOREACH_NODE(node, &conf->profiles) {
 					p = (struct profile *) node->content;
+					/* FIXME: the current profile is not checked
+					 * as it may well be different from each cpu.
+					 * See command CMD_CUR_PROFILES.
+					 */
+					/* format is:
+					 * 1 always 0, currently unused
+					 * 2 profile name
+					 * 3 min freq
+					 * 4 max freq
+					 * 5 active governor
+					 */
 					buflen = snprintf(buf, MAX_STRING_LEN, "%d/%s/%lu/%lu/%s\n",
-							p == current_profile ? 1 : 0,
+							0,
 							p->name,
 							p->policy.min, p->policy.max,
 							p->policy.governor);
+					write(sock, buf, buflen);
+				}
+				break;
+			case CMD_CUR_PROFILES:
+				clog(LOG_DEBUG, "CMD_CUR_PROFILES\n");
+				if (!current_profiles)
+					break;
+
+				for (i = 0; i < cinfo->cpus; i++) {
+					if (!current_profiles[i])
+						continue;
+					/* format is:
+					 * 1 cpu where the profile is active
+					 * 2 profile name
+					 * 3 min freq
+					 * 4 max freq
+					 * 5 active governor
+					 */
+					buflen = snprintf(buf, MAX_STRING_LEN, "%d/%s/%lu/%lu/%s\n",
+							i,
+							current_profiles[i]->name,
+							current_profiles[i]->policy.min,
+							current_profiles[i]->policy.max,
+							current_profiles[i]->policy.governor);
 					write(sock, buf, buflen);
 				}
 				break;
@@ -480,16 +541,6 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 			case CMD_SET_MODE:
 				clog(LOG_DEBUG, "CMD_SET_MODE\n");
 				set_cpufreqd_runmode((int)REMOTE_ARG(command));
-#if 0
-				cpufreqd_mode = REMOTE_ARG(command);
-				if (cpufreqd_mode == MODE_MANUAL) {
-					/* reset alarm */
-					if (setitimer(ITIMER_REAL, NULL, 0) < 0)
-						clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
-				} else {
-					timer_expired = 1;
-				}
-#endif
 				break;
 			case CMD_SET_PROFILE:
 				clog(LOG_DEBUG, "CMD_SET_PROFILE\n");
@@ -507,10 +558,26 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 					p = (struct profile *) node->content;
 					counter++;
 					if (counter == REMOTE_ARG(command)) {
-						cpufreqd_set_profile(NULL, p);
+
+						/* set this profile for every cpu */
+						pp = calloc(cinfo->cpus, sizeof(struct profile *));
+						if (pp == NULL) {
+							clog(LOG_ERR, "Couldn't allocate enough memory "
+									" to set profile \"%s\"\n",
+									p->name);
+							/* return immediately */
+							return;
+						}
+
+						for(i = 0; i < cinfo->cpus; i++)
+							pp[i] = p;
+
+						cpufreqd_set_profile(NULL, pp);
+						free(pp);
+
 						/* reset the current rule to let
 						 * the cpufreqd_loop set the correct
-						 * on if going back to dynamic mode
+						 * one when going back to dynamic mode
 						 */
 						current_rule = NULL;
 						counter = 0;
@@ -676,7 +743,7 @@ int main (int argc, char *argv[]) {
 
 cpufreqd_start:
 
-	if (init_configuration(configuration, cpufreqd_info) < 0) {
+	if (init_configuration(configuration) < 0) {
 		clog(LOG_CRIT, "Unable to parse config file: %s\n", configuration->config_file);
 		ret = EINVAL;
 		goto out_config_read;
@@ -742,21 +809,7 @@ cpufreqd_start:
 		 * if running in DYNAMIC mode AND the timer is expired
 		 */
 		if (cpufreqd_mode == MODE_DYNAMIC && timer_expired) {
-#if 0
-			new_timer.it_interval.tv_usec = configuration->poll_intv.tv_usec;
-			new_timer.it_interval.tv_sec = configuration->poll_intv.tv_sec;
-			new_timer.it_value.tv_usec = configuration->poll_intv.tv_usec;
-			new_timer.it_value.tv_sec = configuration->poll_intv.tv_sec;
-#endif
 			current_rule = cpufreqd_loop(configuration, current_rule);
-#if 0
-			/* set next alarm */
-			if (setitimer(ITIMER_REAL, &new_timer, 0) < 0) {
-				ret = errno;
-				clog(LOG_CRIT, "Couldn't set timer: %s\n", strerror(errno));
-				break;
-			}
-#endif
 			/* can safely reset the expired flag now */
 			timer_expired = 0;
 		}

@@ -27,44 +27,84 @@
 #include "cpufreqd_plugin.h"
 #include "nvclock.h"
 
+/* avoid being called for _every_ cpu switching freq,
+ * just run our stuff on the last one
+ */
+int nvcore_profile_calls;
+int nvmem_profile_calls;
+
 struct nvclock_elem {
 	int card;
 	unsigned int value; /* used for gpu and mem clock */
 };
 
+static void nvcore_change(struct nvclock_elem *nv) {
+	
+	if (nv->card < nvclock.num_cards) {
+		clog(LOG_INFO, "Setting nv_core for card %i to (%u)\n", nv->card, nv->value);
+		set_card(nv->card);
+		if(nv_card.supported & GPU_OVERCLOCKING_SUPPORTED)
+			nv_card.set_gpu_speed(nv->value);
+		unset_card();
+	}
+}
 
-static int nvclock_init(void);
-static int nvclock_parse(const char *ev, void **obj);
+static void nvmem_change(struct nvclock_elem *nv) {
+	
+	if (nv->card < nvclock.num_cards) {
+		clog(LOG_INFO, "Setting nv_mem for card %i to (%u)\n", nv->card, nv->value);
+		set_card(nv->card);
+		if(nv_card.supported & MEM_OVERCLOCKING_SUPPORTED)
+			nv_card.set_memory_speed(nv->value);
+		unset_card();
+	}
+}
 
-static void nvcore_change(void *obj, const struct cpufreq_policy *old, const struct cpufreq_policy *new);
-static void nvmem_change(void *obj, const struct cpufreq_policy *old, const struct cpufreq_policy *new);
+/* pre change events */
+static void nvcore_profile_pre_change(void __UNUSED__ *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
+		const struct cpufreq_policy __UNUSED__ *new,
+		const unsigned int __UNUSED__ cpu) {
+	nvcore_profile_calls++;
+}
 
-static struct cpufreqd_keyword kw[] = {
-	{	.word = "nv_core",
-		.parse = &nvclock_parse,
-		.profile_pre_change = NULL,
-		.profile_post_change = &nvcore_change,
-		.rule_post_change = &nvcore_change
-	},
-	{	.word = "nv_mem",
-		.parse = &nvclock_parse,
-		.profile_pre_change = NULL,
-		.profile_post_change = &nvmem_change,
-		.rule_post_change = &nvmem_change
-	},
-	{ .word = NULL }
-};
+static void nvmem_profile_pre_change(void __UNUSED__ *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
+		const struct cpufreq_policy __UNUSED__ *new,
+		const unsigned int __UNUSED__ cpu) {
+	nvmem_profile_calls++;
+}
 
-static struct cpufreqd_plugin nvclock_plugin = {
-	.plugin_name	= "nvclock",
-	.keywords	= kw,
-	.plugin_init	= nvclock_init,
-	.plugin_exit	= NULL,
-	.plugin_update	= NULL,
-	.plugin_conf	= NULL,
-	.plugin_post_conf= NULL,
-};
+/* post change events */
+static void nvcore_rule_post_change(void *obj,
+		const struct rule __UNUSED__ *old,
+		const struct rule __UNUSED__ *new) {
+	nvcore_change(obj);
+}
 
+static void nvcore_profile_post_change(void *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
+		const struct cpufreq_policy __UNUSED__ *new,
+		const unsigned int __UNUSED__ cpu) {
+	nvcore_profile_calls--;
+	if (nvcore_profile_calls == 0)
+		nvcore_change(obj);	
+}
+
+static void nvmem_rule_post_change(void *obj,
+		const struct rule __UNUSED__ *old,
+		const struct rule __UNUSED__ *new) {
+	nvmem_change(obj);
+}
+
+static void nvmem_profile_post_change(void *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
+		const struct cpufreq_policy __UNUSED__ *new,
+		const unsigned int __UNUSED__ cpu) {
+	nvmem_profile_calls--;
+	if (nvmem_profile_calls == 0)
+		nvmem_change(obj);
+}
 
 static int nvclock_init(void) {
 	return !init_nvclock();
@@ -100,34 +140,31 @@ static int nvclock_parse(const char *ev, void **obj) {
 	return 0;
 }
 
+static struct cpufreqd_keyword kw[] = {
+	{	.word = "nv_core",
+		.parse = &nvclock_parse,
+		.profile_pre_change = &nvcore_profile_pre_change,
+		.profile_post_change = &nvcore_profile_post_change,
+		.rule_post_change = &nvcore_rule_post_change
+	},
+	{	.word = "nv_mem",
+		.parse = &nvclock_parse,
+		.profile_pre_change = &nvmem_profile_pre_change,
+		.profile_post_change = &nvmem_profile_post_change,
+		.rule_post_change = &nvmem_rule_post_change
+	},
+	{ .word = NULL }
+};
 
-static void nvcore_change(void *obj,
-		const struct cpufreq_policy __UNUSED__ *old,
-		const struct cpufreq_policy __UNUSED__ *new) {
-	struct nvclock_elem *nv = obj;
-	
-	if (nv->card < nvclock.num_cards) {
-		clog(LOG_INFO, "Setting nv_core for card %i to (%u)\n", nv->card, nv->value);
-		set_card(nv->card);
-		if(nv_card.supported & GPU_OVERCLOCKING_SUPPORTED)
-			nv_card.set_gpu_speed(nv->value);
-		unset_card();
-	}
-}
-
-static void nvmem_change(void *obj,
-		const struct cpufreq_policy __UNUSED__ *old,
-		const struct cpufreq_policy __UNUSED__ *new) {
-	struct nvclock_elem *nv = obj;
-	
-	if (nv->card < nvclock.num_cards) {
-		clog(LOG_INFO, "Setting nv_mem for card %i to (%u)\n", nv->card, nv->value);
-		set_card(nv->card);
-		if(nv_card.supported & MEM_OVERCLOCKING_SUPPORTED)
-			nv_card.set_memory_speed(nv->value);
-		unset_card();
-	}
-}
+static struct cpufreqd_plugin nvclock_plugin = {
+	.plugin_name	= "nvclock",
+	.keywords	= kw,
+	.plugin_init	= nvclock_init,
+	.plugin_exit	= NULL,
+	.plugin_update	= NULL,
+	.plugin_conf	= NULL,
+	.plugin_post_conf= NULL,
+};
 
 struct cpufreqd_plugin *create_plugin (void) {
 	return &nvclock_plugin;

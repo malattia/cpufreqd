@@ -156,10 +156,36 @@ static void exec_enqueue (const char *cmd) {
 	pthread_mutex_unlock(&exe_q_mtx);
 }
 
-static void change (void *obj,
+/* avoid being called for each cpu profile change,
+ * only act on the last one
+ */
+static int profile_change_calls;
+static void exec_profile_pre_change(void __UNUSED__ *obj,
 		const struct cpufreq_policy __UNUSED__ *old,
-		const struct cpufreq_policy __UNUSED__ *new) {
+		const struct cpufreq_policy __UNUSED__ *new,
+		const unsigned int __UNUSED__ cpu) {
+	if (profile_change_calls == 0)
+		exec_enqueue((char *)obj);
+	profile_change_calls++;
+}
+static void exec_profile_post_change(void *obj,
+		const struct cpufreq_policy __UNUSED__ *old,
+		const struct cpufreq_policy __UNUSED__ *new,
+		const unsigned int __UNUSED__ cpu) {
+	profile_change_calls--;
+	if (profile_change_calls == 0)
+		exec_enqueue((char *)obj);
+}
+
+static void exec_rule_change(void *obj,
+		const struct rule __UNUSED__ *old,
+		const struct rule __UNUSED__ *new) {
 	exec_enqueue((char *)obj);
+}
+
+static int exec_update(void) {
+	profile_change_calls = 0;
+	return 0;
 }
 
 /* Launch the thread that will wait on the queue
@@ -211,9 +237,9 @@ static struct cpufreqd_keyword kw[] =  {
 		.parse = exec_parse,
 		.evaluate = NULL,
 		.profile_pre_change = NULL,
-		.profile_post_change = &change,
+		.profile_post_change = &exec_profile_post_change,
 		.rule_pre_change = NULL,
-		.rule_post_change = &change,
+		.rule_post_change = &exec_rule_change,
 		.free = NULL,
 	},
 	{
@@ -221,9 +247,9 @@ static struct cpufreqd_keyword kw[] =  {
 		.word = "exec_pre",
 		.parse = exec_parse,
 		.evaluate = NULL,
-		.profile_pre_change = &change,
+		.profile_pre_change = &exec_profile_pre_change,
 		.profile_post_change = NULL,
-		.rule_pre_change = &change,
+		.rule_pre_change = &exec_rule_change,
 		.rule_post_change = NULL,
 		.free = NULL,
 	},
@@ -235,7 +261,7 @@ static struct cpufreqd_plugin plugin =  {
 	.keywords = kw,
 	.plugin_init = exec_init,
 	.plugin_exit = exec_exit,
-	.plugin_update = NULL,
+	.plugin_update = &exec_update,
 	.plugin_conf = NULL,
 	.plugin_post_conf = NULL,
 };

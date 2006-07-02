@@ -14,14 +14,18 @@
 cpufreqd\-get \- Issues "get" commands to cpufreqd.
 .SH "SYNTAX"
 .LP 
-cpufreqd\-get
+.B "cpufreqd\-get [-l]"
+
+.SH "PARAMETERS"
+.TP
+.B "-l"
+list applied Profiles for all cpus.
 
 .SH "DESCRIPTION"
 .LP 
 cpufreqd\-get issues a command to cpufreqd and reads the returned output.
-At the moment the only supported command is the "LIST_PROFILES", useful
-for usage with cpufreqd\-set.
-Currently no arguments are allowed to this command.
+When run without arguments it will issue a "LIST_PROFILES" command, useful
+for usage with cpufreqd\-set. See the PARAMETERS above for more.
 
 .SH "COMMANDS"
 .LP 

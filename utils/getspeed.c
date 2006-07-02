@@ -24,12 +24,19 @@ int main(int argc, char *argv[])
 	struct stat st;
 	time_t last_mtime = 0;
 	unsigned int cmd = 0;
+	unsigned int full_cmd = 0;
 	char buf[4096] = {0}, name[256] = {0}, policy[255] = {0};
 	char *in;
 	int min, max, active, n;
 
-	if (argc > 1) {
-		fprintf(stdout, "%s: No arguments allowed\n", argv[0]);
+	if (argc == 2 && !strcmp(argv[1], "-l"))
+		cmd = CMD_CUR_PROFILES;
+	else if (argc == 1)
+		cmd = CMD_LIST_PROFILES;
+	else {
+		fprintf(stdout, "%s: Wrong arguments\n", argv[0]);
+		fprintf(stdout, "%s [-l]\n", argv[0]);
+		fprintf(stdout, "	-l  list applied profiles\n");
 		return 1;
 	}
 	
@@ -66,7 +73,7 @@ int main(int argc, char *argv[])
 		return ENOENT;
 	}
 	fprintf(stdout, "socket I'll try to connect: %s\n", sck.sun_path);
-	
+
 	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
 		perror("socket()");
 		return 1;
@@ -76,20 +83,28 @@ int main(int argc, char *argv[])
 		perror("connect()");
 		return 1;
 	}
-
-	cmd = MAKE_COMMAND(CMD_LIST_PROFILES, 0);
 	
-	if (write(sock, &cmd, 4) != 4)
+	full_cmd = MAKE_COMMAND(cmd, 0);
+	if (write(sock, &full_cmd, 4) != 4)
 		perror("write()");
 
 	n = 0;
 	while (read(sock, buf, 4096)) {
 		in = buf;
-		while (sscanf(in, "%d/%[^/]/%d/%d/%[^\n]\n", &active, name, &min, &max, policy) == 5) {
-			printf("\nName (#%d):\t%s %s\n", ++n, name, active ? "*" : "");
+		while (cmd == CMD_LIST_PROFILES 
+				&& sscanf(in, "%d/%[^/]/%d/%d/%[^\n]\n", &active, name, &min, &max, policy) == 5) {
+			/* ignoring "active" as it's not used anymore */
+			printf("\nName (#%d):\t%s\n", ++n, name);
 			printf("Governor:\t%s\n", policy);
 			printf("Min freq:\t%d\n", min);
 			printf("Max freq:\t%d\n", max);
+			in = strchr(in, '\n') + 1;
+		}
+
+		while (cmd == CMD_CUR_PROFILES
+				&& sscanf(in, "%d/%[^/]/%d/%d/%[^\n]\n", &active, name, &min, &max, policy) == 5) {
+			printf("\nCPU#%d: \"%s\" ", active, name);
+			printf("%s %d-%d\n", policy, min, max);
 			in = strchr(in, '\n') + 1;
 		}
 	}

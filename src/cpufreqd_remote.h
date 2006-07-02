@@ -38,6 +38,7 @@
 #define CMD_SET_RULE		4 /* <rule index> */
 #define CMD_LIST_RULES		5 /* no arguments */
 #define CMD_SET_MODE		6 /* <mode> */
+#define CMD_CUR_PROFILES	7 /* no argument */
 
 #define ARG_MASK		0x0000ffff
 #define MODE_DYNAMIC		(1)

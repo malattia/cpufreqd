@@ -145,7 +145,12 @@ An arbitrary and unique name for your rule. [REQUIRED]
 
 .TP
 .B "profile"
-A character string that must match a [Profile] section name property. [REQUIRED]
+A character string that must match a [Profile] section name property.
+A Rule can also associate profiles to single cpus providing a list of the format
+CPU%d:%s separated by semicolons (";"), e.g.: profile=CPU0:profile0;CPU1:profile1.
+The keyword "ALL" can be used to indicate that all cpus must have the profile applied.
+The "ALL" keyword has a lower priority so you can mix up CPU%d and ALL meaning that 
+if no specific profile is supplied, the "ALL" one will be used. [REQUIRED]
 
 .TP
 .B "other plugin entries"
