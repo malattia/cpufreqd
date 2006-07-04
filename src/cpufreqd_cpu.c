@@ -301,8 +301,8 @@ static int get_cpu(void) {
 					&cpu_num, &c_user, &c_nice, &c_sys,
 					&c_idle, &c_iowait, &c_irq, &c_softirq);
 
-			if ((f == 5 && kernel_version == KERNEL_VERSION_24)
-					|| (f == 8 && kernel_version == KERNEL_VERSION_26))
+			if (!((f == 5 && kernel_version == KERNEL_VERSION_24)
+					|| (f == 8 && kernel_version == KERNEL_VERSION_26)))
 				continue;
 			/* got a CPU stats */
 			i++;
