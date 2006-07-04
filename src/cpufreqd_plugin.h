@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include "cpufreqd.h"
+#include "cpufreqd_remote.h"
 #include "config_parser.h"
 #include "cpufreqd_log.h"
 
@@ -57,6 +58,7 @@ struct cpufreq_sys_info {
 struct cpufreqd_info {
 	unsigned int kernel_version;
 	unsigned int cpus;
+	int cpufreqd_mode; /* operation mode (manual / dynamic) */
 	struct cpufreq_policy *cur_policy;
 	struct cpufreq_limits *limits;
 	struct cpufreq_sys_info *sys_info;

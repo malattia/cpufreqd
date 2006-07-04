@@ -72,7 +72,6 @@ static struct profile **current_profiles;
 static int force_reinit = 0;
 static int force_exit = 0;
 static int timer_expired = 1; /* expired in order to run on the first loop */
-static int cpufreqd_mode = MODE_DYNAMIC; /* operation mode (manual / dynamic) */
 
 /* default configuration */
 static struct cpufreqd_conf default_configuration = {
@@ -285,7 +284,7 @@ static int set_cpufreqd_runmode(int mode) {
 		clog(LOG_WARNING, "Unknown mode %d\n", mode);
 		return EINVAL;
 	}
-	cpufreqd_mode = mode;
+	cpufreqd_info->cpufreqd_mode = mode;
 	return 0;
 }
 
@@ -326,7 +325,7 @@ static int read_args (int argc, char *argv[]) {
 			configuration->no_daemon = 1;
 			break;
 		case 'm':
-			cpufreqd_mode = MODE_MANUAL;
+			cpufreqd_info->cpufreqd_mode = MODE_MANUAL;
 			return 0;
 		case 'V':
 			configuration->log_level = atoi(optarg);
@@ -467,7 +466,6 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 	unsigned int buflen = 0, counter = 0, i = 0;
 	struct profile *p = NULL, **pp = NULL;
 	uint32_t command = INVALID_CMD;
-	struct cpufreqd_info *cinfo = get_cpufreqd_info();
 
 	/* we have a valid sock, wait for command
 	 * don't wait more tha 0.5 sec
@@ -521,7 +519,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 				if (!current_profiles)
 					break;
 
-				for (i = 0; i < cinfo->cpus; i++) {
+				for (i = 0; i < cpufreqd_info->cpus; i++) {
 					if (!current_profiles[i])
 						continue;
 					/* format is:
@@ -550,7 +548,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 				break;
 			case CMD_SET_PROFILE:
 				clog(LOG_DEBUG, "CMD_SET_PROFILE\n");
-				if (cpufreqd_mode == MODE_DYNAMIC) {
+				if (cpufreqd_info->cpufreqd_mode == MODE_DYNAMIC) {
 					clog(LOG_ERR, "Couldn't set profile while running "
 							"in DYNAMIC mode.\n");
 					break;
@@ -566,7 +564,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 					if (counter == REMOTE_ARG(command)) {
 
 						/* set this profile for every cpu */
-						pp = calloc(cinfo->cpus, sizeof(struct profile *));
+						pp = calloc(cpufreqd_info->cpus, sizeof(struct profile *));
 						if (pp == NULL) {
 							clog(LOG_ERR, "Couldn't allocate enough memory "
 									" to set profile \"%s\"\n",
@@ -575,7 +573,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 							return;
 						}
 
-						for(i = 0; i < cinfo->cpus; i++)
+						for(i = 0; i < cpufreqd_info->cpus; i++)
 							pp[i] = p;
 
 						cpufreqd_set_profile(NULL, pp);
@@ -638,6 +636,7 @@ int main (int argc, char *argv[]) {
 		goto out;
 	}
 	memset(cpufreqd_info, 0, sizeof(struct cpufreqd_info));
+	cpufreqd_info->cpufreqd_mode = MODE_DYNAMIC;
 
 	/* 
 	 *  check perms
@@ -766,11 +765,10 @@ cpufreqd_start:
 			clog(LOG_ERR, "Couldn't open socket, remote controls disabled\n");
 		} else {
 			clog(LOG_INFO, "Remote controls enabled\n");
-			if (cpufreqd_mode == MODE_MANUAL)
+			if (cpufreqd_info->cpufreqd_mode == MODE_MANUAL)
 				clog(LOG_INFO, "Starting in manual mode\n");
 		}
-	} else
-		cpufreqd_mode = MODE_DYNAMIC;
+	}
 
 	/* Validate plugins, if none left exit.... */
 	if (validate_plugins(&configuration->plugins) == 0) {
@@ -805,7 +803,7 @@ cpufreqd_start:
 		sigprocmask(SIG_BLOCK, &signal_action.sa_mask, &old_sigmask);
 	}
 	
-	set_cpufreqd_runmode(cpufreqd_mode);
+	set_cpufreqd_runmode(cpufreqd_info->cpufreqd_mode);
 	/*
 	 *  Looooooooop
 	 */
@@ -814,7 +812,7 @@ cpufreqd_start:
 		 * Run the system scan and rule selection and set timer
 		 * if running in DYNAMIC mode AND the timer is expired
 		 */
-		if (cpufreqd_mode == MODE_DYNAMIC && timer_expired) {
+		if (cpufreqd_info->cpufreqd_mode == MODE_DYNAMIC && timer_expired) {
 			current_rule = cpufreqd_loop(configuration, current_rule);
 			/* can safely reset the expired flag now */
 			timer_expired = 0;
@@ -826,7 +824,7 @@ cpufreqd_start:
 			FD_ZERO(&rfds);
 			FD_SET(cpufreqd_sock, &rfds);
 			
-			if (!timer_expired || cpufreqd_mode == MODE_MANUAL) {
+			if (!timer_expired || cpufreqd_info->cpufreqd_mode == MODE_MANUAL) {
 				switch (pselect(cpufreqd_sock+1, &rfds, NULL, NULL, NULL, &old_sigmask)) {
 					case 0:
 						/* timed out. check to see if things have changed */
