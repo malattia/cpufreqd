@@ -191,6 +191,12 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 
 	for (i = 0; i < cpufreqd_info->cpus; i++) {
 		new_profile = new[i];
+
+		if (new_profile == NULL) {
+			clog(LOG_DEBUG, "No Profile available for CPU%d doing nothing.\n", i);
+			continue;
+		}
+
 		if (old != NULL)
 			old_profile = old[i];
 

@@ -886,8 +886,12 @@ int init_configuration(struct cpufreqd_conf *configuration)
 	LIST_FOREACH_NODE(node, &configuration->rules) {
 		tmp_rule = (struct rule *)node->content;
 		clog(LOG_INFO, "Rule \"%s\" has Profiles ", tmp_rule->name);
-		for (i = 0; i < cinfo->cpus; i++)
-			cpufreqd_log(LOG_INFO, "CPU%d:%s ", i, tmp_rule->prof[i]->name);
+		for (i = 0; i < cinfo->cpus; i++) {
+			if (tmp_rule->prof[i] != NULL)
+				cpufreqd_log(LOG_INFO, "CPU%d:%s ", i, tmp_rule->prof[i]->name);
+			else
+				cpufreqd_log(LOG_INFO, "CPU%d:none ", i);
+		}
 		cpufreqd_log(LOG_INFO, "\n");
 	}
 	/* TODO: spit a WARNING if no rule with a global cpu profile is found */
