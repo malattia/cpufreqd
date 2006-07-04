@@ -633,6 +633,7 @@ int init_configuration(struct cpufreqd_conf *configuration)
 		return -1;
 	}
 
+	/* read and initialize plugins */
 	discover_plugins(&configuration->plugins);
 	load_plugin_list(&configuration->plugins);
 
@@ -651,22 +652,6 @@ int init_configuration(struct cpufreqd_conf *configuration)
 				fclose(fp_config);
 				return -1;
 			}
-#if 0
-			/* backward compatibility: if no plugins have
-			 * been configured, then discover them.
-			 * Plugin intialization is safe enough
-			 */
-			if (LIST_EMPTY(&configuration->plugins))
-				discover_plugins(&configuration->plugins);
-					
-			/*
-			 *  Load plugins
-			 *  just after having read the General section
-			 *  and before the rest in order to be able to hadle
-			 *  options with them.
-			 */
-			load_plugin_list(&configuration->plugins);
-#endif
 			continue;
 		}
 
@@ -813,7 +798,9 @@ int init_configuration(struct cpufreqd_conf *configuration)
 		/* split profile names and associate */
 		token = strtok(tmp_name, ";");
 		do {
-			if (strstr(token, "CPU") != token) {
+			if (strstr(token, "CPU") != token 
+					|| strstr(token, ":") == NULL
+					|| *(token + 3) == ':') {
 				
 				if (strstr(token, "ALL:") == token) {
 					strncpy(profile_name, token+4, MAX_STRING_LEN);
@@ -822,7 +809,9 @@ int init_configuration(struct cpufreqd_conf *configuration)
 					strncpy(profile_name, token, MAX_STRING_LEN);
 				}
 				profile_name[MAX_STRING_LEN - 1] = '\0';
+
 				/* set this profile for all unassigned cpus */
+
 				LIST_FOREACH_NODE(node1, &configuration->profiles) {
 					tmp_profile = (struct profile *)node1->content;
 					if (strcmp(profile_name, tmp_profile->name) == 0) {
@@ -841,9 +830,12 @@ int init_configuration(struct cpufreqd_conf *configuration)
 
 			}
 			else {
-				/* assign profile for a single CPU */
+				/* assign profile to a single CPU */
 				
-				if (sscanf(token, "CPU%d:%[a-zA-Z0-9 ]", &cpu_num, profile_name) != 2) {
+				strncpy(profile_name, strstr(token, ":") + 1, MAX_STRING_LEN);
+				cpu_num = atoi(token + 3);
+
+				if (!profile_name) {
 					clog(LOG_ERR, "Wrong format for Profile name \"%s\".\n",
 							token);
 					return -1;
