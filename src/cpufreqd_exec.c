@@ -159,22 +159,28 @@ static void exec_enqueue (const char *cmd) {
 /* avoid being called for each cpu profile change,
  * only act on the last one
  */
-static int profile_change_calls;
+static int profile_pre_change_calls;
+static int profile_post_change_calls;
+
 static void exec_profile_pre_change(void __UNUSED__ *obj,
 		const struct cpufreq_policy __UNUSED__ *old,
 		const struct cpufreq_policy __UNUSED__ *new,
 		const unsigned int __UNUSED__ cpu) {
-	if (profile_change_calls == 0)
+	struct cpufreqd_info *cinfo = get_cpufreqd_info();
+	clog(LOG_DEBUG, "launch counter = %d\n", profile_pre_change_calls);
+	if (profile_pre_change_calls == 0 || cinfo->cpufreqd_mode == MODE_MANUAL)
 		exec_enqueue((char *)obj);
-	profile_change_calls++;
+	profile_pre_change_calls++;
 }
 static void exec_profile_post_change(void *obj,
 		const struct cpufreq_policy __UNUSED__ *old,
 		const struct cpufreq_policy __UNUSED__ *new,
 		const unsigned int __UNUSED__ cpu) {
-	profile_change_calls--;
-	if (profile_change_calls == 0)
+	struct cpufreqd_info *cinfo = get_cpufreqd_info();
+	clog(LOG_DEBUG, "launch counter = %d\n", profile_post_change_calls);
+	if (profile_post_change_calls == 0 || cinfo->cpufreqd_mode == MODE_MANUAL)
 		exec_enqueue((char *)obj);
+	profile_post_change_calls++;
 }
 
 static void exec_rule_change(void *obj,
@@ -184,7 +190,8 @@ static void exec_rule_change(void *obj,
 }
 
 static int exec_update(void) {
-	profile_change_calls = 0;
+	profile_pre_change_calls = 0;
+	profile_post_change_calls = 0;
 	return 0;
 }
 
