@@ -1,3 +1,12 @@
+cpufreqd (--- NEXT ---) unstable; urgency=low
+
+  * Updated debconf messages:
+    - German, thanks to Erik Schanze
+    - Vietnamese, thanks to Clytie Siddall
+    - Japanese, thanks to Hideki Yamane
+
+ -- Mattia Dongili <malattia@debian.org>  Sat, 15 Jul 2006 16:52:10 +0200
+
 cpufreqd (2.1.1-1) unstable; urgency=low
   
   * New upstream release:

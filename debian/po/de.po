@@ -1,4 +1,4 @@
-# translation of cpufreqd_1.1.2-1_templates.po to German
+# translation of cpufreqd_2.1.0-1_de.po to German
 #
 #    Translators, if you are not familiar with the PO format, gettext
 #    documentation is worth reading, especially sections dedicated to
@@ -9,19 +9,20 @@
 #            /usr/share/doc/po-debconf/README-trans
 #         or http://www.debian.org/intl/l10n/po-debconf/README-trans#
 #    Developers do not need to manually edit POT or PO files.
-# Erik Schanze <mail@erikschanze.de>, 2004.
 #
+# Erik Schanze <eriks@debian.org>, 2006.
 msgid ""
 msgstr ""
-"Project-Id-Version: cpufreqd_1.1.2-1_templates\n"
+"Project-Id-Version: cpufreqd_2.1.0-1_de\n"
 "Report-Msgid-Bugs-To: malattia@debian.org\n"
 "POT-Creation-Date: 2006-06-17 17:43+0200\n"
-"PO-Revision-Date: 2006-06-18 14:00+0200\n"
-"Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
-"Language-Team: German <debian-l10n-german@lists.debian.org>\n"
+"PO-Revision-Date: 2006-06-18 21:18+0200\n"
+"Last-Translator: Erik Schanze <eriks@debian.org>\n"
+"Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.1\n"
 
 #. Type: note
 #. Description
@@ -40,15 +41,15 @@ msgid ""
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-" Cpufreqd wird nicht gestartet, bitte aktivieren Sie ACPI, APM oder PMU in "
-"Ihrem Kernel und\n"
-" 1. starten Sie dpkg-reconfigure cpufreqd für eine einfache automatische "
-"Konfiguration oder\n"
-" 2. editieren Sie selbst /etc/cpufreqd.conf und starten dann dpkg-"
-"reconfigure cpufreqd.\n"
-"Weitere Konfiguration kann zur Aktivierung dieser Konfiguration benötigt "
-"werden. Lesen Sie hierzu /usr/share/doc/cpufreqd/README.Debian für weitere "
-"Informationen."
+" Cpufreqd wird nicht gestartet, bitte aktivieren Sie die\n"
+" CpuFreq-Schnittstelle in Ihrem Kernel und\n"
+" 1. starten Sie dpkg-reconfigure cpufreqd für eine einfache\n"
+"    automatische Einrichtung oder\n"
+" 2. editieren Sie selbst /etc/cpufreqd.conf und starten dann\n"
+"    dpkg-reconfigure cpufreqd.\n"
+" Zusätzliche Einstellungen können nötig sein, um diese Funktion\n"
+" zu aktivieren.\n"
+" Siehe/usr/share/doc/cpufreqd/README.Debian für weitere Informationen."
 
 #. Type: note
 #. Description
@@ -67,12 +68,13 @@ msgid ""
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-" Cpufreqd wird nicht gestartet, bitte aktivieren Sie die CpuFreq-"
-"Schnittstelle in Ihrem Kernel und\n"
-" 1. starten Sie dpkg-reconfigure cpufreqd für eine einfache automatische "
-"Konfiguration oder\n"
-" 2. editieren Sie selbst /etc/cpufreqd.conf und starten dann dpkg-"
-"reconfigure cpufreqd.\n"
-"Weitere Konfiguration kann zur Aktivierung dieser Konfiguration benötigt "
-"werden. Lesen Sie hierzu /usr/share/doc/cpufreqd/README.Debian für weitere "
-"Informationen."
+" Cpufreqd wird nicht gestartet, bitte aktivieren Sie die\n"
+" CpuFreq-Schnittstelle in Ihrem Kernel und\n"
+" 1. starten Sie dpkg-reconfigure cpufreqd für eine einfache\n"
+"    automatische Einrichtung oder\n"
+" 2. editieren Sie selbst /etc/cpufreqd.conf und starten dann\n"
+"    dpkg-reconfigure cpufreqd.\n"
+" Zusätzliche Einstellungen können nötig sein, um diese Funktion\n"
+" zu aktivieren.\n"
+" Siehe/usr/share/doc/cpufreqd/README.Debian für weitere Informationen."
+
