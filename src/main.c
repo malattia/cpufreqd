@@ -68,7 +68,6 @@ do { \
 
 static struct cpufreqd_info *cpufreqd_info;
 static struct rule *current_rule;
-static struct profile **current_profiles;
 static int force_reinit = 0;
 static int force_exit = 0;
 static int timer_expired = 1; /* expired in order to run on the first loop */
@@ -239,6 +238,7 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 							new_profile->policy.governor);
 				}
 				cpufreq_put_policy(check);
+				cpufreqd_info->current_profiles[i] = new_profile;
 			} /* end if double_check */
 		}
 		else {
@@ -254,8 +254,6 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 					&new_profile->policy, i);
 		}
 	}
-	current_profiles = new;
-	cpufreqd_info->cur_policy = &new_profile->policy;
 	return 0;
 }
 
@@ -396,6 +394,8 @@ static void pipe_handler(int signo) {
 }
 
 static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *current) {
+	int rule_equivalent = 0;
+	unsigned int i = 0;
 	struct rule *best_rule = NULL;
 	struct directive *d = NULL;
 	
@@ -416,16 +416,32 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 		clog(LOG_WARNING, "No Rule matches current system status.\n");
 
 	} else if (current != best_rule) {
+		
 		/* rule changed */
 
 		/* try to be conservative, if the new rule has the same score
-		 * as the old one then keep the old one
+		 * as the old one then keep the old one.
+		 * Check for profiles equivalence too.
 		 */
 		if (current != NULL && current->score == best_rule->score) {
-			clog(LOG_INFO, "New Rule (\"%s\") is equivalent "
-					"to the old one (\"%s\"), doing nothing.\n",
-					best_rule->name, current->name);
-			return current;
+
+			rule_equivalent = 1;
+			for (i = 0; i < cpufreqd_info->cpus; i++) {
+				/*
+				 * if the new rule sets a profile for a cpu not 
+				 * covered by the current rule then prefer the new rule
+				 */
+				 if (current->prof[i] == NULL && best_rule->prof[i] != NULL) {
+					 rule_equivalent = 0;
+					 break;
+				 }
+			}
+			if (rule_equivalent) {
+				clog(LOG_INFO, "New Rule (\"%s\") is equivalent "
+						"to the old one (\"%s\"), doing nothing.\n",
+						best_rule->name, current->name);
+				return current;
+			}
 		}
 		
 		clog(LOG_DEBUG, "New Rule (\"%s\"), applying.\n", 
@@ -516,11 +532,11 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 				break;
 			case CMD_CUR_PROFILES:
 				clog(LOG_DEBUG, "CMD_CUR_PROFILES\n");
-				if (!current_profiles)
+				if (!cpufreqd_info->current_profiles)
 					break;
 
 				for (i = 0; i < cpufreqd_info->cpus; i++) {
-					if (!current_profiles[i])
+					if (!cpufreqd_info->current_profiles[i])
 						continue;
 					/* format is:
 					 * 1 cpu where the profile is active
@@ -531,10 +547,10 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 					 */
 					buflen = snprintf(buf, MAX_STRING_LEN, "%d/%s/%lu/%lu/%s\n",
 							i,
-							current_profiles[i]->name,
-							current_profiles[i]->policy.min,
-							current_profiles[i]->policy.max,
-							current_profiles[i]->policy.governor);
+							cpufreqd_info->current_profiles[i]->name,
+							cpufreqd_info->current_profiles[i]->policy.min,
+							cpufreqd_info->current_profiles[i]->policy.max,
+							cpufreqd_info->current_profiles[i]->policy.governor);
 					write(sock, buf, buflen);
 				}
 				break;
@@ -615,9 +631,6 @@ int main (int argc, char *argv[]) {
 	struct sigaction signal_action;
 	sigset_t old_sigmask;
 	fd_set rfds;
-#if 0
-	struct itimerval new_timer;
-#endif
 	unsigned int i = 0;
 	int cpufreqd_sock = -1, peer_sock = -1; /* input pipe */
 	char dirname[MAX_PATH_LEN];
@@ -712,13 +725,23 @@ int main (int argc, char *argv[]) {
 		(cpufreqd_info->sys_info+i)->governors = cpufreq_get_available_governors(i);
 		(cpufreqd_info->sys_info+i)->frequencies = cpufreq_get_available_frequencies(i);
 	}
+	/* 
+	 * per-cpu profiles
+	 */
+	cpufreqd_info->current_profiles = calloc(1, cpufreqd_info->cpus * sizeof(struct profile *));
+	if (cpufreqd_info->current_profiles == NULL) {
+		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
+		ret = ENOMEM;
+		goto out;
+	}
+
 
 	/* SMP: with different speed cpus */
 	cpufreqd_info->limits = calloc(1, cpufreqd_info->cpus * sizeof(struct cpufreq_limits));
 	if (cpufreqd_info->limits == NULL) {
 		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
 		ret = ENOMEM;
-		goto out_sys_info;
+		goto out;
 	}
 	for (i = 0; i < cpufreqd_info->cpus; i++) {
 		/* if one of the probes fails remove all the others also */
@@ -743,7 +766,7 @@ int main (int argc, char *argv[]) {
 	if (configuration->no_daemon==0 && daemonize()!=0) {
 		clog(LOG_CRIT, "Unable to go background, exiting.\n");
 		ret = ECHILD;
-		goto out_limits;
+		goto out;
 	}
 
 cpufreqd_start:
@@ -883,26 +906,28 @@ out_config_read:
 		goto cpufreqd_start;
 	}
 
-out_limits:
-	if (cpufreqd_info->limits != NULL)
-		free(cpufreqd_info->limits);
-
-out_sys_info:
-	if (cpufreqd_info->sys_info != NULL) {
-		for (i=0; i<cpufreqd_info->cpus; i++) {
-			if ((cpufreqd_info->sys_info+i)->governors!=NULL)
-				cpufreq_put_available_governors((cpufreqd_info->sys_info+i)->governors);
-			if ((cpufreqd_info->sys_info+i)->affected_cpus!=NULL)
-				cpufreq_put_affected_cpus((cpufreqd_info->sys_info+i)->affected_cpus);
-			if ((cpufreqd_info->sys_info+i)->frequencies!=NULL)
-				cpufreq_put_available_frequencies((cpufreqd_info->sys_info+i)->frequencies);
-		}
-		free(cpufreqd_info->sys_info);
-	}
-
 out:
-	if (cpufreqd_info != NULL)
+	if (cpufreqd_info != NULL) {
+		if (cpufreqd_info->limits != NULL)
+			free(cpufreqd_info->limits);
+
+		if (cpufreqd_info->sys_info != NULL) {
+			for (i=0; i<cpufreqd_info->cpus; i++) {
+				if ((cpufreqd_info->sys_info+i)->governors!=NULL)
+					cpufreq_put_available_governors((cpufreqd_info->sys_info+i)->governors);
+				if ((cpufreqd_info->sys_info+i)->affected_cpus!=NULL)
+					cpufreq_put_affected_cpus((cpufreqd_info->sys_info+i)->affected_cpus);
+				if ((cpufreqd_info->sys_info+i)->frequencies!=NULL)
+					cpufreq_put_available_frequencies((cpufreqd_info->sys_info+i)->frequencies);
+			}
+			free(cpufreqd_info->sys_info);
+		}
+
+		if (cpufreqd_info->current_profiles != NULL)
+			free(cpufreqd_info->current_profiles);
+
 		free(cpufreqd_info);
+	}
 	if (configuration != NULL)
 		free(configuration);
 	/*
