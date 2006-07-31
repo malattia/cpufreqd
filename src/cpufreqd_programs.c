@@ -270,7 +270,13 @@ static void print_tree(TNODE *n) {
  *
  */
 static int numeric_entry(const struct dirent *d) {
-	return isdigit(d->d_name[0]);
+	if (isdigit(d->d_name[0])) {
+#if 0
+		clog(LOG_DEBUG, "directory: %s\n", d->d_name);
+#endif
+		return 1;
+	}
+	return 0;
 }
 
 /* int get_running_programs(void)
@@ -283,15 +289,19 @@ static int numeric_entry(const struct dirent *d) {
 static int programs_update(void) {
 
 	struct dirent **namelist;
-	int n=0, ret=0, n_chars=0;
+	int n = 0, ret = 0, pid = 0;
 	char file[PRG_LENGTH];
 	char program[PRG_LENGTH];
 	char *prg_basename;
+	FILE *fp;
 
 	/* reset all nodes  */
 	preorder_visit(running_programs, &neglect_node);
 
 	n = scandir("/proc", &namelist, numeric_entry, NULL);
+#if 0
+	clog(LOG_DEBUG, "directories: %d\n", n);
+#endif
 
 	if (n < 0) {
 		clog(LOG_ERR, "scandir: %s\n", strerror(errno));
@@ -299,26 +309,48 @@ static int programs_update(void) {
 	} else {
 
 		while(n--) {
-			snprintf(file, PRG_LENGTH - 1, "/proc/%s/exe", namelist[n]->d_name);    
+			snprintf(file, PRG_LENGTH - 1, "/proc/%s/cmdline", namelist[n]->d_name);
+#if 0
+			clog(LOG_DEBUG, "directory (%3d: %s)\n", n, file);
+#endif
+			pid = atoi(namelist[n]->d_name);
 			free(namelist[n]);
 
-			n_chars = readlink(file, program, PRG_LENGTH - 1);
-
-			if (n_chars < 0) {
-				/* probably this process is a kernel process or 
-				 * user cannot read the link or
-				 * has disappeared while scanning, don't worry */
+			if (!(fp = fopen(file, "r"))) {
 #if 0
 				clog(LOG_DEBUG, "%s: %s\n", file, strerror(errno));
 #endif
+				continue; /* disappeared process?? */
+			}
+
+			if (!fgets(program, PRG_LENGTH - 1, fp)) {
+#if 0
+				clog(LOG_DEBUG, "%s: %s\n", file, strerror(errno));
+#endif
+				fclose(fp);
 				continue;
 			}
+			fclose(fp);
+
 			/* terminate the string */
-			program[n_chars] = '\0';
+			program[PRG_LENGTH - 1] = '\0';
+#if 0
+			clog(LOG_DEBUG, "read program (%3d %5d: %s)\n", n, pid, program);
+#endif
+			/* strip stuff after a blank space */
+			prg_basename = index(program, ' ');
+			if (prg_basename != NULL)
+				*prg_basename = '\0';
+
+			/* find basename */
 			prg_basename = rindex(program, '/');
-			prg_basename++;
 			if (prg_basename == NULL)
 				prg_basename = program;
+			else
+				prg_basename++;
+			if (*prg_basename == '-')
+				prg_basename++;
+
 			insert_tnode(&running_programs, prg_basename);
 			ret++;
 		}
