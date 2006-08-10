@@ -393,8 +393,8 @@ static void pipe_handler(int signo) {
   clog(LOG_NOTICE, "Caught PIPE signal (%s).\n", strsignal(signo));
 }
 
-static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *current) {
-	int rule_equivalent = 0;
+static void cpufreqd_loop(struct cpufreqd_conf *conf) {
+	int rule_equivalent = 0, ret = 0;
 	unsigned int i = 0;
 	struct rule *best_rule = NULL;
 	struct directive *d = NULL;
@@ -415,7 +415,7 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 	if (best_rule == NULL) {
 		clog(LOG_WARNING, "No Rule matches current system status.\n");
 
-	} else if (current != best_rule) {
+	} else if (current_rule != best_rule) {
 		
 		/* rule changed */
 
@@ -423,7 +423,7 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 		 * as the old one then keep the old one.
 		 * Check for profiles equivalence too.
 		 */
-		if (current != NULL && current->score == best_rule->score) {
+		if (current_rule != NULL && current_rule->score == best_rule->score) {
 
 			rule_equivalent = 1;
 			for (i = 0; i < cpufreqd_info->cpus; i++) {
@@ -431,7 +431,7 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 				 * if the new rule sets a profile for a cpu not 
 				 * covered by the current rule then prefer the new rule
 				 */
-				 if (current->prof[i] == NULL && best_rule->prof[i] != NULL) {
+				 if (current_rule->prof[i] == NULL && best_rule->prof[i] != NULL) {
 					 rule_equivalent = 0;
 					 break;
 				 }
@@ -439,8 +439,8 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 			if (rule_equivalent) {
 				clog(LOG_INFO, "New Rule (\"%s\") is equivalent "
 						"to the old one (\"%s\"), doing nothing.\n",
-						best_rule->name, current->name);
-				return current;
+						best_rule->name, current_rule->name);
+				return;
 			}
 		}
 		
@@ -449,28 +449,36 @@ static struct rule *cpufreqd_loop(struct cpufreqd_conf *conf, struct rule *curre
 		/* pre change event */
 		if (best_rule->directives.first != NULL) {
 			TRIGGER_RULE_EVENT(rule_pre_change, &best_rule->directives, d,
-					current, best_rule);
+					current_rule, best_rule);
 		}
 
 		/* change frequency */
-		if (current == NULL) {
-			cpufreqd_set_profile(NULL, best_rule->prof);
-		} else if (best_rule->prof != current->prof) {
-			cpufreqd_set_profile(current->prof, best_rule->prof);
+		if (current_rule == NULL)
+			ret = cpufreqd_set_profile(NULL, best_rule->prof);
+
+		else if (best_rule->prof != current_rule->prof)
+			ret = cpufreqd_set_profile(current_rule->prof, best_rule->prof);
+
+		if (ret < 0) {
+			clog(LOG_ERR, "Cannot set policy, Rule unchanged (\"%s\").\n", 
+					current_rule != NULL ? current_rule->name : "none");
+			return;
 		}
 
 		/* post change event */
 		if (best_rule->directives.first != NULL) {
 			TRIGGER_RULE_EVENT(rule_post_change, &best_rule->directives, d,
-					current, best_rule);
+					current_rule, best_rule);
 		}
+
+		/* update current rule */
+		current_rule = best_rule;
 
 	} else {
 		/* nothing new happened */
 		clog(LOG_DEBUG, "Rule unchanged (\"%s\"), doing nothing.\n", 
-				current->name);
+				current_rule->name);
 	}
-	return best_rule;
 }
 
 /*
@@ -836,7 +844,7 @@ cpufreqd_start:
 		 * if running in DYNAMIC mode AND the timer is expired
 		 */
 		if (cpufreqd_info->cpufreqd_mode == MODE_DYNAMIC && timer_expired) {
-			current_rule = cpufreqd_loop(configuration, current_rule);
+			cpufreqd_loop(configuration);
 			/* can safely reset the expired flag now */
 			timer_expired = 0;
 		}
