@@ -31,7 +31,7 @@ db_stop
 check_for_cpufreq_support() {
 	# forget it if we're trying to start and no cpufreq found in kernel
 	if !([ -d /sys/devices/system/cpu/cpu0/cpufreq ] || [ -f /proc/cpufreq ]) ; then
-		echo -n "No cpufreq interface found, "
+		echo -n "No cpufreq interface found, " >&2
 		return 1
 	fi
 	return 0
@@ -41,7 +41,7 @@ check_for_pm_support() {
 	# forget it if we're trying to start and no power management support is
 	# included in kernel
 	if !([ -d /proc/pmu ] || [ -f /proc/apm ] || [ -d /proc/acpi ]) ; then
-		echo -n "No supported power management interface found, "
+		echo -n "No supported power management interface found, " >&2
 		return 1
 	fi
 	return 0
@@ -58,7 +58,7 @@ case "$1" in
 		    /etc/init.d/cpufreqd start
 		fi
 	else
-		echo "not starting cpufreqd."
+		echo "not starting cpufreqd." >&2
 	fi
 
 
