@@ -1,3 +1,12 @@
+version 2.2.0
+-------------
+* SMP/SMT awareness in profiles/rules settings and cpu_plugin
+* deal with unfair bioses which change frequency (and locks 
+it for some time) behind our back
+* restore reading /proc/<pid>/cmdline instead of /p/<p>/exe and try to
+normalize the porcess name
+* do not set a Rule as "current" if it fails to apply
+
 version 2.1.1
 -------------
 * fixed incorrect use of va_args in cpufreqd_log
