@@ -343,6 +343,25 @@ else
 	DISABLED_PLUGINS="$DISABLED_PLUGINS governor_parameters"
 fi
 
+###############
+# TAU support #
+###############
+AC_ARG_ENABLE([tau],
+	[AS_HELP_STRING(
+		[--enable-tau],
+		[tau plugin - will provide the TAU (Thermal Assist Unit) cpufreqd plugin [default=enabled]])
+	],
+	[tau_enable=$enableval],
+	[tau_enable=yes]
+	)
+AM_CONDITIONAL(TAU_PLUGIN, test x"${tau_enable}" = xyes)
+if test x"${tau_enable}" = xyes; then
+	ENABLED_PLUGINS="$ENABLED_PLUGINS tau"
+else
+	DISABLED_PLUGINS="$DISABLED_PLUGINS tau"
+fi
+
+
 # Defines two useful paths in order to remove hardcoded paths
 if test "x$prefix" = xNONE; then
   prefix="${ac_default_prefix}"

@@ -224,6 +224,15 @@ The rule will have a higher score if battery percentage is between the values
 provided. Must be of the form %d-%d (e.g.: battery_interval=10-100).
 
 .PP
+.SS "tau plugin"
+Support for the Thermal Assist Unit to read the CPU temperature from
+/proc/cpuinfo.
+.TP
+.B "tau_temperature"
+The rule will have a higher score if the temperature is between the values
+provided. Must be of the form %d-%d (e.g.: tau_temperature=30-60).
+
+.PP
 .SS "cpu plugin"
 Monitors the cpu usage. Available Rule entries:
 .TP

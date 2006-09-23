@@ -54,6 +54,10 @@ endif
 if GOVERNOR_PARAMETERS_PLUGIN
 BUILD_PLUGINS += cpufreqd_governor_parameters.la
 endif
+if TAU_PLUGIN
+BUILD_PLUGINS += cpufreqd_tau.la
+endif
+
 lib_LTLIBRARIES = $(BUILD_PLUGINS)
 
 if NFORCE2_PLUGIN
@@ -176,6 +180,14 @@ cpufreqd_governor_parameters_la_CFLAGS = \
 
 cpufreqd_governor_parameters_la_LDFLAGS = \
 		-module -avoid-version -lsysfs
+endif
+
+if TAU_PLUGIN
+cpufreqd_tau_la_SOURCES = \
+		cpufreqd_tau.c
+
+cpufreqd_tau_la_LDFLAGS = \
+		-module -avoid-version
 endif
 
 noinst_HEADERS = \
