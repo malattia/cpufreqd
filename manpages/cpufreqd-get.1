@@ -7,7 +7,7 @@
 .\" but WITHOUT ANY WARRANTY; without even the implied warranty of
 .\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 .\" GNU General Public License for more details."
-.TH "cpufreqd-get" "1" "2.0.0" "Mattia Dongili" ""
+.TH "cpufreqd-get" "1" "2.2.0" "Mattia Dongili" ""
 
 .SH "NAME"
 .LP 
@@ -34,7 +34,7 @@ for usage with cpufreqd\-set. See the PARAMETERS above for more.
 cpufreqd\-get
 .nf
 .ne 7
-Name (#1):      High Speed 1 *
+Name (#1):      High Speed 1
 Governor:       performance
 Min freq:       997500
 Max freq:       997500
@@ -43,6 +43,14 @@ Name (#2):      Low Speed 1
 Governor:       powersave
 Min freq:       731500
 Max freq:       731500
+.fi
+.LP 
+.B "LIST_APPLIED_PROFILES"
+.LP 
+cpufreqd\-get -l
+.nf
+.ne 7
+CPU#0: "High Speed 1" ondemand 731500-997500
 .fi
 
 Near the name (between the parenthesis) you can find the index number to use
