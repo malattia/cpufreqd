@@ -3,10 +3,10 @@
 # Clytie Siddall <clytie@riverland.net.au>, 2005-2006.
 # 
 msgid ""
-""
-msgstr "Project-Id-Version: cpufreqd 2.1.0-1\n"
+msgstr ""
+"Project-Id-Version: cpufreqd 2.1.0-1\n"
 "Report-Msgid-Bugs-To: malattia@debian.org\n"
-"POT-Creation-Date: 2006-06-17 17:43+0200\n"
+"POT-Creation-Date: 2006-09-23 18:11+0200\n"
 "PO-Revision-Date: 2006-06-23 15:00+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
@@ -15,15 +15,15 @@ msgstr "Project-Id-Version: cpufreqd 2.1.0-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 
-#.Type: note
-#.Description
-#: ../templates:4
+#. Type: error
+#. Description
+#: ../templates:1001
 msgid "Unable to find a Power Management interface in your kernel"
 msgstr "Không tìm thấy giao diện Quản Lý Điện Năng trong hạt nhân này"
 
-#.Type: note
-#.Description
-#: ../templates:4
+#. Type: error
+#. Description
+#: ../templates:1001
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
@@ -31,21 +31,26 @@ msgid ""
 " 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
-msgstr "Trình nền cpufreqd sẽ không được khởi chạy; trong hạt nhân hãy hiệu lực ACPI, APM hay PMU, và\n"
-" 1. chạy lệnh « dpkg-reconfigure cpufreqd » để tạo cấu hình tự động đơn giản, hay\n"
-" 2. sửa đổi bằng tay tập tin cấu hình </etc/cpufreqd.conf> rồi chạy lệnh « dpkg-reconfigure cpufreqd ».\n"
+msgstr ""
+"Trình nền cpufreqd sẽ không được khởi chạy; trong hạt nhân hãy hiệu lực "
+"ACPI, APM hay PMU, và\n"
+" 1. chạy lệnh « dpkg-reconfigure cpufreqd » để tạo cấu hình tự động đơn "
+"giản, hay\n"
+" 2. sửa đổi bằng tay tập tin cấu hình </etc/cpufreqd.conf> rồi chạy lệnh « "
+"dpkg-reconfigure cpufreqd ».\n"
 "Có lẽ cần thiết cấu hình thêm để kích hoạt tính năng này.\n"
-"Xem tài liệu Đọc Đi </usr/share/doc/cpufreqd/README.Debian> để tìm thông tin thêm."
+"Xem tài liệu Đọc Đi </usr/share/doc/cpufreqd/README.Debian> để tìm thông tin "
+"thêm."
 
-#.Type: note
-#.Description
-#: ../templates:14
+#. Type: error
+#. Description
+#: ../templates:2001
 msgid "Unable to find a CpuFreq interface in your kernel"
 msgstr "Không tìm thấy giao diện CpuFreq trong hạt nhận này."
 
-#.Type: note
-#.Description
-#: ../templates:14
+#. Type: error
+#. Description
+#: ../templates:2001
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
@@ -53,8 +58,13 @@ msgid ""
 " 2. edit /etc/cpufreqd.conf by hand and run dpkg-reconfigure cpufreqd.\n"
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
-msgstr "Trình nền cpufreqd sẽ không được khởi chạy; trong hạt nhân hãy hiệu lực một trình điều khiển (driver) CpuFreq, và\n"
-" 1. chạy lệnh « dpkg-reconfigure cpufreqd » để tạo cấu hình tự động đơn giản, hay\n"
-" 2. sửa đổi bằng tay tập tin cấu hình </etc/cpufreqd.conf> rồi chạy lệnh « dpkg-reconfigure cpufreqd ».\n"
+msgstr ""
+"Trình nền cpufreqd sẽ không được khởi chạy; trong hạt nhân hãy hiệu lực một "
+"trình điều khiển (driver) CpuFreq, và\n"
+" 1. chạy lệnh « dpkg-reconfigure cpufreqd » để tạo cấu hình tự động đơn "
+"giản, hay\n"
+" 2. sửa đổi bằng tay tập tin cấu hình </etc/cpufreqd.conf> rồi chạy lệnh « "
+"dpkg-reconfigure cpufreqd ».\n"
 "Có lẽ cần thiết cấu hình thêm để kích hoạt tính năng này.\n"
-"Xem tài liệu Đọc Đi </usr/share/doc/cpufreqd/README.Debian> để tìm thông tin thêm."
+"Xem tài liệu Đọc Đi </usr/share/doc/cpufreqd/README.Debian> để tìm thông tin "
+"thêm."

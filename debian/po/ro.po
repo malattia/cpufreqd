@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ro\n"
 "Report-Msgid-Bugs-To: malattia@debian.org\n"
-"POT-Creation-Date: 2006-06-17 17:43+0200\n"
+"POT-Creation-Date: 2006-09-23 18:11+0200\n"
 "PO-Revision-Date: 2006-06-18 14:11+0300\n"
 "Last-Translator: Eddy Petrişor <eddy.petrisor@gmail.com>\n"
 "Language-Team: Romanian <debian-l10n-romanian@lists.debian.org>\n"
@@ -15,17 +15,20 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.2\n"
-"Plural-Forms: nplurals=3;plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?2:1))\n"
+"Plural-Forms: nplurals=3;plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?"
+"2:1))\n"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Unable to find a Power Management interface in your kernel"
-msgstr "Nu s-a putut găsi nici o interfaţă de management a consumului în nucelul dvs. de sistem"
+msgstr ""
+"Nu s-a putut găsi nici o interfaţă de management a consumului în nucelul "
+"dvs. de sistem"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
@@ -34,24 +37,29 @@ msgid ""
 " Additional configuration may be needed to activate this feature.\n"
 " See /usr/share/doc/cpufreqd/README.Debian for more information."
 msgstr ""
-" Cpufreqd nu va fi pornit, vă rugăm să activaţi ACPI, APM sau PMU în nucelul\n"
+" Cpufreqd nu va fi pornit, vă rugăm să activaţi ACPI, APM sau PMU în "
+"nucelul\n"
 "dvs. de sistem şi\n"
-" 1. să rulaţi dpkg-reconfigure cpufreqd pentru a avea o configurarea automată\n"
+" 1. să rulaţi dpkg-reconfigure cpufreqd pentru a avea o configurarea "
+"automată\n"
 "şi simplă sau\n"
-" 2. să editaţi /etc/cpufreqd.conf manunal şi rulaţi dpkg-reconfigure cpufreqd.\n"
+" 2. să editaţi /etc/cpufreqd.conf manunal şi rulaţi dpkg-reconfigure "
+"cpufreqd.\n"
 " Este posibil ca să fie necesare configurări suplimentare pentru activa\n"
 "această facilitate.\n"
-" A se vedea /usr/share/doc/cpufreqd/README.Debian pentru mai multe informaţii."
+" A se vedea /usr/share/doc/cpufreqd/README.Debian pentru mai multe "
+"informaţii."
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:14
+#: ../templates:2001
 msgid "Unable to find a CpuFreq interface in your kernel"
-msgstr "Nu s-a putut găsi nici o interfaţă pentru CpuFreq în nucleulul dvs. de sistem"
+msgstr ""
+"Nu s-a putut găsi nici o interfaţă pentru CpuFreq în nucleulul dvs. de sistem"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:14
+#: ../templates:2001
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
@@ -62,10 +70,12 @@ msgid ""
 msgstr ""
 " Cpufreqd nu va fi pornit, vă rugăm să activaţi un modul CpuFreq în nucelul\n"
 "dvs. de sistem şi\n"
-" 1. să rulaţi dpkg-reconfigure cpufreqd pentru a avea o configurarea automată\n"
+" 1. să rulaţi dpkg-reconfigure cpufreqd pentru a avea o configurarea "
+"automată\n"
 "şi simplă sau\n"
-" 2. să editaţi /etc/cpufreqd.conf manunal şi rulaţi dpkg-reconfigure cpufreqd.\n"
+" 2. să editaţi /etc/cpufreqd.conf manunal şi rulaţi dpkg-reconfigure "
+"cpufreqd.\n"
 " Este posibil ca să fie necesare configurări suplimentare pentru activa\n"
 "această facilitate.\n"
-" A se vedea /usr/share/doc/cpufreqd/README.Debian pentru mai multe informaţii."
-
+" A se vedea /usr/share/doc/cpufreqd/README.Debian pentru mai multe "
+"informaţii."

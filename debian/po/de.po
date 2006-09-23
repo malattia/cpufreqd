@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cpufreqd_2.1.0-1_de\n"
 "Report-Msgid-Bugs-To: malattia@debian.org\n"
-"POT-Creation-Date: 2006-06-17 17:43+0200\n"
+"POT-Creation-Date: 2006-09-23 18:11+0200\n"
 "PO-Revision-Date: 2006-06-18 21:18+0200\n"
 "Last-Translator: Erik Schanze <eriks@debian.org>\n"
 "Language-Team: German <de@li.org>\n"
@@ -24,15 +24,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.1\n"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Unable to find a Power Management interface in your kernel"
 msgstr "Keine Kernel-Schnittstelle zur Energiekontrolle gefunden"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
@@ -51,15 +51,15 @@ msgstr ""
 " zu aktivieren.\n"
 " Siehe/usr/share/doc/cpufreqd/README.Debian für weitere Informationen."
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:14
+#: ../templates:2001
 msgid "Unable to find a CpuFreq interface in your kernel"
 msgstr "CpuFreq-Schnittstelle im Kernel nicht gefunden"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:14
+#: ../templates:2001
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
@@ -77,4 +77,3 @@ msgstr ""
 " Zusätzliche Einstellungen können nötig sein, um diese Funktion\n"
 " zu aktivieren.\n"
 " Siehe/usr/share/doc/cpufreqd/README.Debian für weitere Informationen."
-

@@ -27,7 +27,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cpufreqd\n"
 "Report-Msgid-Bugs-To: malattia@debian.org\n"
-"POT-Creation-Date: 2006-06-17 17:43+0200\n"
+"POT-Creation-Date: 2006-09-23 18:11+0200\n"
 "PO-Revision-Date: 2005-10-11 18:09+0100\n"
 "Last-Translator: César Gómez Martín <cesar.gomez@gmail.com>\n"
 "Language-Team: Debian l10n spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -38,15 +38,15 @@ msgstr ""
 "X-Poedit-Country: SPAIN\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Unable to find a Power Management interface in your kernel"
 msgstr "No se pudo encontrar una interfaz de gestión de energía en su núcleo"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:4
+#: ../templates:1001
 #, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
@@ -61,15 +61,15 @@ msgstr ""
 "automática simple o\n"
 " 2. edite /etc/cpufreqd.conf manualmente y ejecute dpkg-reconfigure cpufreqd."
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:14
+#: ../templates:2001
 msgid "Unable to find a CpuFreq interface in your kernel"
 msgstr "No se pudo encontrar una interfaz CpuFreq en su núcleo"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:14
+#: ../templates:2001
 #, fuzzy
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "

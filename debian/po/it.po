@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cpufreqd\n"
 "Report-Msgid-Bugs-To: malattia@debian.org\n"
-"POT-Creation-Date: 2006-06-17 17:43+0200\n"
+"POT-Creation-Date: 2006-09-23 18:11+0200\n"
 "PO-Revision-Date: 2006-06-17 17:49+0200\n"
 "Last-Translator: Mattia Dongili <malattia@debian.org>\n"
 "Language-Team:\n"
@@ -23,16 +23,16 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Unable to find a Power Management interface in your kernel"
 msgstr ""
 "Impossibile trovare l'interfaccia per la gestione energetica nel kernel"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid ""
 " Cpufreqd won't be started, please enable ACPI, APM or PMU in your kernel "
 "and\n"
@@ -47,21 +47,21 @@ msgstr ""
 "automatica oppure\n"
 " 2. modifica manualmente il file /etc/cpufreqd.conf ed esegui dpkg-"
 "reconfigure cpufreqd.\n"
-" Per attivare queste funzionalita` potrebbero essere necessarie altre"
-" configurazioni.\n"
+" Per attivare queste funzionalita` potrebbero essere necessarie altre "
+"configurazioni.\n"
 " Vedi /usr/share/doc/cpufreqd/README.Debian per ulteriori informazioni."
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:14
+#: ../templates:2001
 msgid "Unable to find a CpuFreq interface in your kernel"
 msgstr ""
 "Impossibile trovare l'interfaccia per la gestione della frequenza del "
 "processore nel kernel"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../templates:14
+#: ../templates:2001
 msgid ""
 " Cpufreqd won't be started, please enable a CpuFreq driver in your kernel "
 "and\n"
@@ -76,6 +76,6 @@ msgstr ""
 "automatica oppure\n"
 " 2. modifica manualmente il file /etc/cpufreqd.conf ed esegui dpkg-"
 "reconfigure cpufreqd.\n"
-" Per attivare queste funzionalita` potrebbero essere necessarie altre"
-" configurazioni.\n"
+" Per attivare queste funzionalita` potrebbero essere necessarie altre "
+"configurazioni.\n"
 " Vedi /usr/share/doc/cpufreqd/README.Debian per ulteriori informazioni."
