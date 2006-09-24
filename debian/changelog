@@ -1,6 +1,7 @@
 cpufreqd (2.2.0-2) unstable; urgency=low
 
   * Remove all debconf stuff.
+  * use Sarge's compliant character classes in sed.
 
  -- Mattia Dongili <malattia@debian.org>  Sun, 24 Sep 2006 11:13:47 +0200
 
