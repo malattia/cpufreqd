@@ -48,7 +48,7 @@ load_governor_modules() {
 		;;
 		"auto")
 			CPUFREQ_GOV_MODULES=$(cat /etc/cpufreqd.conf | \
-						sed -ne 's/^policy=\(\w*\)/cpufreq_\1/p' | \
+						sed -ne 's/^policy=\([[:alpha:]]*\)/cpufreq_\1/p' | \
 						uniq | xargs)
 		;;
 		*)
