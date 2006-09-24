@@ -24,9 +24,8 @@ set -e
 #     `abort-remove' or `abort-deconfigure'.
 
 # Source debconf library.
-. /usr/share/debconf/confmodule
-
-db_stop
+#. /usr/share/debconf/confmodule
+#db_stop
 
 check_for_cpufreq_support() {
 	# forget it if we're trying to start and no cpufreq found in kernel
@@ -37,21 +36,11 @@ check_for_cpufreq_support() {
 	return 0
 }
 
-check_for_pm_support() {
-	# forget it if we're trying to start and no power management support is
-	# included in kernel
-	if !([ -d /proc/pmu ] || [ -f /proc/apm ] || [ -d /proc/acpi ]) ; then
-		echo -n "No supported power management interface found, " >&2
-		return 1
-	fi
-	return 0
-}
-
 case "$1" in
     configure)
         # setup startup links, they'll warn the user of anything not being setup properly
         update-rc.d cpufreqd defaults > /dev/null
-	if ( check_for_cpufreq_support && check_for_pm_support ) ; then
+	if check_for_cpufreq_support ; then
 		if [ -x /usr/sbin/invoke-rc.d ] ; then
 		      invoke-rc.d cpufreqd start
 		else

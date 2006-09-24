@@ -5,12 +5,8 @@ This package installs a very trivial configuration file and most of the time
 it's not suite for everybody needs. Thus it's strongly suggested to modify the
 configuration and restart cpufreqd after install.
 
-If the install process fails to detect proper cpufreq support it will warn
-through debconf with a low priority. Startup links are created and the startup
-script will try to give useful hints.
-
 Cpufreqd provides support to automatically load necessary kernel modules on startup,
-see /etc/default/cpufreqd comments for more
+see /etc/default/cpufreqd comments for more.
 
 CPUFreq support
 ---------------
@@ -46,5 +42,3 @@ Advanced users may want try this feature as follows:
    --enable-nvclock=/dir/where/apt/unzipped/nvclock-0.8b
    and build cpufreqd's deb package by means of
    dpkg-buildpackage -rfakeroot -uc -us -b
-   or with
-   make && make install

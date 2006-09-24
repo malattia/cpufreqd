@@ -1,3 +1,9 @@
+cpufreqd (2.2.0-2) unstable; urgency=low
+
+  * Remove all debconf stuff.
+
+ -- Mattia Dongili <malattia@debian.org>  Sun, 24 Sep 2006 11:13:47 +0200
+
 cpufreqd (2.2.0-1) unstable; urgency=low
 
   * Updated debconf messages:

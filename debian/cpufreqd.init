@@ -72,16 +72,6 @@ check_for_cpufreq_support() {
 	return 0
 }
 
-check_for_pm_support() {
-	# forget it if we're trying to start and no power management support is
-	# included in kernel
-	if !([ -d /proc/pmu ] || [ -f /proc/apm ] || [ -d /proc/acpi ]) ; then
-#		log_failure_msg "no supported power management interface found. "
-		return 1
-	fi
-	return 0
-}
-
 set -e
 
 retval=0
@@ -90,7 +80,7 @@ case "$1" in
 		log_daemon_msg "Starting $DESC" "$NAME"
 		load_cpu_module
 		load_governor_modules
-		if ( check_for_cpufreq_support && check_for_pm_support ) ; then
+		if check_for_cpufreq_support ; then
 			start_daemon $DAEMON -f $CPUFREQD_CONFFILE
 		else
 #			log_failure_msg " Errors occurred starting cpufreqd"
@@ -107,7 +97,6 @@ case "$1" in
 	;;
 #  reload|force-reload)
 #      check_for_cpufreq_support
-#      check_for_pm_support
 #      echo -n "Reloading $DESC configuration..."
 #      start-stop-daemon --stop --oknodo --signal 1 --exec $DAEMON -- -f $CPUFREQD_CONFFILE
 #      echo "done."
@@ -116,7 +105,7 @@ case "$1" in
 		log_daemon_msg "Restarting $DESC" "$NAME"
 		killproc $DAEMON
 		sleep 1
-		if ( check_for_cpufreq_support && check_for_pm_support ) ; then
+		if check_for_cpufreq_support ; then
 			start_daemon $DAEMON -f $CPUFREQD_CONFFILE
 		else
 #			log_failure_msg " Errors occurred starting cpufreqd"
