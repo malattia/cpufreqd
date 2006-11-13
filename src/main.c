@@ -488,7 +488,7 @@ static void cpufreqd_loop(struct cpufreqd_conf *conf) {
 static void execute_command(int sock, struct cpufreqd_conf *conf) {
 	struct pollfd fds;
 	char buf[MAX_STRING_LEN];
-	unsigned int buflen = 0, counter = 0, i = 0;
+	unsigned int buflen = 0, counter = 0, i = 0, cpus = 0;
 	struct profile *p = NULL, **pp = NULL;
 	uint32_t command = INVALID_CMD;
 
@@ -524,15 +524,20 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 					 * as it may well be different from each cpu.
 					 * See command CMD_CUR_PROFILES.
 					 */
+					cpus = 0;
+					for (i = 0; i < cpufreqd_info->cpus; i++) {
+						if (cpufreqd_info->current_profiles[i] == p)
+							cpus |= (1 << i);
+					}
 					/* format is:
-					 * 1 always 0, currently unused
+					 * 1 cpu applied bitmask 
 					 * 2 profile name
 					 * 3 min freq
 					 * 4 max freq
 					 * 5 active governor
 					 */
 					buflen = snprintf(buf, MAX_STRING_LEN, "%d/%s/%lu/%lu/%s\n",
-							0,
+							cpus,
 							p->name,
 							p->policy.min, p->policy.max,
 							p->policy.governor);

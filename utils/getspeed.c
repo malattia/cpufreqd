@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
 	time_t last_mtime = 0;
 	unsigned int cmd = 0;
 	unsigned int full_cmd = 0;
+	unsigned int i = 0;
 	char buf[4096] = {0}, name[256] = {0}, policy[255] = {0};
 	char *in;
 	int min, max, active, n;
@@ -90,11 +91,29 @@ int main(int argc, char *argv[])
 
 	n = 0;
 	while (read(sock, buf, 4096)) {
+		int is_active = 0;
 		in = buf;
 		while (cmd == CMD_LIST_PROFILES 
 				&& sscanf(in, "%d/%[^/]/%d/%d/%[^\n]\n", &active, name, &min, &max, policy) == 5) {
 			/* ignoring "active" as it's not used anymore */
-			printf("\nName (#%d):\t%s\n", ++n, name);
+
+			printf("\nName (#%d):\t%s", ++n, name);
+			/* pretty print active cpus */
+			is_active = 0;
+			for (i = 0; i < sizeof(active); i++) {
+				if (active & (1 << i)) {
+					if (is_active == 0)
+						printf(" [");
+					else if (is_active > 0)
+						printf(" ");
+					printf("%d", i);
+					is_active++;
+				}
+			}
+			if (is_active)
+				printf("]");
+
+			printf("\n");
 			printf("Governor:\t%s\n", policy);
 			printf("Min freq:\t%d\n", min);
 			printf("Max freq:\t%d\n", max);
