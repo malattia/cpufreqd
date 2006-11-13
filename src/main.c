@@ -213,6 +213,7 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 		/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
 		else if (cpufreq_set_policy(i, &(new_profile->policy)) == 0) {
 			clog(LOG_NOTICE, "Profile \"%s\" set for CPU%d\n", new_profile->name, i);
+			cpufreqd_info->current_profiles[i] = new_profile;
 
 			/* double check if everything is OK (configurable) */
 			if (configuration->double_check) {
@@ -238,12 +239,12 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 							new_profile->policy.governor);
 				}
 				cpufreq_put_policy(check);
-				cpufreqd_info->current_profiles[i] = new_profile;
 			} /* end if double_check */
 		}
 		else {
-			clog(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d\n",
-					new_profile->name, i);
+			clog(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d (%d-%d-%s)\n",
+					new_profile->name, i, new_profile->policy.max, 
+					new_profile->policy.min, new_profile->policy.governor);
 			return -1;
 		}
 
