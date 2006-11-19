@@ -73,7 +73,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "No cpufreqd socket found\n");
 		return ENOENT;
 	}
+#if 0
 	fprintf(stdout, "socket I'll try to connect: %s\n", sck.sun_path);
+#endif
 
 	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
 		perror("socket()");
@@ -95,25 +97,22 @@ int main(int argc, char *argv[])
 		in = buf;
 		while (cmd == CMD_LIST_PROFILES 
 				&& sscanf(in, "%d/%[^/]/%d/%d/%[^\n]\n", &active, name, &min, &max, policy) == 5) {
-			/* ignoring "active" as it's not used anymore */
-
-			printf("\nName (#%d):\t%s", ++n, name);
+			printf("\nName (#%d):\t%s\n", ++n, name);
 			/* pretty print active cpus */
 			is_active = 0;
 			for (i = 0; i < sizeof(active); i++) {
 				if (active & (1 << i)) {
 					if (is_active == 0)
-						printf(" [");
+						printf("Active on CPU#:\t");
 					else if (is_active > 0)
-						printf(" ");
+						printf(", ");
 					printf("%d", i);
 					is_active++;
 				}
 			}
 			if (is_active)
-				printf("]");
+				printf("\n");
 
-			printf("\n");
 			printf("Governor:\t%s\n", policy);
 			printf("Min freq:\t%d\n", min);
 			printf("Max freq:\t%d\n", max);

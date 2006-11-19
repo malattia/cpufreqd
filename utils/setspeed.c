@@ -65,7 +65,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "No cpufreqd socket found\n");
 		return ENOENT;
 	}
+#if 0
 	fprintf(stdout, "socket I'll try to connect: %s\n", sck.sun_path);
+#endif
 
 
 	if (!strcmp(argv[1], "dynamic"))
