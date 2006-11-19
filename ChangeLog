@@ -1,3 +1,10 @@
+version 2.2.1
+-------------
+* Fix CMD_CUR_PROFILES or better, fix current_profile traking
+* Fix temperature plugin log output
+* Add currently active cpu in CMD_LIST_PROFILES and modify cpufreqd-get
+  accordingly
+
 version 2.2.0
 -------------
 * SMP/SMT awareness in profiles/rules settings and cpu_plugin
