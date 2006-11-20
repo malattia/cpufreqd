@@ -1,8 +1,8 @@
 # Cpufreqd startup configuration
 
 # CPU kernel module.
-# Leave empty if you which to load the modules in different ways
-# of CPUFreq support for your cpu is built in.
+# Leave empty if you wish to load the modules another way,
+# or if CPUFreq support for your cpu is built in.
 CPUFREQ_CPU_MODULE=""
 
 # Governor modules.

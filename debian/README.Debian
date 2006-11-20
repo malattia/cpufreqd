@@ -1,9 +1,9 @@
               README for Debian package of Cpufreqd
               =====================================
 
-This package installs a very trivial configuration file and most of the time
-it's not suite for everybody needs. Thus it's strongly suggested to modify the
-configuration and restart cpufreqd after install.
+This package installs a trivial configuration file which will not suit
+everyone's needs. Thus it's strongly suggested to modify the
+configuration and restart cpufreqd after installation.
 
 Cpufreqd provides support to automatically load necessary kernel modules on startup,
 see /etc/default/cpufreqd comments for more.

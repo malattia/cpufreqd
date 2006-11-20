@@ -1,3 +1,11 @@
+cpufreqd (2.2.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Fix wording in README.Debian and /etc/default/cpufreq as
+    suggested by Reuben Thomas. (Closes: #399105 and Closes: #399106)
+
+ -- Mattia Dongili <malattia@debian.org>  Mon, 20 Nov 2006 22:02:13 +0100
+
 cpufreqd (2.2.0-2) unstable; urgency=low
 
   * Remove all debconf stuff.
