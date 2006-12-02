@@ -63,6 +63,7 @@ install: build
 
 	# install the package into debian/cpufreqd.
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/cpufreqd
+	install -m 0644 debian/cpufreqd.conf $(CURDIR)/etc/
 
 
 # Build architecture-independent files here.
