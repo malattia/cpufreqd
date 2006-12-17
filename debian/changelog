@@ -1,3 +1,10 @@
+cpufreqd (2.2.1-2) unstable; urgency=low
+
+  * Provide a more conservative config files, users owning non ondemand
+    capable CPU have complained. (Closes: #400580)
+
+ -- Mattia Dongili <malattia@debian.org>  Sun, 17 Dec 2006 17:13:57 +0100
+
 cpufreqd (2.2.1-1) unstable; urgency=low
 
   * New upstream release.
