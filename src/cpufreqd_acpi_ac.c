@@ -22,59 +22,87 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysfs/libsysfs.h>
 #include "cpufreqd_plugin.h"
 #include "cpufreqd_acpi_ac.h"
 
-#define ACPI_AC_DIR "/proc/acpi/ac_adapter/"
-#define ACPI_AC_FILE "/state"
-#define ACPI_AC_FORMAT "state:                   %s\n"
+#define POWER_SUPPLY "power_supply"
+#define AC_TYPE "Mains"
+#define AC_ONLINE "online"
 
 #define PLUGGED   1
 #define UNPLUGGED 0
 
-static char *ac_filelist[64];
+static struct sysfs_attribute *mains[64];
 static unsigned short ac_state;
 static int ac_dir_num;
-
-static int no_dots(const struct dirent *d) {
-	return d->d_name[0]!= '.';
-}
 
 /*  static int acpi_ac_init(void)
  *
  *  test if AC dirs are present
  */
 int acpi_ac_init(void) {
-	struct dirent **namelist = NULL;
-	int n = 0;
+	struct sysfs_attribute *attr = NULL;
+	struct dlist *devs = NULL;
+	struct sysfs_class *cls = NULL;
+	struct sysfs_class_device *power_supply = NULL;
+	char type[256];
+	char path[SYSFS_PATH_MAX];
 
-	/* get AC path */
-	n = scandir(ACPI_AC_DIR, &namelist, no_dots, NULL);
-	if (n > 0) {
-		ac_dir_num = n;
-		*ac_filelist = malloc(n * 64 * sizeof(char));
-		while (n--) {
-			snprintf(ac_filelist[n], 64, "%s%s%s", ACPI_AC_DIR, namelist[n]->d_name, ACPI_AC_FILE);
-			clog(LOG_INFO, "AC path %s\n", ac_filelist[n]);
-			free(namelist[n]);
-		} 
-		free(namelist);
-
-	} else if (n < 0) {
-		clog(LOG_DEBUG, "no acpi_ac module compiled or inserted? (%s: %s)\n",
-				ACPI_AC_DIR, strerror(errno));
-		return -1;
-
-	} else {
-		clog(LOG_NOTICE, "no ac adapters found, not a laptop?\n");
+	cls = sysfs_open_class(POWER_SUPPLY);
+	if (!cls) {
+		clog(LOG_NOTICE, "class '%s' not found\n", POWER_SUPPLY);
 		return -1;
 	}
+
+	/* read POWER_SUPPLY devices (we only want Mains here) */
+	devs = sysfs_get_class_devices(cls);
+	if (!cls) {
+		clog(LOG_NOTICE, "class '%s' not found\n", POWER_SUPPLY);
+		goto exit;
+	}
+	dlist_for_each_data(devs, power_supply, struct sysfs_class_device) {
+		clog(LOG_NOTICE, "found %s\n", power_supply->path);
+
+		attr = sysfs_get_classdev_attr(power_supply, "type");
+		if (!attr) {
+			clog(LOG_NOTICE, "attribute 'type' not found for %s.\n",
+					power_supply->name);
+			continue;
+		}
+		/* check power_supply type */
+		if (sysfs_read_attribute(attr)) {
+			clog(LOG_NOTICE, "couldn't read %s\n", attr->path);
+		}
+		sscanf(attr->value, "%255s\n", type);
+		clog(LOG_NOTICE, "%s is of type %s\n", power_supply->name, type);
+		if (strncmp(type, AC_TYPE, 256) == 0) {
+			snprintf(path, SYSFS_PATH_MAX, "%s/%s",
+					power_supply->path, AC_ONLINE);
+			mains[ac_dir_num] = sysfs_open_attribute(path);
+			if (!mains[ac_dir_num]) {
+				clog(LOG_WARNING, "couldn't open %s\n", path);
+			}
+			else {
+				clog(LOG_INFO, "found %s AC path %s\n",
+						AC_TYPE, path);
+				ac_dir_num++;
+			}
+		}
+	}
+	sysfs_close_class(cls);
 	return 0;
+exit:
+	/* cleanup */
+	sysfs_close_class(cls);
+	return -1;
 }
 
 int acpi_ac_exit(void) {
-	if (ac_filelist != NULL)
-		free(*ac_filelist);
+	while (ac_dir_num--) {
+		clog(LOG_DEBUG, "closing %s.\n", mains[ac_dir_num]->path);
+		sysfs_close_attribute(mains[ac_dir_num]);
+	}
 	clog(LOG_INFO, "exited.\n");
 	return 0;
 }
@@ -84,23 +112,20 @@ int acpi_ac_exit(void) {
  *  reads temperature valuse ant compute a medium value
  */
 int acpi_ac_update(void) {
-	char temp[50];
-	int i=0;
-	FILE *fp = NULL;
+	char temp[256];
+	int i = 0;
 
 	ac_state = UNPLUGGED;
 	clog(LOG_DEBUG, "called\n");
-	for (i=0; i<ac_dir_num; i++) {
-		fp = fopen(ac_filelist[i], "r");
-		if (!fp) {
-			clog(LOG_ERR, "%s: %s\n", ac_filelist[i], strerror(errno));
-			return -1;
+	for (i = 0; i < ac_dir_num; i++) {
+		/* check power_supply type */
+		if (sysfs_read_attribute(mains[i])) {
+			clog(LOG_NOTICE, "couldn't read %s\n", mains[i]->path);
+			continue;
 		}
-		fscanf(fp, ACPI_AC_FORMAT, temp);
-		fclose(fp);
-
-		clog(LOG_DEBUG, "read %s\n", temp);
-		ac_state |= (strncmp(temp, "on-line", 7)==0 ? PLUGGED : UNPLUGGED);
+		sscanf(mains[i]->value, "%255s\n", temp);
+		clog(LOG_DEBUG, "read %s:%s\n", mains[i]->path, temp);
+		ac_state |= (strncmp(temp, "1", 7) == 0 ? PLUGGED : UNPLUGGED);
 	}
 
 	clog(LOG_INFO, "ac_adapter is %s\n",

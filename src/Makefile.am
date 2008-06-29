@@ -104,10 +104,10 @@ cpufreqd_acpi_la_SOURCES = \
 		cpufreqd_acpi_temperature.c
 
 cpufreqd_acpi_la_CFLAGS = \
-		$(AM_CFLAGS) -I/@PTHREAD_SRCDIR@/include
+		$(AM_CFLAGS) -I/@PTHREAD_SRCDIR@/include -I/usr/include/sysfs
 
 cpufreqd_acpi_la_LDFLAGS = \
-		-module -avoid-version -L/@PTHREAD_SRCDIR@/lib -lpthread
+		-module -avoid-version -L/@PTHREAD_SRCDIR@/lib -lpthread -lsysfs
 
 #cpufreqd_acpi_ac_la_SOURCES = \
 #		cpufreqd_acpi_ac.c
