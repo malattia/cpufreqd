@@ -1,5 +1,5 @@
-
 #!/bin/bash
+
 WANT_AUTOMAKE="1.8" aclocal && libtoolize -c -f && \
 aclocal && autoconf && automake -a -c --foreign \
 && chmod +x ltmain.sh
