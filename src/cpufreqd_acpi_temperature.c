@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2008  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,16 +23,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi.h"
 #include "cpufreqd_acpi_temperature.h"
 
-#define ACPI_TEMPERATURE_DIR "/proc/acpi/thermal_zone/"
-#define ACPI_TEMPERATURE_FILE "temperature"
-#define ACPI_TEMPERATURE_FORMAT "temperature:             %ld C\n"
+#define THERMAL "thermal"
+#define THERMAL_TYPE "ACPI thermal zone"
+#define THERMAL_TEMP "temp"
 
 struct thermal_zone {
 	char name[32];
-	char zone_path[64];
-	long int temperature;
+	int temperature;
+	struct sysfs_attribute *atz;
 };
 
 struct temperature_interval {
@@ -40,14 +41,9 @@ struct temperature_interval {
 	struct thermal_zone *tz;
 };
 
-static struct thermal_zone *atz_list;
+static struct thermal_zone atz_list[64];
 static int temp_dir_num;
-static long int temperature;
-
-static int no_dots(const struct dirent *d)
-{
-	return d->d_name[0]!= '.';
-}
+static long int temp_avg;
 
 static struct thermal_zone *get_thermal_zone(const char *name)
 {
@@ -63,6 +59,14 @@ static struct thermal_zone *get_thermal_zone(const char *name)
 	return ret;
 }
 
+static void set_atz_list_callback(int idx, struct sysfs_attribute *attr) {
+	atz_list[idx].atz = attr;
+}
+
+static struct sysfs_attribute *get_atz_list_callback(int idx) {
+	return atz_list[idx].atz;
+}
+
 /*  static int acpi_temperature_init(void)
  *
  *  test if ATZ dirs are present and read their 
@@ -70,42 +74,23 @@ static struct thermal_zone *get_thermal_zone(const char *name)
  */
 int acpi_temperature_init(void)
 {
-	struct dirent **namelist = NULL;
-	int n = 0;
-
-	/* get ATZ path */
-	n = scandir(ACPI_TEMPERATURE_DIR, &namelist, no_dots, NULL);
-	if (n > 0) {
-		temp_dir_num = n;
-		atz_list = malloc(n * sizeof(struct thermal_zone));
-		while (n--) {
-			snprintf(atz_list[n].name, 32, "%s", namelist[n]->d_name);
-			snprintf(atz_list[n].zone_path, 64, "%s%s/",
-					ACPI_TEMPERATURE_DIR, namelist[n]->d_name);
-			clog(LOG_INFO, "TEMP path: %s name: %s\n",
-					atz_list[n].zone_path, atz_list[n].name);
-			free(namelist[n]);
-		} 
-		free(namelist);
-
-	} else if (n < -1) {
-		clog(LOG_NOTICE, "no acpi_temperature support %s:%s\n", 
-				ACPI_TEMPERATURE_DIR, strerror(errno));
-		return -1;
-
-	} else {
-		clog(LOG_NOTICE, "no acpi_temperature support found %s\n", 
-				ACPI_TEMPERATURE_DIR);
+	int i = 0;
+	temp_dir_num = open_attributes_for_class(set_atz_list_callback,
+			THERMAL, THERMAL_TYPE, THERMAL_TEMP);
+	if (temp_dir_num <= 0) {
+		clog(LOG_NOTICE, "No thermal zones found\n");
 		return -1;
 	}
+
+	for (i = temp_dir_num; i > 0; i--)
+		clog(LOG_DEBUG, "%s\n", atz_list[i - 1].atz->path);
 
 	return 0;
 }
 
 int acpi_temperature_exit(void) 
 {
-	if (atz_list != NULL)
-		free(atz_list);
+	close_attributes_for_class(get_atz_list_callback, temp_dir_num);
 	clog(LOG_INFO, "exited.\n");
 	return 0;
 }
@@ -168,15 +153,16 @@ int acpi_temperature_parse(const char *ev, void **obj)
 int acpi_temperature_evaluate(const void *s)
 {
 	const struct temperature_interval *ti = (const struct temperature_interval *)s;
-	long int temp = temperature;
+	long int temp = temp_avg;
 
 	if (ti != NULL && ti->tz != NULL)
 		temp = ti->tz->temperature;
 		
-	clog(LOG_DEBUG, "called %d-%d [%s:%d]\n", ti->min, ti->max, 
-			ti != NULL && ti->tz != NULL ? ti->tz->name : "Medium", temp);
+	clog(LOG_DEBUG, "called %d-%d [%s:%.1f]\n", ti->min, ti->max, 
+			ti != NULL && ti->tz != NULL ? ti->tz->atz->name : "Avg",
+			(float)temp / 1000);
 
-	return (temp <= ti->max && temp >= ti->min) ? MATCH : DONT_MATCH;
+	return (temp <= (ti->max * 1000) && temp >= (ti->min * 1000)) ? MATCH : DONT_MATCH;
 }
 
 /*  static int acpi_temperature_update(void)
@@ -185,39 +171,28 @@ int acpi_temperature_evaluate(const void *s)
  */
 int acpi_temperature_update(void)
 {
-	char fname[256];
 	int count = 0, i = 0;
-	long int t = 0;
-	FILE *fp = NULL;
 
 	clog(LOG_DEBUG, "called\n");
 
-	temperature = 0;
-	for (i=0; i<temp_dir_num; i++) {
-		snprintf(fname, 255, "%s%s", atz_list[i].zone_path, ACPI_TEMPERATURE_FILE);
-		fp = fopen(fname, "r");
-		if (fp) {
-			if (fscanf(fp, ACPI_TEMPERATURE_FORMAT, &t) == 1) {
-				count++;
-				temperature += t;
-				atz_list[i].temperature = t;
-				clog(LOG_INFO, "temperature for %s is %ldC\n",
-						atz_list[i].name, atz_list[i].temperature);
-			}
-			fclose(fp);
+	temp_avg = 0;
+	for (i = 0; i < temp_dir_num; i++) {
 
-		} else {
-			clog(LOG_ERR, "%s: %s\n", fname, strerror(errno));
-			clog(LOG_ERR, "ATZ path %s disappeared? send SIGHUP to re-read Temp zones\n",
-					atz_list[i].zone_path);
+		if (read_int(atz_list[i].atz, &atz_list[i].temperature)) {
+			continue;
 		}
+		count++;
+		temp_avg += atz_list[i].temperature;
+		clog(LOG_INFO, "temperature for %s is %.1fC\n",
+				atz_list[i].name,
+				(float)atz_list[i].temperature / 1000);
 	}
 
 	/* compute global medium value */
 	if (count > 0) {
-		temperature = (float)temperature / (float)count;
+		temp_avg = (float)temp_avg / (float)count;
 	}
-	clog(LOG_INFO, "medium temperature is %ldC\n", temperature);
+	clog(LOG_INFO, "temperature average is %.1fC\n", (float)temp_avg / 1000);
 	return 0;
 }
 
