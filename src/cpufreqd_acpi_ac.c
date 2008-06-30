@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2008  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysfs/libsysfs.h>
 #include "cpufreqd_plugin.h"
+#include "cpufreqd_acpi.h"
 #include "cpufreqd_acpi_ac.h"
 
 #define POWER_SUPPLY "power_supply"
@@ -37,72 +37,31 @@ static struct sysfs_attribute *mains[64];
 static unsigned short ac_state;
 static int ac_dir_num;
 
+static void set_mains_callback(int idx, struct sysfs_attribute *attr) {
+	mains[idx] = attr;
+}
+
+static struct sysfs_attribute *get_mains_callback(int idx) {
+	return mains[idx];
+}
+
 /*  static int acpi_ac_init(void)
  *
  *  test if AC dirs are present
  */
 int acpi_ac_init(void) {
-	struct sysfs_attribute *attr = NULL;
-	struct dlist *devs = NULL;
-	struct sysfs_class *cls = NULL;
-	struct sysfs_class_device *power_supply = NULL;
-	char type[256];
-	char path[SYSFS_PATH_MAX];
 
-	cls = sysfs_open_class(POWER_SUPPLY);
-	if (!cls) {
-		clog(LOG_NOTICE, "class '%s' not found\n", POWER_SUPPLY);
+	ac_dir_num = open_attributes_for_class(set_mains_callback,
+			POWER_SUPPLY, AC_TYPE, AC_ONLINE);
+	if (ac_dir_num <= 0) {
+		clog(LOG_NOTICE, "No AC adapters found\n");
 		return -1;
 	}
-
-	/* read POWER_SUPPLY devices (we only want Mains here) */
-	devs = sysfs_get_class_devices(cls);
-	if (!cls) {
-		clog(LOG_NOTICE, "class '%s' not found\n", POWER_SUPPLY);
-		goto exit;
-	}
-	dlist_for_each_data(devs, power_supply, struct sysfs_class_device) {
-		clog(LOG_NOTICE, "found %s\n", power_supply->path);
-
-		attr = sysfs_get_classdev_attr(power_supply, "type");
-		if (!attr) {
-			clog(LOG_NOTICE, "attribute 'type' not found for %s.\n",
-					power_supply->name);
-			continue;
-		}
-		/* check power_supply type */
-		if (sysfs_read_attribute(attr)) {
-			clog(LOG_NOTICE, "couldn't read %s\n", attr->path);
-		}
-		sscanf(attr->value, "%255s\n", type);
-		clog(LOG_NOTICE, "%s is of type %s\n", power_supply->name, type);
-		if (strncmp(type, AC_TYPE, 256) == 0) {
-			snprintf(path, SYSFS_PATH_MAX, "%s/%s",
-					power_supply->path, AC_ONLINE);
-			mains[ac_dir_num] = sysfs_open_attribute(path);
-			if (!mains[ac_dir_num]) {
-				clog(LOG_WARNING, "couldn't open %s\n", path);
-			}
-			else {
-				clog(LOG_INFO, "found %s AC path %s\n",
-						AC_TYPE, path);
-				ac_dir_num++;
-			}
-		}
-	}
-	sysfs_close_class(cls);
 	return 0;
-exit:
-	/* cleanup */
-	sysfs_close_class(cls);
-	return -1;
 }
 
 int acpi_ac_exit(void) {
-	while (ac_dir_num--) {
-		clog(LOG_DEBUG, "closing %s.\n", mains[ac_dir_num]->path);
-		sysfs_close_attribute(mains[ac_dir_num]);
-	}
+	close_attributes_for_class(get_mains_callback, ac_dir_num);
 	clog(LOG_INFO, "exited.\n");
 	return 0;
 }
@@ -112,20 +71,18 @@ int acpi_ac_exit(void) {
  *  reads temperature valuse ant compute a medium value
  */
 int acpi_ac_update(void) {
-	char temp[256];
+	int value;
 	int i = 0;
 
 	ac_state = UNPLUGGED;
 	clog(LOG_DEBUG, "called\n");
 	for (i = 0; i < ac_dir_num; i++) {
 		/* check power_supply type */
-		if (sysfs_read_attribute(mains[i])) {
-			clog(LOG_NOTICE, "couldn't read %s\n", mains[i]->path);
-			continue;
-		}
-		sscanf(mains[i]->value, "%255s\n", temp);
-		clog(LOG_DEBUG, "read %s:%s\n", mains[i]->path, temp);
-		ac_state |= (strncmp(temp, "1", 7) == 0 ? PLUGGED : UNPLUGGED);
+		if (read_int(mains[i], &value))
+				continue;
+
+		clog(LOG_DEBUG, "read %s:%d\n", mains[i]->path, value);
+		ac_state |= value ? PLUGGED : UNPLUGGED;
 	}
 
 	clog(LOG_INFO, "ac_adapter is %s\n",

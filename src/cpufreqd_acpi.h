@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2006-2008  Mattia Dongili <malattia@linux.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <sysfs/libsysfs.h>
 #include "cpufreqd.h"
 
 struct acpi_configuration {
@@ -26,3 +27,11 @@ struct acpi_configuration {
 	int watch_temperature;
 	char acpid_sock_path[MAX_PATH_LEN];
 };
+
+int open_attributes_for_class(void (*set_callback)(int idx, struct sysfs_attribute *attr),
+		const char *clsname, const char *devtype, const char *attrname);
+
+void close_attributes_for_class(struct sysfs_attribute * (*get_callback)(int idx),
+		int attrcnt);
+
+int read_int(struct sysfs_attribute *attr, int *value);

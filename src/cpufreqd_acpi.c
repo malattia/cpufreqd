@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2006-2008  Mattia Dongili <malattia@linux.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -139,4 +140,91 @@ static struct cpufreqd_plugin acpi = {
 
 struct cpufreqd_plugin *create_plugin (void) {
 	return &acpi;
+}
+
+/* exported functions used in all the acpi/cpufreqd components */
+
+/* read char value, requires an open sysfs attribute */
+int read_int(struct sysfs_attribute *attr, int *value) {
+		if (sysfs_read_attribute(attr)) {
+			clog(LOG_NOTICE, "couldn't read %s (%s)\n",
+					attr->path, strerror(errno));
+			return -1;
+		}
+		sscanf(attr->value, "%d\n", value);
+		return 0;
+}
+
+/* close the attributes prevously opened */
+void close_attributes_for_class(struct sysfs_attribute * (*get_callback)(int idx),
+		int attrcnt) {
+	struct sysfs_attribute *attr = NULL;
+	while (attrcnt--) {
+		attr = get_callback(attrcnt);
+		clog(LOG_DEBUG, "closing %s.\n", attr->path);
+		sysfs_close_attribute(attr);
+	}
+}
+
+/* open attributes for a specific class device */
+int open_attributes_for_class(void (*set_callback)(int idx, struct sysfs_attribute *attr),
+		const char *clsname, const char *devtype, const char *attrname) {
+	struct sysfs_attribute *attr = NULL;
+	struct dlist *devs = NULL;
+	struct sysfs_class *cls = NULL;
+	struct sysfs_class_device *clsdev = NULL;
+	char type[256];
+	char path[SYSFS_PATH_MAX];
+	int attrcount = 0;
+
+	cls = sysfs_open_class(clsname);
+	if (!cls) {
+		clog(LOG_NOTICE, "class '%s' not found (%s)\n", clsname,
+				strerror(errno));
+		return -1;
+	}
+
+	/* read POWER_SUPPLY devices (we only want Mains here) */
+	devs = sysfs_get_class_devices(cls);
+	if (!cls) {
+		clog(LOG_NOTICE, "class '%s' not found (%s)\n", clsname,
+				strerror(errno));
+		sysfs_close_class(cls);
+		return -1;
+	}
+	dlist_for_each_data(devs, clsdev, struct sysfs_class_device) {
+		clog(LOG_NOTICE, "found %s\n", clsdev->path);
+
+		attr = sysfs_get_classdev_attr(clsdev, "type");
+		if (!attr) {
+			clog(LOG_NOTICE, "attribute 'type' not found for %s (%s).\n",
+					clsdev->name, strerror(errno));
+			continue;
+		}
+		/* check if devtype matches */
+		if (sysfs_read_attribute(attr)) {
+			clog(LOG_NOTICE, "couldn't read %s (%s)\n",
+					attr->path, strerror(errno));
+		}
+		sscanf(attr->value, "%255[a-zA-Z0-9 ]\n", type);
+		clog(LOG_NOTICE, "%s is of type %s\n", clsdev->name, type);
+		if (strncmp(type, devtype, 256) == 0) {
+			snprintf(path, SYSFS_PATH_MAX, "%s/%s",
+					clsdev->path, attrname);
+			attr = sysfs_open_attribute(path);
+			if (!attr) {
+				clog(LOG_WARNING, "couldn't open %s (%s)\n", path,
+						strerror(errno));
+			}
+			else {
+				clog(LOG_INFO, "found %s AC path %s\n",
+						devtype, path);
+				set_callback(attrcount, attr);
+				attrcount++;
+			}
+		}
+	}
+	sysfs_close_class(cls);
+
+	return attrcount;
 }
