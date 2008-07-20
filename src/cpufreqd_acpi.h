@@ -28,10 +28,14 @@ struct acpi_configuration {
 	char acpid_sock_path[MAX_PATH_LEN];
 };
 
-int open_attributes_for_class(void (*set_callback)(int idx, struct sysfs_attribute *attr),
-		const char *clsname, const char *devtype, const char *attrname);
-
-void close_attributes_for_class(struct sysfs_attribute * (*get_callback)(int idx),
-		int attrcnt);
-
+int read_value(struct sysfs_attribute *attr);
 int read_int(struct sysfs_attribute *attr, int *value);
+
+
+void put_attribute(struct sysfs_attribute *attr);
+struct sysfs_attribute *get_class_device_attribute(struct sysfs_class_device *clsdev,
+		const char *attrname);
+
+void put_class_device(struct sysfs_class_device *clsdev);
+int find_class_device(const char *clsname, const char *devtype,
+		int (*clsdev_callback)(struct sysfs_class_device *cls));
