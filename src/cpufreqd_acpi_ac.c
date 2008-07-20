@@ -37,12 +37,19 @@ static struct sysfs_attribute *mains[64];
 static unsigned short ac_state;
 static int ac_dir_num;
 
-static void set_mains_callback(int idx, struct sysfs_attribute *attr) {
-	mains[idx] = attr;
-}
-
-static struct sysfs_attribute *get_mains_callback(int idx) {
-	return mains[idx];
+static int mains_callback(struct sysfs_class_device *cdev) {
+	struct sysfs_attribute *attr = get_class_device_attribute(cdev,
+			AC_ONLINE);
+	if (attr) {
+		/* success */
+		mains[ac_dir_num] = attr;
+		ac_dir_num++;
+	}
+	/* we don't care about the class_device
+	 * returning 1 will force find_class_device
+	 * to close it
+	 */
+	return 1;
 }
 
 /*  static int acpi_ac_init(void)
@@ -51,8 +58,7 @@ static struct sysfs_attribute *get_mains_callback(int idx) {
  */
 int acpi_ac_init(void) {
 
-	ac_dir_num = open_attributes_for_class(set_mains_callback,
-			POWER_SUPPLY, AC_TYPE, AC_ONLINE);
+	find_class_device(POWER_SUPPLY, AC_TYPE, mains_callback);
 	if (ac_dir_num <= 0) {
 		clog(LOG_NOTICE, "No AC adapters found\n");
 		return -1;
@@ -61,7 +67,8 @@ int acpi_ac_init(void) {
 }
 
 int acpi_ac_exit(void) {
-	close_attributes_for_class(get_mains_callback, ac_dir_num);
+	while (--ac_dir_num >= 0)
+		put_attribute(mains[ac_dir_num]);
 	clog(LOG_INFO, "exited.\n");
 	return 0;
 }
