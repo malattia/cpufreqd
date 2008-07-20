@@ -31,9 +31,9 @@
 #define THERMAL_TEMP "temp"
 
 struct thermal_zone {
-	char name[32];
 	int temperature;
-	struct sysfs_attribute *atz;
+	struct sysfs_class_device *cdev;
+	struct sysfs_attribute *temp;
 };
 
 struct temperature_interval {
@@ -42,7 +42,7 @@ struct temperature_interval {
 };
 
 static struct thermal_zone atz_list[64];
-static int temp_dir_num;
+static int atz_dir_num;
 static long int temp_avg;
 
 static struct thermal_zone *get_thermal_zone(const char *name)
@@ -50,8 +50,8 @@ static struct thermal_zone *get_thermal_zone(const char *name)
 	int i;
 	struct thermal_zone *ret = NULL;
 	
-	for (i=0; i<temp_dir_num; i++) {
-		if (strncmp(atz_list[i].name, name, 32) == 0) {
+	for (i = 0; i < atz_dir_num; i++) {
+		if (strncmp(atz_list[i].cdev->name, name, 32) == 0) {
 			ret = &atz_list[i];
 			break;
 		}
@@ -59,12 +59,17 @@ static struct thermal_zone *get_thermal_zone(const char *name)
 	return ret;
 }
 
-static void set_atz_list_callback(int idx, struct sysfs_attribute *attr) {
-	atz_list[idx].atz = attr;
-}
+static int atz_callback(struct sysfs_class_device *cdev)
+{
+	atz_list[atz_dir_num].cdev = cdev;
+	atz_list[atz_dir_num].temp = get_class_device_attribute(cdev,
+			THERMAL_TEMP);
+	if (!atz_list[atz_dir_num].temp)
+		return 1;
 
-static struct sysfs_attribute *get_atz_list_callback(int idx) {
-	return atz_list[idx].atz;
+	clog(LOG_DEBUG, "Found %s\n", cdev->name);
+	atz_dir_num++;
+	return 0;
 }
 
 /*  static int acpi_temperature_init(void)
@@ -74,23 +79,22 @@ static struct sysfs_attribute *get_atz_list_callback(int idx) {
  */
 int acpi_temperature_init(void)
 {
-	int i = 0;
-	temp_dir_num = open_attributes_for_class(set_atz_list_callback,
-			THERMAL, THERMAL_TYPE, THERMAL_TEMP);
-	if (temp_dir_num <= 0) {
+	find_class_device(THERMAL, THERMAL_TYPE, atz_callback);
+	if (atz_dir_num <= 0) {
 		clog(LOG_NOTICE, "No thermal zones found\n");
 		return -1;
 	}
-
-	for (i = temp_dir_num; i > 0; i--)
-		clog(LOG_DEBUG, "%s\n", atz_list[i - 1].atz->path);
-
+	clog(LOG_NOTICE, "found %d ACPI Thermal Zone%s\n", atz_dir_num,
+			atz_dir_num > 1 ? "s" : "");
 	return 0;
 }
 
 int acpi_temperature_exit(void) 
 {
-	close_attributes_for_class(get_atz_list_callback, temp_dir_num);
+	while (--atz_dir_num >= 0) {
+		put_attribute(atz_list[atz_dir_num].temp);
+		put_class_device(atz_list[atz_dir_num].cdev);
+	}
 	clog(LOG_INFO, "exited.\n");
 	return 0;
 }
@@ -116,7 +120,7 @@ int acpi_temperature_parse(const char *ev, void **obj)
 			return -1;
 		}
 		clog(LOG_INFO, "parsed %s %d-%d\n",
-				ret->tz->name, ret->min, ret->max);
+				ret->tz->cdev->name, ret->min, ret->max);
 
 	} else if (sscanf(ev, "%32[a-zA-Z0-9]:%d", atz_name, &(ret->min)) == 2) {
 		/* validate zone name and assign pointer to struct thermal_zone */
@@ -126,7 +130,7 @@ int acpi_temperature_parse(const char *ev, void **obj)
 			return -1;
 		}
 		ret->max = ret->min;
-		clog(LOG_INFO, "parsed %s %d\n", ret->tz->name, ret->min);
+		clog(LOG_INFO, "parsed %s %d\n", ret->tz->cdev->name, ret->min);
 
 	} else if (sscanf(ev, "%d-%d", &(ret->min), &(ret->max)) == 2) {
 		clog(LOG_INFO, "parsed %d-%d\n", ret->min, ret->max);
@@ -159,7 +163,7 @@ int acpi_temperature_evaluate(const void *s)
 		temp = ti->tz->temperature;
 		
 	clog(LOG_DEBUG, "called %d-%d [%s:%.1f]\n", ti->min, ti->max, 
-			ti != NULL && ti->tz != NULL ? ti->tz->atz->name : "Avg",
+			ti != NULL && ti->tz != NULL ? ti->tz->cdev->name : "Avg",
 			(float)temp / 1000);
 
 	return (temp <= (ti->max * 1000) && temp >= (ti->min * 1000)) ? MATCH : DONT_MATCH;
@@ -176,15 +180,15 @@ int acpi_temperature_update(void)
 	clog(LOG_DEBUG, "called\n");
 
 	temp_avg = 0;
-	for (i = 0; i < temp_dir_num; i++) {
+	for (i = 0; i < atz_dir_num; i++) {
 
-		if (read_int(atz_list[i].atz, &atz_list[i].temperature)) {
+		if (read_int(atz_list[i].temp, &atz_list[i].temperature)) {
 			continue;
 		}
 		count++;
 		temp_avg += atz_list[i].temperature;
 		clog(LOG_INFO, "temperature for %s is %.1fC\n",
-				atz_list[i].name,
+				atz_list[i].cdev->name,
 				(float)atz_list[i].temperature / 1000);
 	}
 
