@@ -834,8 +834,7 @@ int init_configuration(struct cpufreqd_conf *configuration)
 				
 				strncpy(profile_name, strstr(token, ":") + 1, MAX_STRING_LEN);
 				cpu_num = atoi(token + 3);
-
-				if (!profile_name) {
+				if (profile_name[0]) {
 					clog(LOG_ERR, "Wrong format for Profile name \"%s\".\n",
 							token);
 					return -1;
