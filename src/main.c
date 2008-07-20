@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2008  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -147,7 +147,7 @@ static unsigned int rule_score(struct rule *rule) {
 	} /* end foreach rule entry */
 	if (directives > 0)
 		return hits + (100 * hits / directives);
-	clog(LOG_INFO, "No evaulatable directives in Rule \"%s\".\n", rule->name);
+	clog(LOG_INFO, "No evaluatable directives in Rule \"%s\".\n", rule->name);
 	return 0;
 }
 
@@ -293,12 +293,12 @@ static int set_cpufreqd_runmode(int mode) {
 static int read_args (int argc, char *argv[]) {
 
 	static struct option long_options[] = {
-		{ "help", 0, 0, 'h' }, 
-		{ "version", 0, 0, 'v' }, 
-		{ "file", 1, 0, 'f' },
-		{ "no-daemon", 0, 0, 'D' },
-		{ "manual", 0, 0, 'm' },
-		{ "verbosity", 1, 0, 'V' },
+		{ "help",	0, 0, 'h' }, 
+		{ "version",	0, 0, 'v' }, 
+		{ "file",	1, 0, 'f' },
+		{ "no-daemon",	0, 0, 'D' },
+		{ "manual",	0, 0, 'm' },
+		{ "verbosity",	1, 0, 'V' },
 		{ 0, 0, 0, 0 }, 
 	};
 	int ch,option_index = 0;
