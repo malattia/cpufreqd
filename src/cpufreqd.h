@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2006  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2008  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,20 +17,20 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef __CPUFREQD_H__
 #define __CPUFREQD_H__
 
-#define __CPUFREQD_VERSION__	"2.2.1"
+#define __CPUFREQD_VERSION__	VERSION
 #define __CPUFREQD_MAINTAINER__	"malattia@linux.it"
 
 #ifdef __GNUC__
 #  define __UNUSED__	__attribute__((unused))
 #else
 #  define __UNUSED__
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
 #endif
 
 #ifndef CPUFREQD_CONFDIR

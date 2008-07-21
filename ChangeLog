@@ -1,3 +1,11 @@
+version 2.3.0
+-------------
+* use sysfs acpi class devices to read system status (/proc is not supported
+anymore, if you don't want't to switch to /sys do not install this version of
+cpufreqd)
+* rescan batteries on acpi events
+* fix invalid profile checking
+
 version 2.2.1
 -------------
 * Fix CMD_CUR_PROFILES or better, fix current_profile traking
