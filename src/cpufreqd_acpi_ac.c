@@ -60,7 +60,7 @@ int acpi_ac_init(void) {
 
 	find_class_device(POWER_SUPPLY, AC_TYPE, mains_callback);
 	if (ac_dir_num <= 0) {
-		clog(LOG_NOTICE, "No AC adapters found\n");
+		clog(LOG_INFO, "No AC adapters found\n");
 		return -1;
 	}
 	return 0;

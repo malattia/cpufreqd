@@ -70,14 +70,14 @@ static int sensors_post_conf(void) {
 
 	/* did we succeed opening a config file? */
 	if(config == NULL) {
-		clog(LOG_ERR, "no sensors.conf found, sensors disabled!\n");
+		clog(LOG_INFO, "no sensors.conf found, sensors disabled!\n");
 		return -1;
 	}
 
 	clog(LOG_INFO, "using %s\n", sensors_conffile);
 
 	if(sensors_init(config)) {
-		clog(LOG_ERR, "sensors_init() failed, sensosrs disabled!\n");
+		clog(LOG_ERR, "sensors_init() failed, sensors disabled!\n");
 		fclose(config);
 		return -1;
 	}

@@ -64,12 +64,12 @@ static int nforce2_post_conf(void) {
 	struct stat sb;
 
 	if (!vcore_path[0]) {
-		clog(LOG_CRIT, "Unconfigured, exiting.\n");
+		clog(LOG_INFO, "Unconfigured, exiting.\n");
 		return -1;
 	}
 	/* check vcore_path */
 	if (stat(vcore_path, &sb) != 0) {
-		clog(LOG_CRIT, "Unable to find %s.\n", vcore_path);
+		clog(LOG_INFO, "Unable to find %s.\n", vcore_path);
 		return -1;
 	}
 	return 0;

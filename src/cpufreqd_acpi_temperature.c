@@ -81,7 +81,7 @@ int acpi_temperature_init(void)
 {
 	find_class_device(THERMAL, THERMAL_TYPE, atz_callback);
 	if (atz_dir_num <= 0) {
-		clog(LOG_NOTICE, "No thermal zones found\n");
+		clog(LOG_INFO, "No thermal zones found\n");
 		return -1;
 	}
 	clog(LOG_NOTICE, "found %d ACPI Thermal Zone%s\n", atz_dir_num,

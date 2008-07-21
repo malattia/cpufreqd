@@ -48,7 +48,7 @@ static int apm_init(void) {
 
 	rc = stat(APM_PROC_FILE, &sb);
 	if (rc < 0) {
-		clog(LOG_ERR, "%s: %s\n", APM_PROC_FILE, strerror(errno));
+		clog(LOG_INFO, "%s: %s\n", APM_PROC_FILE, strerror(errno));
 		return -1;
 	}
 	return 0;

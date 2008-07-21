@@ -109,7 +109,7 @@ static int pmu_init(void) {
 
 	fp = fopen(PMU_INFO_FILE, "r");
 	if (!fp) {
-		clog(LOG_ERR, "%s: %s\n", PMU_INFO_FILE, strerror(errno));
+		clog(LOG_INFO, "%s: %s\n", PMU_INFO_FILE, strerror(errno));
 		return -1;
 	}
 

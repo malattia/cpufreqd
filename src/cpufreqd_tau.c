@@ -93,7 +93,7 @@ static int tau_init(void) {
 
 	fp = fopen(CPU_INFO_FILE, "r");
 	if (!fp) {
-		clog(LOG_ERR, "%s: %s\n", CPU_INFO_FILE, strerror(errno));
+		clog(LOG_INFO, "%s: %s\n", CPU_INFO_FILE, strerror(errno));
 		return -1;
 	}
 

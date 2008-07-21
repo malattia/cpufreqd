@@ -145,14 +145,6 @@ static int open_battery(struct battery_info *binfo) {
 				binfo->cdev->name, strerror(errno));
 		return -1;
 	}
-#if 0
-	/* initialize the current levels */
-	if (read_battery(binfo)) {
-		clog(LOG_INFO, "Unable to read battery %s\n",
-				binfo->cdev->name);
-		return -1;
-	}
-#endif
 	return 0;
 }
 
@@ -175,7 +167,7 @@ int acpi_battery_init(void) {
 
 	find_class_device(POWER_SUPPLY, BATTERY_TYPE, &clsdev_callback);
 	if (bat_dir_num <= 0) {
-		clog(LOG_NOTICE, "No Batteries found\n");
+		clog(LOG_INFO, "No Batteries found\n");
 		return 0;
 	}
 	/* open the required attributes */
@@ -187,7 +179,7 @@ int acpi_battery_init(void) {
 			close_battery(&info[i]);
 		}
 	}
-	clog(LOG_NOTICE, "found %d Batter%s\n", bat_dir_num,
+	clog(LOG_INFO, "found %d Batter%s\n", bat_dir_num,
 			bat_dir_num > 1 ? "ies" : "y");
 	return 0;
 }
