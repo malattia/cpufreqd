@@ -34,8 +34,6 @@
 #define PRESENT		"present"
 #define STATUS		"status"
 #define CURRENT_NOW	"current_now"
-#define VOLTAGE_NOW	"voltage_now"
-#define VOLTAGE_MIN	"voltage_min_design"
 
 struct battery_info {
 	int capacity;
@@ -50,8 +48,6 @@ struct battery_info {
 	struct sysfs_attribute *present;
 	struct sysfs_attribute *status;
 	struct sysfs_attribute *current_now; /* present rate */
-	struct sysfs_attribute *voltage_now;
-	struct sysfs_attribute *voltage_min_design;
 
 	int open;
 };
@@ -99,12 +95,28 @@ static void close_battery(struct battery_info *binfo) {
 		put_attribute(binfo->status);
 	if (binfo->current_now)
 		put_attribute(binfo->current_now);
-	if (binfo->voltage_now)
-		put_attribute(binfo->voltage_now);
-	if (binfo->voltage_min_design)
-		put_attribute(binfo->voltage_min_design);
 
 	binfo->open = 0;
+}
+/* read battery levels as reported by hw */
+static int read_battery(struct battery_info *binfo) {
+	clog(LOG_DEBUG, "%s - reading battery levels\n", binfo->cdev->name);
+
+	if (read_int(binfo->current_now, &binfo->present_rate) != 0) {
+		clog(LOG_ERR, "Skipping %s\n", binfo->cdev->name);
+		return -1;
+	}
+	if (read_int(binfo->energy_now, &binfo->remaining) != 0) {
+		clog(LOG_ERR, "Skipping %s\n", binfo->cdev->name);
+		return -1;
+	}
+	if (read_value(binfo->status) != 0) {
+		clog(LOG_ERR, "Skipping %s\n", binfo->cdev->name);
+		return -1;
+	}
+	clog(LOG_DEBUG, "%s - remaining capacity: %d\n",
+			binfo->cdev->name, binfo->remaining);
+	return 0;
 }
 /* open all the required attributes and set the open status */
 static int open_battery(struct battery_info *binfo) {
@@ -112,34 +124,35 @@ static int open_battery(struct battery_info *binfo) {
 
 	binfo->energy_full = get_class_device_attribute(binfo->cdev, ENERGY_FULL);
 	if (!binfo->energy_full)
-		return 1;
+		return -1;
 	binfo->energy_now = get_class_device_attribute(binfo->cdev, ENERGY_NOW);
 	if (!binfo->energy_now)
-		return 1;
+		return -1;
 	binfo->present = get_class_device_attribute(binfo->cdev, PRESENT);
 	if (!binfo->present)
-		return 1;
+		return -1;
 	binfo->status = get_class_device_attribute(binfo->cdev, STATUS);
 	if (!binfo->status)
-		return 1;
+		return -1;
 	binfo->current_now = get_class_device_attribute(binfo->cdev, CURRENT_NOW);
 	if (!binfo->current_now)
-		return 1;
-	binfo->voltage_now = get_class_device_attribute(binfo->cdev, VOLTAGE_NOW);
-	if (!binfo->voltage_now)
-		return 1;
-	binfo->voltage_min_design = get_class_device_attribute(binfo->cdev, VOLTAGE_MIN);
-	if (!binfo->voltage_min_design)
-		return 1;
+		return -1;
 
 	/* read the last full capacity, this is not going to change
 	 * very often, so no need to poke it later */
 	if (read_int(binfo->energy_full, &binfo->capacity) != 0) {
 		clog(LOG_WARNING, "Couldn't read %s capacity (%s)\n",
 				binfo->cdev->name, strerror(errno));
-		return 1;
+		return -1;
 	}
-
+#if 0
+	/* initialize the current levels */
+	if (read_battery(binfo)) {
+		clog(LOG_INFO, "Unable to read battery %s\n",
+				binfo->cdev->name);
+		return -1;
+	}
+#endif
 	return 0;
 }
 
@@ -152,6 +165,10 @@ static int clsdev_callback(struct sysfs_class_device *cdev) {
 }
 
 /*  int acpi_battery_init(void)
+ *
+ *  this never fails since batteries are hotpluggable and
+ *  we can easily rescan for availability later (see acpi_battery_update
+ *  when an event is pending)
  */
 int acpi_battery_init(void) {
 	int i;
@@ -159,7 +176,7 @@ int acpi_battery_init(void) {
 	find_class_device(POWER_SUPPLY, BATTERY_TYPE, &clsdev_callback);
 	if (bat_dir_num <= 0) {
 		clog(LOG_NOTICE, "No Batteries found\n");
-		return -1;
+		return 0;
 	}
 	/* open the required attributes */
 	for (i = 0; i < bat_dir_num; i++) {
@@ -175,11 +192,15 @@ int acpi_battery_init(void) {
 	return 0;
 }
 int acpi_battery_exit(void) {
-	/*close_attributes_for_class(get_mains_callback, ac_dir_num);*/
+	/* also reset values since this is called on pending
+	 * acpi events to rescan batteries
+	 */
 	while (--bat_dir_num >= 0) {
 		close_battery(&info[bat_dir_num]);
 		put_class_device(info[bat_dir_num].cdev);
+		info[bat_dir_num].cdev = NULL;
 	}
+	bat_dir_num = 0;
 	clog(LOG_INFO, "exited.\n");
 	return 0;
 }
@@ -276,9 +297,18 @@ int acpi_battery_update(void) {
 	/* decrement timeout */
 	check_timeout -= elapsed_time;
 
+	/* if there is a pending event rescan batteries */
+	if (is_event_pending()) {
+		clog(LOG_NOTICE, "Re-scanning available batteries\n");
+		acpi_battery_exit();
+		acpi_battery_init();
+		/* force timeout expiration */
+		check_timeout = -1;
+	}
+
 	/* Read battery informations */
 	for (i = 0; i < bat_dir_num; i++) {
-
+		
 		if (read_int(info[i].present, &info[i].is_present) != 0) {
 			clog(LOG_INFO, "Skipping %s\n", info[i].cdev->name);
 			continue;
@@ -290,28 +320,14 @@ int acpi_battery_update(void) {
 		}
 		clog(LOG_INFO, "%s - present\n", info[i].cdev->name);
 
-		/* if check_timeout is expired or an event is pending read battery */
-		if (check_timeout <= 0 || is_event_pending()) {
-			clog(LOG_DEBUG, "%s - reading battery\n", info[i].cdev->name);
+		/* if check_timeout is expired */
+		if (check_timeout <= 0) {
 			check_timeout = acpi_config.battery_update_interval;
-			/**
-			 ** /proc/acpi/battery/.../state
-			 **/
-			if (read_int(info[i].current_now, &info[i].present_rate) != 0) {
-				clog(LOG_ERR, "Skipping %s\n", info[i].cdev->name);
-				continue;
-			}
-			if (read_int(info[i].energy_now, &info[i].remaining) != 0) {
-				clog(LOG_ERR, "Skipping %s\n", info[i].cdev->name);
-				continue;
-			}
-			if (read_value(info[i].status) != 0) {
-				clog(LOG_ERR, "Skipping %s\n", info[i].cdev->name);
-				continue;
-			}
-			n_read++;
-			clog(LOG_DEBUG, "%s - remaining capacity: %d\n",
-					info[i].cdev->name, info[i].remaining);
+			if (read_battery(&info[i]) == 0)
+				n_read++;
+			else
+				clog(LOG_INFO, "Unable to read battery %s\n",
+						info[i].cdev->name);
 		} else {
 			/* estimate battery life */
 			clog(LOG_DEBUG, "%s - estimating battery life (timeout: %0.2f"
