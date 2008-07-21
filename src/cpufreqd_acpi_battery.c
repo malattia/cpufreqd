@@ -251,7 +251,7 @@ int acpi_battery_evaluate(const void *s) {
 	}
 
 	clog(LOG_DEBUG, "called %d-%d [%s:%d]\n", bi->min, bi->max, 
-			bi != NULL && bi->bat != NULL ? bi->bat->cdev->name : "Medium", level);
+			bi != NULL && bi->bat != NULL ? bi->bat->cdev->name : "Avg", level);
 
 	return (level >= bi->min && level <= bi->max) ? MATCH : DONT_MATCH;
 }
