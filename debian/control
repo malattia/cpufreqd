@@ -9,7 +9,7 @@ Package: cpufreqd
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, lsb-base (>= 3.0)
 Conflicts: cpudyn, powernowd
-Recommends: acpid
+Recommends: acpid [amd64 i386 ia64]
 Suggests: cpufrequtils
 Description: fully configurable daemon for dynamic frequency and voltage scaling
  cpufreqd is meant to be a replacement of the speedstep applet you can find on
