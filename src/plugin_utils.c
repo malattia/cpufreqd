@@ -274,7 +274,7 @@ void plugins_post_conf(struct LIST *plugins) {
 		/* try to post-configure the plugin */
 		if (plugin->plugin->plugin_post_conf != NULL
 				&& plugin->plugin->plugin_post_conf() != 0) {
-			clog(LOG_ERR, "Unable to configure plugin %s, removing\n",
+			clog(LOG_NOTICE, "Unable to configure plugin %s, removing\n",
 					plugin->plugin->plugin_name);
 
 			/* the next call is currently useless due to the fact that

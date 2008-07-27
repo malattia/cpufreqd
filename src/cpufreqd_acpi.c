@@ -247,13 +247,13 @@ int find_class_device(const char *clsname, const char *devtype,
 	/* read `clsname` devices */
 	devs = sysfs_get_class_devices(cls);
 	if (!cls) {
-		clog(LOG_NOTICE, "class '%s' not found (%s)\n", clsname,
+		clog(LOG_INFO, "class '%s' not found (%s)\n", clsname,
 				strerror(errno));
 		sysfs_close_class(cls);
 		return -1;
 	}
 	dlist_for_each_data(devs, clsdev, struct sysfs_class_device) {
-		clog(LOG_NOTICE, "found %s\n", clsdev->path);
+		clog(LOG_INFO, "found %s\n", clsdev->path);
 
 		/* read the `type` attribute */
 		attr = sysfs_get_classdev_attr(clsdev, "type");
@@ -268,7 +268,7 @@ int find_class_device(const char *clsname, const char *devtype,
 					attr->path, strerror(errno));
 		}
 		sscanf(attr->value, "%255[a-zA-Z0-9 ]\n", type);
-		clog(LOG_NOTICE, "%s is of type %s\n", clsdev->name, type);
+		clog(LOG_DEBUG, "%s is of type %s\n", clsdev->name, type);
 		if (strncmp(type, devtype, 256) == 0) {
 			struct sysfs_class_device *cdev = 
 				sysfs_open_class_device(clsname, clsdev->name);
