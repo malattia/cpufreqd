@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 #include "cpufreqd_plugin.h"
 #include "cpufreqd_acpi.h"
@@ -54,6 +55,64 @@ static int event_fd;
 static short event_pending;
 extern struct acpi_configuration acpi_config;
 
+static void close_acpi_event(void) {
+	if (event_fd) {
+		clog(LOG_DEBUG, "closing event handle.\n");
+		if (close(event_fd))
+			clog(LOG_ERR, "Couldn't close the ACPI event handler (%s).\n",
+					strerror(errno));
+	}
+	event_fd = 0;
+}
+
+static int open_acpi_event (void) {
+#if 0
+	/* try to open /proc/acpi/event */
+	event_fd = open("/proc/acpi/event", O_RDONLY);
+#endif
+	/* or fallback to the acpid socket */
+	if (event_fd <= 0 && acpi_config.acpid_sock_path[0]) {
+		struct sockaddr_un sck;
+		sck.sun_family = AF_UNIX;
+		strncpy(sck.sun_path, acpi_config.acpid_sock_path, 108);
+		sck.sun_path[107] = '\0';
+
+		if ((event_fd = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
+			clog(LOG_ERR, "Couldn't open acpid socket (%s).\n",
+					strerror(errno));
+			event_fd = 0;
+			return -1;
+		}
+
+		if (connect(event_fd, (struct sockaddr *)&sck, sizeof(sck)) == -1) {
+			clog(LOG_NOTICE, "Couldn't connect to acpid socket %s (%s).\n",
+					acpi_config.acpid_sock_path, strerror(errno));
+			close_acpi_event();
+			return -1;
+		}
+	} else if (event_fd <= 0) {
+		clog(LOG_ERR, "Couldn't open ACPI event device (%s).\n",
+				strerror(errno));
+		event_fd = 0;
+		return -1;
+	} else if (!acpi_config.acpid_sock_path[0]) {
+		clog(LOG_ERR, "No acpid socket given (%s).\n", acpi_config.acpid_sock_path);
+		return -1;
+	} else {
+		clog(LOG_ERR, "Unknown error (%d)-(%s).\n", event_fd, acpi_config.acpid_sock_path);
+		return -1;
+
+	}
+
+	if (fcntl(event_fd, F_SETFL, O_NONBLOCK) == -1) {
+		clog(LOG_ERR, "Couldn't set O_NONBLOCK on ACPI event handler (%s).\n",
+				strerror(errno));
+		close(event_fd);
+		return -1;
+	}
+	return 0;
+}
+
 /*  Waits for ACPI events on the file descriptor opened previously.
  *  This function uses poll(2) to wait for readable data in order
  *  to only wake cpufreqd once in case multiple events are available.
@@ -67,27 +126,33 @@ static void *event_wait (void __UNUSED__ *arg) {
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
-	rfd.fd = event_fd;
 	rfd.events = POLLIN | POLLPRI;
-	rfd.revents = 0;
 	
 	while (1) {
+		while (!event_fd && open_acpi_event() != 0) {
+			struct timespec req = { .tv_sec = 5, .tv_nsec = 0 };
+			nanosleep(&req, NULL);
+		}
+
+		rfd.fd = event_fd;
+		rfd.revents = 0;
 		ret = poll(&rfd, 1, -1);
 
-		if (ret < 0 && errno == EINTR)
-			continue;
-
-		else if (ret < 0) {
+		if (ret < 0) {
 			clog(LOG_ERR, "Error polling ACPI Event handler: %s\n",
 					strerror(errno));
-			break;
+			if (errno == EINTR)
+				close_acpi_event();
+			continue;
 		}
 		
 		/* barf and exit on any error condition */
+		/* close the FD and try too reopen it every 5 seconds */
 		if (rfd.revents & ~POLLIN) {
 			clog(LOG_ERR, "Error polling ACPI Event handler (0x%.4x).\n",
 					rfd.revents);
-			break;
+			close_acpi_event();
+			continue;
 		}
 		while ((read_chars = read(event_fd, buf, MAX_STRING_LEN-1)) > 0) {
 			buf[read_chars-1] = '\0';
@@ -97,10 +162,12 @@ static void *event_wait (void __UNUSED__ *arg) {
 		if (read_chars < 0 && errno != EAGAIN && errno != EINTR) {
 			clog(LOG_DEBUG, "Error reading the ACPI event handler (%d)\n",
 					strerror(errno), read_chars);
-			break;
+			close_acpi_event();
+			continue;
 		} else if (read_chars == 0) {
 			clog(LOG_DEBUG, "ACPI event handler disappeared.\n");
-			break;
+			close_acpi_event();
+			continue;
 		}
 
 		/* mark pending event */
@@ -109,7 +176,6 @@ static void *event_wait (void __UNUSED__ *arg) {
 		acpi_event_unlock();
 		/* Ring the bell!! */
 		wake_cpufreqd();
-		rfd.revents = 0;
 	}
 
 	/* set acpi_event as inactive */
@@ -141,45 +207,6 @@ int acpi_event_init (void) {
 
 	event_pending = 1;
 
-	/* try to open /proc/acpi/event */
-#if 0
-	event_fd = open("/proc/acpi/event", O_RDONLY);
-#endif
-	
-	/* or fallback to the acpid socket */
-	if (event_fd <= 0 && acpi_config.acpid_sock_path[0]) {
-		struct sockaddr_un sck;
-		sck.sun_family = AF_UNIX;
-		strncpy(sck.sun_path, acpi_config.acpid_sock_path, 108);
-		sck.sun_path[107] = '\0';
-
-		if ((event_fd = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
-			clog(LOG_ERR, "Couldn't open acpid socket (%s).\n",
-					strerror(errno));
-			return -1;
-		}
-
-		if (connect(event_fd, (struct sockaddr *)&sck, sizeof(sck)) == -1) {
-			clog(LOG_ERR, "Couldn't connect to acpid socket %s (%s).\n",
-					acpi_config.acpid_sock_path, strerror(errno));
-			return -1;
-		}
-	} else if (event_fd <= 0) {
-		clog(LOG_ERR, "Couldn't open ACPI event device (%s).\n",
-				strerror(errno));
-		return -1;
-	} else {
-		clog(LOG_ERR, "No acpid socket given.\n");
-		return -1;
-	}
-
-	if (fcntl(event_fd, F_SETFL, O_NONBLOCK) == -1) {
-		clog(LOG_ERR, "Couldn't set O_NONBLOCK on ACPI event handler (%s).\n",
-				strerror(errno));
-		close(event_fd);
-		return -1;
-	}
-	
 	/* launch exec thread */
 	if ((ret = pthread_create(&event_thread, NULL, &event_wait, NULL)) != 0) {
 		clog(LOG_ERR, "Unable to launch thread: %s\n", strerror(ret));
@@ -206,12 +233,9 @@ int acpi_event_exit (void) {
 					strerror(ret));
 		event_thread = 0;
 	}
-	
-	if (event_fd) {
-		clog(LOG_DEBUG, "closing event handle.\n");
-		close(event_fd);
-		event_fd = 0;
-	}
+
+	/* just in case the event thread missed it */
+	close_acpi_event();
 	
 	clog(LOG_INFO, "acpi_event exited.\n");
 	return 0;
