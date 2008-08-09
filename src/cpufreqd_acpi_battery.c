@@ -214,7 +214,7 @@ int acpi_battery_parse(const char *ev, void **obj) {
 	if (sscanf(ev, "%32[a-zA-Z0-9]:%d-%d", battery_name, &(ret->min), &(ret->max)) == 3) {
 		/* validate battery name and assign pointer to struct battery_info */
 		if ((ret->bat = get_battery_info(battery_name)) == NULL) {
-			clog(LOG_ERR, "non existent thermal zone %s!\n",
+			clog(LOG_ERR, "non existent battery %s!\n",
 					battery_name);
 			free(ret);
 			return -1;
@@ -224,7 +224,7 @@ int acpi_battery_parse(const char *ev, void **obj) {
 	} else if (sscanf(ev, "%32[a-zA-Z0-9]:%d", battery_name, &(ret->min)) == 2) {
 		/* validate battery name and assign pointer to struct battery_info */
 		if ((ret->bat = get_battery_info(battery_name)) == NULL) {
-			clog(LOG_ERR, "non existent thermal zone %s!\n",
+			clog(LOG_ERR, "non existent battery %s!\n",
 					battery_name);
 			free(ret);
 			return -1;
