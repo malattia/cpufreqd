@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: cpufreqd
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, lsb-base (>= 3.0)
+Depends: ${shlibs:Depends}, lsb-base (>= 3.0)
 Conflicts: cpudyn, powernowd
 Recommends: acpid [amd64 i386 ia64]
 Suggests: cpufrequtils
