@@ -839,6 +839,11 @@ cpufreqd_start:
 		sigaddset(&signal_action.sa_mask, SIGALRM);
 		sigprocmask(SIG_BLOCK, &signal_action.sa_mask, &old_sigmask);
 	}
+	/* otherwise if for any reason the control socket is closed
+	 * force cpufreqd_mode to dynamic and move on
+	 */
+	else
+		cpufreqd_info->cpufreqd_mode = MODE_DYNAMIC;
 	
 	set_cpufreqd_runmode(cpufreqd_info->cpufreqd_mode);
 	/*
