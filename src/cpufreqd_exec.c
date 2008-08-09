@@ -117,7 +117,7 @@ static void *queue_launcher (void __UNUSED__ *arg) {
 						clog(LOG_NOTICE, "\"%s\" exited on signal %d\n",
 								etemp->cmd, WTERMSIG(child_ret));
 					} else {
-						clog(LOG_ERR, "\"%s\" exited with status %d\n",
+						clog(LOG_WARNING, "\"%s\" exited with status %d\n",
 								etemp->cmd, child_ret);
 					}
 						
