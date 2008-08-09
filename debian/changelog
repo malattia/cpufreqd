@@ -1,3 +1,11 @@
+cpufreqd (2.3.2-1) unstable; urgency=low
+
+  * New upstream version (skipping 2.3.0 and 2.3.1)
+  * now reads acpi data from sysfs rather than /proc (Closes: #484467)
+  * plugin initialization is quieter (Closes: #400165)
+
+ -- Mattia Dongili <malattia@debian.org>  Sat, 09 Aug 2008 16:08:22 +0900
+
 cpufreqd (2.2.1-2.1) unstable; urgency=low
 
   * Non-maintainer upload.
