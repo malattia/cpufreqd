@@ -1,3 +1,9 @@
+version 2.3.2
+-------------
+* Fix damn stupid bug that made cpufreq spin forever if there is
+no socket available and it is started with -m (manual mode)
+* Fix some logging as well in acpi_battery
+
 version 2.3.1
 -------------
 * even more silent about non fatal failures
