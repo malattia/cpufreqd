@@ -347,7 +347,7 @@ static int read_args (int argc, char *argv[]) {
  */
 static void print_version(const char *me) {
 	printf("%s version "__CPUFREQD_VERSION__".\n", me);
-	printf("Copyright 2002-2006 Mattia Dongili <"__CPUFREQD_MAINTAINER__">\n"
+	printf("Copyright 2002-2008 Mattia Dongili <"__CPUFREQD_MAINTAINER__">\n"
 	       "                    George Staikos <staikos@0wned.org>\n");
 }
 
@@ -363,7 +363,7 @@ static void print_help(const char *me) {
 			"  -m, --manual                 start in manual mode (ignored if the enable_remote is 0)\n"
 			"  -V, --verbosity              verbosity level from 0 (less verbose) to 7 (most verbose)\n"
 			"\n"
-			"Report bugs to Mattia Dongili <malattia@linux.it>.\n", me);
+			"Report bugs to Mattia Dongili <"__CPUFREQD_MAINTAINER__">.\n", me);
 }
 
 static void term_handler(int signo) {
