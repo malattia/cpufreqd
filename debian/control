@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Mattia Dongili <malattia@debian.org>
 Build-Depends: debhelper (>= 4.1.16), libsensors-dev (>= 1:2.9.1), libcpufreq-dev, libsysfs-dev (>= 2.0.0)
 Standards-Version: 3.7.3
+Homepage: http://sourceforge.net/projects/cpufreqd
 
 Package: cpufreqd
 Architecture: any
@@ -21,5 +22,3 @@ Description: fully configurable daemon for dynamic frequency and voltage scaling
  .
  You need a CPUFreq driver and either APM, ACPI (a recent version) or PMU
  enabled in your kernel in order for this daemon to work.
- .
- Homepage: http://sourceforge.net/projects/cpufreqd
