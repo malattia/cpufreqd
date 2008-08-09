@@ -1,3 +1,9 @@
+version 2.3.1
+-------------
+* even more silent about non fatal failures
+* acpi_event more resitant to acpid dying, it tries to reopen 
+the socket if it loses the connection
+
 version 2.3.0
 -------------
 * use sysfs acpi class devices to read system status (/proc is not supported
