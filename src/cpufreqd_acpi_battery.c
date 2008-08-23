@@ -31,6 +31,8 @@
 #define BATTERY_TYPE	"Battery"
 #define ENERGY_FULL	"energy_full"
 #define ENERGY_NOW	"energy_now"
+#define CHARGE_FULL	"charge_full"
+#define CHARGE_NOW	"charge_now"
 #define PRESENT		"present"
 #define STATUS		"status"
 #define CURRENT_NOW	"current_now"
@@ -123,11 +125,20 @@ static int open_battery(struct battery_info *binfo) {
 	binfo->open = 1;
 
 	binfo->energy_full = get_class_device_attribute(binfo->cdev, ENERGY_FULL);
-	if (!binfo->energy_full)
-		return -1;
+	if (!binfo->energy_full) {
+		/* try the "charge_full" name */
+		binfo->energy_full = get_class_device_attribute(binfo->cdev,
+				CHARGE_FULL);
+		if (!binfo->energy_full)
+			return -1;
+	}
 	binfo->energy_now = get_class_device_attribute(binfo->cdev, ENERGY_NOW);
-	if (!binfo->energy_now)
-		return -1;
+	if (!binfo->energy_now) {
+		/* try the "charge_now" name */
+		binfo->energy_now = get_class_device_attribute(binfo->cdev, CHARGE_NOW);
+		if (!binfo->energy_now)
+			return -1;
+	}
 	binfo->present = get_class_device_attribute(binfo->cdev, PRESENT);
 	if (!binfo->present)
 		return -1;
@@ -306,8 +317,8 @@ int acpi_battery_update(void) {
 			continue;
 		}
 
-		/* if battery not present skip to the next one */
-		if (!info[i].is_present || info[i].capacity <= 0) {
+		/* if battery not open or not present skip to the next one */
+		if (!info[i].open || !info[i].is_present || info[i].capacity <= 0) {
 			continue;
 		}
 		clog(LOG_INFO, "%s - present\n", info[i].cdev->name);
