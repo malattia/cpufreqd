@@ -27,10 +27,10 @@
 #include "cpufreqd_acpi_event.h"
 #include "cpufreqd_acpi_temperature.h"
 
-static short acpi_ac_failed;
-static short acpi_batt_failed;
-static short acpi_ev_failed;
-static short acpi_temp_failed;
+static short int acpi_ac_failed;
+static short int acpi_batt_failed;
+static short int acpi_ev_failed;
+static short int acpi_temp_failed;
 struct acpi_configuration acpi_config;
 
 /*
@@ -83,7 +83,7 @@ static int acpi_post_conf (void) {
 }
 
 static int acpi_exit (void) {
-	int ret = 0;
+	short int ret = 0;
 	if (!acpi_ac_failed) {
 		clog(LOG_DEBUG, "Closing AC\n");
 		ret |= acpi_ac_exit();

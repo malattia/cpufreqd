@@ -23,8 +23,8 @@
  */
 
 int acpi_event_conf (const char *key, const char *value);
-int acpi_event_init (void);
-int acpi_event_exit (void);
+short int acpi_event_init (void);
+short int acpi_event_exit (void);
 int acpi_event_lock (void);
 int acpi_event_unlock (void);
 int is_event_pending(void);

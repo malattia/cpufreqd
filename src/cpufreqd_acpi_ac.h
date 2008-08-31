@@ -18,8 +18,8 @@
  */
 
 
-int acpi_ac_init(void);
-int acpi_ac_exit(void);
+short int acpi_ac_init(void);
+short int acpi_ac_exit(void);
 int acpi_ac_update(void);
 int acpi_ac_parse(const char *ev, void **obj);
 int acpi_ac_evaluate(const void *s);

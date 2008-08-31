@@ -16,8 +16,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-int acpi_temperature_init(void);
-int acpi_temperature_exit(void) ;
+short int acpi_temperature_init(void);
+short int acpi_temperature_exit(void) ;
 int acpi_temperature_parse(const char *ev, void **obj);
 int acpi_temperature_evaluate(const void *s);
 int acpi_temperature_update(void);

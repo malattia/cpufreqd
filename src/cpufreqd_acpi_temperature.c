@@ -26,9 +26,11 @@
 #include "cpufreqd_acpi.h"
 #include "cpufreqd_acpi_temperature.h"
 
-#define THERMAL "thermal"
-#define THERMAL_TYPE "ACPI thermal zone"
-#define THERMAL_TEMP "temp"
+#define THERMAL			"thermal"
+#define THERMAL_TYPE		"acpitz"
+/* the below is for kernels <= 2.6.25 */
+#define THERMAL_TYPE_ALT	"ACPI thermal zone"
+#define THERMAL_TEMP		"temp"
 
 struct thermal_zone {
 	int temperature;
@@ -77,9 +79,12 @@ static int atz_callback(struct sysfs_class_device *cdev)
  *  test if ATZ dirs are present and read their 
  *  path for usage when parsing rules
  */
-int acpi_temperature_init(void)
+short int acpi_temperature_init(void)
 {
 	find_class_device(THERMAL, THERMAL_TYPE, atz_callback);
+	/* try with the old type name */
+	if (atz_dir_num <= 0)
+		find_class_device(THERMAL, THERMAL_TYPE_ALT, atz_callback);
 	if (atz_dir_num <= 0) {
 		clog(LOG_INFO, "No thermal zones found\n");
 		return -1;
@@ -89,7 +94,7 @@ int acpi_temperature_init(void)
 	return 0;
 }
 
-int acpi_temperature_exit(void) 
+short int acpi_temperature_exit(void) 
 {
 	while (--atz_dir_num >= 0) {
 		put_attribute(atz_list[atz_dir_num].temp);

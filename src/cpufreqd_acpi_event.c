@@ -202,7 +202,7 @@ int acpi_event_unlock (void) {
 
 /* Launch the thread that will wait for acpi events
  */
-int acpi_event_init (void) {
+short int acpi_event_init (void) {
 	int ret = 0;
 
 	event_pending = 1;
@@ -216,7 +216,7 @@ int acpi_event_init (void) {
 	return 0;
 }
 
-int acpi_event_exit (void) {
+short int acpi_event_exit (void) {
 	int ret = 0;
 
 	if (event_thread) {

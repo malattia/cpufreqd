@@ -98,8 +98,8 @@ static int cpu_parse(const char *ev, void **obj)
 	char *cpu_cmd = NULL;
 	char wcards[4];
 	unsigned int cpu_num = 0;
-	unsigned int min = 0;
-	unsigned int max = 0;
+	int min = 0;
+	int max = 0;
 	float nice_scale = 0.0f;
 	struct cpu_interval *ret = NULL, **temp_cint = NULL;
 	struct cpufreqd_info *cinfo = get_cpufreqd_info();

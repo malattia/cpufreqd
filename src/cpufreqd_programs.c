@@ -97,11 +97,11 @@ static void insert_tnode(TREE **t, const char *c) {
 	if (cmp > 0) {
 		insert_tnode(&((*t)->right), c);
 		(*t)->right->parent = *t;
-		(*t)->right->height = (*t)->height+1;
+		(*t)->right->height = (short unsigned)((*t)->height + 1);
 	} else if (cmp < 0) {
 		insert_tnode(&((*t)->left), c);
 		(*t)->left->parent = *t;
-		(*t)->left->height = (*t)->height+1;
+		(*t)->left->height = (short unsigned)((*t)->height + 1);
 	} else {
 		(*t)->used++;
 	}

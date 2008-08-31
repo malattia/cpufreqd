@@ -173,7 +173,7 @@ static int clsdev_callback(struct sysfs_class_device *cdev) {
  *  we can easily rescan for availability later (see acpi_battery_update
  *  when an event is pending)
  */
-int acpi_battery_init(void) {
+short int acpi_battery_init(void) {
 	int i;
 
 	find_class_device(POWER_SUPPLY, BATTERY_TYPE, &clsdev_callback);
@@ -194,7 +194,7 @@ int acpi_battery_init(void) {
 			bat_dir_num > 1 ? "ies" : "y");
 	return 0;
 }
-int acpi_battery_exit(void) {
+short int acpi_battery_exit(void) {
 	/* also reset values since this is called on pending
 	 * acpi events to rescan batteries
 	 */

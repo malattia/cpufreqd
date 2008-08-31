@@ -34,7 +34,7 @@
 #define UNPLUGGED 0
 
 static struct sysfs_attribute *mains[64];
-static unsigned short ac_state;
+static int ac_state;
 static int ac_dir_num;
 
 static int mains_callback(struct sysfs_class_device *cdev) {
@@ -56,7 +56,7 @@ static int mains_callback(struct sysfs_class_device *cdev) {
  *
  *  test if AC dirs are present
  */
-int acpi_ac_init(void) {
+short int acpi_ac_init(void) {
 
 	find_class_device(POWER_SUPPLY, AC_TYPE, mains_callback);
 	if (ac_dir_num <= 0) {
@@ -66,7 +66,7 @@ int acpi_ac_init(void) {
 	return 0;
 }
 
-int acpi_ac_exit(void) {
+short int acpi_ac_exit(void) {
 	while (--ac_dir_num >= 0)
 		put_attribute(mains[ac_dir_num]);
 	clog(LOG_INFO, "exited.\n");
