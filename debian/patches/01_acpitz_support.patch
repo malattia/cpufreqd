@@ -17,8 +17,8 @@ Log Message:
 
 Index: cpufreqd-2.3.3/src/cpufreqd_acpi_temperature.c
 ===================================================================
---- cpufreqd-2.3.3.orig/src/cpufreqd_acpi_temperature.c	2008-07-21 16:42:01.000000000 +0900
-+++ cpufreqd-2.3.3/src/cpufreqd_acpi_temperature.c	2008-09-08 23:13:31.345182904 +0900
+--- cpufreqd-2.3.3.orig/src/cpufreqd_acpi_temperature.c	2008-09-08 23:57:02.961182316 +0900
++++ cpufreqd-2.3.3/src/cpufreqd_acpi_temperature.c	2008-09-09 00:01:56.361181870 +0900
 @@ -26,9 +26,11 @@
  #include "cpufreqd_acpi.h"
  #include "cpufreqd_acpi_temperature.h"
@@ -34,12 +34,8 @@ Index: cpufreqd-2.3.3/src/cpufreqd_acpi_temperature.c
  
  struct thermal_zone {
  	int temperature;
-@@ -77,9 +79,12 @@ static int atz_callback(struct sysfs_cla
-  *  test if ATZ dirs are present and read their 
-  *  path for usage when parsing rules
-  */
--int acpi_temperature_init(void)
-+short int acpi_temperature_init(void)
+@@ -80,6 +82,9 @@ static int atz_callback(struct sysfs_cla
+ int acpi_temperature_init(void)
  {
  	find_class_device(THERMAL, THERMAL_TYPE, atz_callback);
 +	/* try with the old type name */
