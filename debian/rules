@@ -22,11 +22,17 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-config.status: configure
+config.status: patch-stamp configure
 	dh_testdir
 	# onfigure the package.
 	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc --localstatedir=/var/run --libdir=/usr/lib/cpufreqd
 
+
+patch: patch-stamp
+patch-stamp:
+	QUILT_PATCHES=debian/patches quilt push -a
+
+        touch patch-stamp
 
 build: build-stamp
 
@@ -38,10 +44,15 @@ build-stamp:  config.status
 
 	touch build-stamp
 
-clean:
+clean: clean-patched upatch
+clean-patched:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp 
+
+unpatch:
+	-QUILT_PATCHES=debian/patches quilt pop -a
+	rm -rf .pc patch-stamp
 
 	# clean up after the build process.
 	[ ! -f Makefile ] || $(MAKE) distclean

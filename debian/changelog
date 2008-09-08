@@ -1,3 +1,10 @@
+cpufreqd (2.3.3-2) unstable; urgency=low
+
+  * backport a patch from upstream repository to support the
+    ACPI thermal zone  reported as "acpitz" in /sys (Closes: #497083).
+
+ -- Mattia Dongili <malattia@debian.org>  Mon, 08 Sep 2008 22:57:22 +0900
+
 cpufreqd (2.3.3-1) unstable; urgency=low
 
   * New upstream version

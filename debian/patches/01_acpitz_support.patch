@@ -1,0 +1,319 @@
+Update of /cvsroot/cpufreqd/sources2/src
+In directory sc8-pr-cvs4.sourceforge.net:/tmp/cvs-serv5102/src
+
+Modified Files:
+	cpufreqd_acpi.c cpufreqd_acpi_ac.c cpufreqd_acpi_ac.h 
+	cpufreqd_acpi_battery.c cpufreqd_acpi_battery.h 
+	cpufreqd_acpi_event.c cpufreqd_acpi_event.h 
+	cpufreqd_acpi_temperature.c cpufreqd_acpi_temperature.h 
+	cpufreqd_cpu.c cpufreqd_programs.c 
+Log Message:
+- make the acpi thermal comaptible with kernels >2.6.25 when the type has
+  changed from "ACPI Thermal Zone" to "acpitz"
+- squash some converison warnings (gcc 4.3 is very loud about it)
+
+
+Index: cpufreqd_acpi_event.h
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi_event.h,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -u -d -r1.1 -r1.2
+--- cpufreqd_acpi_event.h	12 May 2006 18:08:40 -0000	1.1
++++ cpufreqd_acpi_event.h	31 Aug 2008 01:17:25 -0000	1.2
+@@ -23,8 +23,8 @@
+  */
+ 
+ int acpi_event_conf (const char *key, const char *value);
+-int acpi_event_init (void);
+-int acpi_event_exit (void);
++short int acpi_event_init (void);
++short int acpi_event_exit (void);
+ int acpi_event_lock (void);
+ int acpi_event_unlock (void);
+ int is_event_pending(void);
+
+Index: cpufreqd_acpi_ac.h
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi_ac.h,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -u -d -r1.1 -r1.2
+--- cpufreqd_acpi_ac.h	12 May 2006 18:08:40 -0000	1.1
++++ cpufreqd_acpi_ac.h	31 Aug 2008 01:17:25 -0000	1.2
+@@ -18,8 +18,8 @@
+  */
+ 
+ 
+-int acpi_ac_init(void);
+-int acpi_ac_exit(void);
++short int acpi_ac_init(void);
++short int acpi_ac_exit(void);
+ int acpi_ac_update(void);
+ int acpi_ac_parse(const char *ev, void **obj);
+ int acpi_ac_evaluate(const void *s);
+
+Index: cpufreqd_cpu.c
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_cpu.c,v
+retrieving revision 1.18
+retrieving revision 1.19
+diff -u -d -r1.18 -r1.19
+--- cpufreqd_cpu.c	4 Jul 2006 16:49:05 -0000	1.18
++++ cpufreqd_cpu.c	31 Aug 2008 01:17:25 -0000	1.19
+@@ -98,8 +98,8 @@
+ 	char *cpu_cmd = NULL;
+ 	char wcards[4];
+ 	unsigned int cpu_num = 0;
+-	unsigned int min = 0;
+-	unsigned int max = 0;
++	int min = 0;
++	int max = 0;
+ 	float nice_scale = 0.0f;
+ 	struct cpu_interval *ret = NULL, **temp_cint = NULL;
+ 	struct cpufreqd_info *cinfo = get_cpufreqd_info();
+
+Index: cpufreqd_acpi_ac.c
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi_ac.c,v
+retrieving revision 1.18
+retrieving revision 1.19
+diff -u -d -r1.18 -r1.19
+--- cpufreqd_acpi_ac.c	21 Jul 2008 07:56:28 -0000	1.18
++++ cpufreqd_acpi_ac.c	31 Aug 2008 01:17:25 -0000	1.19
+@@ -34,7 +34,7 @@
+ #define UNPLUGGED 0
+ 
+ static struct sysfs_attribute *mains[64];
+-static unsigned short ac_state;
++static int ac_state;
+ static int ac_dir_num;
+ 
+ static int mains_callback(struct sysfs_class_device *cdev) {
+@@ -56,7 +56,7 @@
+  *
+  *  test if AC dirs are present
+  */
+-int acpi_ac_init(void) {
++short int acpi_ac_init(void) {
+ 
+ 	find_class_device(POWER_SUPPLY, AC_TYPE, mains_callback);
+ 	if (ac_dir_num <= 0) {
+@@ -66,7 +66,7 @@
+ 	return 0;
+ }
+ 
+-int acpi_ac_exit(void) {
++short int acpi_ac_exit(void) {
+ 	while (--ac_dir_num >= 0)
+ 		put_attribute(mains[ac_dir_num]);
+ 	clog(LOG_INFO, "exited.\n");
+
+Index: cpufreqd_acpi_event.c
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi_event.c,v
+retrieving revision 1.8
+retrieving revision 1.9
+diff -u -d -r1.8 -r1.9
+--- cpufreqd_acpi_event.c	27 Jul 2008 07:46:35 -0000	1.8
++++ cpufreqd_acpi_event.c	31 Aug 2008 01:17:25 -0000	1.9
+@@ -202,7 +202,7 @@
+ 
+ /* Launch the thread that will wait for acpi events
+  */
+-int acpi_event_init (void) {
++short int acpi_event_init (void) {
+ 	int ret = 0;
+ 
+ 	event_pending = 1;
+@@ -216,7 +216,7 @@
+ 	return 0;
+ }
+ 
+-int acpi_event_exit (void) {
++short int acpi_event_exit (void) {
+ 	int ret = 0;
+ 
+ 	if (event_thread) {
+
+Index: cpufreqd_acpi.c
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi.c,v
+retrieving revision 1.7
+retrieving revision 1.8
+diff -u -d -r1.7 -r1.8
+--- cpufreqd_acpi.c	27 Jul 2008 07:47:42 -0000	1.7
++++ cpufreqd_acpi.c	31 Aug 2008 01:17:25 -0000	1.8
+@@ -27,10 +27,10 @@
+ #include "cpufreqd_acpi_event.h"
+ #include "cpufreqd_acpi_temperature.h"
+ 
+-static short acpi_ac_failed;
+-static short acpi_batt_failed;
+-static short acpi_ev_failed;
+-static short acpi_temp_failed;
++static short int acpi_ac_failed;
++static short int acpi_batt_failed;
++static short int acpi_ev_failed;
++static short int acpi_temp_failed;
+ struct acpi_configuration acpi_config;
+ 
+ /*
+@@ -83,7 +83,7 @@
+ }
+ 
+ static int acpi_exit (void) {
+-	int ret = 0;
++	short int ret = 0;
+ 	if (!acpi_ac_failed) {
+ 		clog(LOG_DEBUG, "Closing AC\n");
+ 		ret |= acpi_ac_exit();
+
+Index: cpufreqd_acpi_battery.h
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi_battery.h,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -u -d -r1.1 -r1.2
+--- cpufreqd_acpi_battery.h	12 May 2006 18:08:40 -0000	1.1
++++ cpufreqd_acpi_battery.h	31 Aug 2008 01:17:25 -0000	1.2
+@@ -17,8 +17,8 @@
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
+-int acpi_battery_init(void);
+-int acpi_battery_exit(void);
++short int acpi_battery_init(void);
++short int acpi_battery_exit(void);
+ int acpi_battery_parse(const char *ev, void **obj);
+ int acpi_battery_evaluate(const void *s);
+ int acpi_battery_update(void);
+
+Index: cpufreqd_programs.c
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_programs.c,v
+retrieving revision 1.19
+retrieving revision 1.20
+diff -u -d -r1.19 -r1.20
+--- cpufreqd_programs.c	31 Jul 2006 19:57:57 -0000	1.19
++++ cpufreqd_programs.c	31 Aug 2008 01:17:25 -0000	1.20
+@@ -97,11 +97,11 @@
+ 	if (cmp > 0) {
+ 		insert_tnode(&((*t)->right), c);
+ 		(*t)->right->parent = *t;
+-		(*t)->right->height = (*t)->height+1;
++		(*t)->right->height = (short unsigned)((*t)->height + 1);
+ 	} else if (cmp < 0) {
+ 		insert_tnode(&((*t)->left), c);
+ 		(*t)->left->parent = *t;
+-		(*t)->left->height = (*t)->height+1;
++		(*t)->left->height = (short unsigned)((*t)->height + 1);
+ 	} else {
+ 		(*t)->used++;
+ 	}
+
+Index: cpufreqd_acpi_temperature.c
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi_temperature.c,v
+retrieving revision 1.20
+retrieving revision 1.21
+diff -u -d -r1.20 -r1.21
+--- cpufreqd_acpi_temperature.c	21 Jul 2008 07:56:28 -0000	1.20
++++ cpufreqd_acpi_temperature.c	31 Aug 2008 01:17:25 -0000	1.21
+@@ -26,9 +26,11 @@
+ #include "cpufreqd_acpi.h"
+ #include "cpufreqd_acpi_temperature.h"
+ 
+-#define THERMAL "thermal"
+-#define THERMAL_TYPE "ACPI thermal zone"
+-#define THERMAL_TEMP "temp"
++#define THERMAL			"thermal"
++#define THERMAL_TYPE		"acpitz"
++/* the below is for kernels <= 2.6.25 */
++#define THERMAL_TYPE_ALT	"ACPI thermal zone"
++#define THERMAL_TEMP		"temp"
+ 
+ struct thermal_zone {
+ 	int temperature;
+@@ -77,9 +79,12 @@
+  *  test if ATZ dirs are present and read their 
+  *  path for usage when parsing rules
+  */
+-int acpi_temperature_init(void)
++short int acpi_temperature_init(void)
+ {
+ 	find_class_device(THERMAL, THERMAL_TYPE, atz_callback);
++	/* try with the old type name */
++	if (atz_dir_num <= 0)
++		find_class_device(THERMAL, THERMAL_TYPE_ALT, atz_callback);
+ 	if (atz_dir_num <= 0) {
+ 		clog(LOG_INFO, "No thermal zones found\n");
+ 		return -1;
+@@ -89,7 +94,7 @@
+ 	return 0;
+ }
+ 
+-int acpi_temperature_exit(void) 
++short int acpi_temperature_exit(void) 
+ {
+ 	while (--atz_dir_num >= 0) {
+ 		put_attribute(atz_list[atz_dir_num].temp);
+
+Index: cpufreqd_acpi_battery.c
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi_battery.c,v
+retrieving revision 1.24
+retrieving revision 1.25
+diff -u -d -r1.24 -r1.25
+--- cpufreqd_acpi_battery.c	23 Aug 2008 03:58:17 -0000	1.24
++++ cpufreqd_acpi_battery.c	31 Aug 2008 01:17:25 -0000	1.25
+@@ -173,7 +173,7 @@
+  *  we can easily rescan for availability later (see acpi_battery_update
+  *  when an event is pending)
+  */
+-int acpi_battery_init(void) {
++short int acpi_battery_init(void) {
+ 	int i;
+ 
+ 	find_class_device(POWER_SUPPLY, BATTERY_TYPE, &clsdev_callback);
+@@ -194,7 +194,7 @@
+ 			bat_dir_num > 1 ? "ies" : "y");
+ 	return 0;
+ }
+-int acpi_battery_exit(void) {
++short int acpi_battery_exit(void) {
+ 	/* also reset values since this is called on pending
+ 	 * acpi events to rescan batteries
+ 	 */
+
+Index: cpufreqd_acpi_temperature.h
+===================================================================
+RCS file: /cvsroot/cpufreqd/sources2/src/cpufreqd_acpi_temperature.h,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -u -d -r1.1 -r1.2
+--- cpufreqd_acpi_temperature.h	12 May 2006 18:08:40 -0000	1.1
++++ cpufreqd_acpi_temperature.h	31 Aug 2008 01:17:25 -0000	1.2
+@@ -16,8 +16,8 @@
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
+-int acpi_temperature_init(void);
+-int acpi_temperature_exit(void) ;
++short int acpi_temperature_init(void);
++short int acpi_temperature_exit(void) ;
+ int acpi_temperature_parse(const char *ev, void **obj);
+ int acpi_temperature_evaluate(const void *s);
+ int acpi_temperature_update(void);
+
+
+-------------------------------------------------------------------------
+This SF.Net email is sponsored by the Moblin Your Move Developer's challenge
+Build the coolest Linux based applications with Moblin SDK & win great prizes
+Grand prize is a trip for two to an Open Source event anywhere in the world
+http://moblin-contest.org/redirect.php?banner_id=100&url=/
+_______________________________________________
+Cpufreqd-devel mailing list
+Cpufreqd-devel@lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/cpufreqd-devel
+
