@@ -44,7 +44,7 @@ build-stamp:  config.status
 
 	touch build-stamp
 
-clean: clean-patched upatch
+clean: clean-patched unpatch
 clean-patched:
 	dh_testdir
 	dh_testroot
