@@ -32,7 +32,7 @@ patch: patch-stamp
 patch-stamp:
 	QUILT_PATCHES=debian/patches quilt push -a
 
-        touch patch-stamp
+	touch patch-stamp
 
 build: build-stamp
 
