@@ -1,3 +1,11 @@
+cpufreqd (2.3.3-3) unstable; urgency=low
+
+  * backport a patch from upstream repository fixing
+    a segfault when reading a /sys device class with no
+    attributes (Closes: #496288).
+
+ -- Mattia Dongili <malattia@debian.org>  Sun, 05 Oct 2008 11:23:07 +0900
+
 cpufreqd (2.3.3-2) unstable; urgency=low
 
   * backport a patch from upstream repository to support the
