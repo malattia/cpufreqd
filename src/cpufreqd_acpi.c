@@ -246,8 +246,8 @@ int find_class_device(const char *clsname, const char *devtype,
 
 	/* read `clsname` devices */
 	devs = sysfs_get_class_devices(cls);
-	if (!cls) {
-		clog(LOG_INFO, "class '%s' not found (%s)\n", clsname,
+	if (!devs) {
+		clog(LOG_INFO, "class device '%s' not found (%s)\n", clsname,
 				strerror(errno));
 		sysfs_close_class(cls);
 		return -1;
