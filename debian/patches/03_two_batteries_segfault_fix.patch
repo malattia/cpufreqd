@@ -1,0 +1,34 @@
+The problem is that check_timeout is reset after the first battery got
+updated, so the values for the second battery are never read.
+
+This results in status->value == NULL, and strncmp segfaults.
+
+The solution is to update check_timeout after all battery values are updated.
+
+kind regards
+Stefan
+
+---
+diff -r -u -b cpufreqd-2.3.3/src/cpufreqd_acpi_battery.c cpufreqd-2.3.3.new/src/cpufreqd_acpi_battery.c
+--- cpufreqd-2.3.3/src/cpufreqd_acpi_battery.c	2008-08-23 05:52:47.000000000 +0200
++++ cpufreqd-2.3.3.new/src/cpufreqd_acpi_battery.c	2008-12-23 19:39:18.850501003 +0100
+@@ -325,7 +325,6 @@
+ 
+ 		/* if check_timeout is expired */
+ 		if (check_timeout <= 0) {
+-			check_timeout = acpi_config.battery_update_interval;
+ 			if (read_battery(&info[i]) == 0)
+ 				n_read++;
+ 			else
+@@ -365,6 +364,11 @@
+ #endif
+ 	} /* end info loop */
+ 
++	/* check_timeout is global for all batteries, so update it after all batteries got updated */
++	if (check_timeout <= 0) {
++		check_timeout = acpi_config.battery_update_interval;
++	}
++
+ 	/* calculates medium battery life between all batteries */
+ 	if (total_capacity > 0)
+ 		avg_battery_level = 100 * (total_remaining / (double)total_capacity);

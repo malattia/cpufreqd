@@ -1,3 +1,10 @@
+cpufreqd (2.3.3-4) unstable; urgency=low
+
+  * Fix segfaulting on laptops with more than one battery,
+    patch from Stefan Bühler (Closes: #509355).
+
+ -- Mattia Dongili <malattia@debian.org>  Wed, 24 Dec 2008 22:01:17 +0900
+
 cpufreqd (2.3.3-3) unstable; urgency=low
 
   * backport a patch from upstream repository fixing
