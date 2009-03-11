@@ -151,33 +151,35 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 	struct sensors_monitor *list = monitor_list;
 	struct sensors_monitor *ret = NULL;
 
-	/* first look if such a name is already cached */
-	while (list) {
-		if (strncmp(list->feat->name, name, MAX_STRING_LEN) == 0) {
-			return list;
-		}
-		list = list->next;
-	}
-	
 	/* scan the full thing */
 	while ( (chip = sensors_get_detected_chips(&nr)) != NULL) {
 		nr1 = nr2 = 0;
+		char *label = NULL;
+		clog(LOG_DEBUG, "Examining chip %s(%d)\n", chip->prefix, nr);
 		while ((feat = sensors_get_all_features(*chip, &nr1, &nr2)) != NULL) {
 			/* sensor? */
-			if(feat->mapping != SENSORS_NO_MAPPING) {
+			if(feat->mapping != SENSORS_NO_MAPPING)
 				continue;
 
-			/* is it? */
-			} else if (strncmp(feat->name, name, MAX_STRING_LEN) != 0) {
+			if (sensors_get_label(*chip, feat->number, &label) != 0)
+				clog(LOG_DEBUG, "Couldn't get label for %s (%s)\n",
+						feat->name, strerror(errno));
+
+			/* is it the one we are looking for? */
+			if (strncmp(feat->name, name, MAX_STRING_LEN) != 0 &&
+					(label && strncmp(label, name, MAX_STRING_LEN) != 0)) {
+				free(label);
 				continue;
 
 			/* cache it */
 			} else if ((ret = calloc(1, sizeof(struct sensors_monitor))) != NULL) {
-				clog(LOG_DEBUG, "Creating new sensors_monitor for %s\n",
-						name);
+				clog(LOG_DEBUG, "Creating new sensors_monitor for %s (%s)\n",
+						label, feat->name);
 				ret->chip = chip;
 				ret->feat = feat;
 				ret->next = NULL;
+				/* free the label here, we are not using it anymore */
+				free(label);
 				/* append monitor to the cache list */
 				list = monitor_list;
 				if (list != NULL) {
@@ -189,7 +191,7 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 					monitor_list = ret;
 				}
 				return ret;
-			/* got somethign wrong... */
+			/* somethign went wrong... */
 			} else {
 				clog(LOG_ERR, "Couldn't create new sensor monitor for %s (%s)\n",
 						name, strerror(errno));
