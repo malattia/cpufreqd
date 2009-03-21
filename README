@@ -74,5 +74,5 @@ http://sf.net/projects/acpi while CPUFreq is available through recent  -ac
 kernels (that include ACPI too) or as patches at
 http://codemonkey.org.uk/projects/cpufreq.
 
-Copyright (C) 2002-2005  Mattia Dongili<malattia@linux.it>
+Copyright (C) 2002-2009  Mattia Dongili<malattia@linux.it>
                          George Staikos <staikos@0wned.org>

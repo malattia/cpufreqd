@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2008  Mattia Dongili <malattia@linux.it>
+ *  Copyright (C) 2002-2009  Mattia Dongili <malattia@linux.it>
  *                           George Staikos <staikos@0wned.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -347,7 +347,7 @@ static int read_args (int argc, char *argv[]) {
  */
 static void print_version(const char *me) {
 	printf("%s version "__CPUFREQD_VERSION__".\n", me);
-	printf("Copyright 2002-2008 Mattia Dongili <"__CPUFREQD_MAINTAINER__">\n"
+	printf("Copyright 2002-2009 Mattia Dongili <"__CPUFREQD_MAINTAINER__">\n"
 	       "                    George Staikos <staikos@0wned.org>\n");
 }
 
