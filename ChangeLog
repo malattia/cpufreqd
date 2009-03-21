@@ -1,3 +1,12 @@
+version 2.3.4
+-------------
+* Fix segfault when no battery directory present (i.e.: on desktops)
+* make the acpi thermal comaptible with kernels >2.6.25 when the type has
+changed from "ACPI Thermal Zone" to "acpitz"
+* squash some converison warnings (gcc 4.3 is very loud about it)
+* allow labels for sensor features
+
+
 version 2.3.3
 -------------
 * support reading the acpi battery status from charge_* attributes
