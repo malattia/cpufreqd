@@ -119,10 +119,10 @@ static int cpu_parse(const char *ev, void **obj)
 		nice_scale = 3.0f;
 
 		/* parse formats */
-		if ((sscanf(cpu_cmd, "%d:%d-%d,%f", &cpu_num, &min, &max, &nice_scale) == 4 
+		if ((sscanf(cpu_cmd, "%d:%d-%d,%f", &cpu_num, &min, &max, &nice_scale) == 4
 					&& cpu_num < cinfo->cpus)) {
 		}
-		else if (sscanf(cpu_cmd, "%d:%d-%d", &cpu_num, &min, &max) == 3 
+		else if (sscanf(cpu_cmd, "%d:%d-%d", &cpu_num, &min, &max) == 3
 				&& cpu_num < cinfo->cpus) {
 			nice_scale = 3.0f;
 		}
@@ -160,7 +160,7 @@ static int cpu_parse(const char *ev, void **obj)
 			clog(LOG_ERR, "Discarded wrong format for cpu_interval: %s\n", cpu_cmd);
 			continue;
 		}
-		clog(LOG_INFO, "read CPU:%d MIN:%d MAX:%d SCALE:%.2f\n", 
+		clog(LOG_INFO, "read CPU:%d MIN:%d MAX:%d SCALE:%.2f\n",
 				cpu_num, min, max, nice_scale);
 
 		/* validate values */
@@ -180,7 +180,7 @@ static int cpu_parse(const char *ev, void **obj)
 		/* store values */
 		*temp_cint = calloc(1, sizeof(struct cpu_interval));
 		if (*temp_cint == NULL) {
-			clog(LOG_ERR, "Unable to make room for a cpu interval (%s)\n", 
+			clog(LOG_ERR, "Unable to make room for a cpu interval (%s)\n",
 					strerror(errno));
 			free_cpu_intervals(ret);
 			return -1;
@@ -228,7 +228,7 @@ static int cpu_evaluate(const void *s) {
 				clog(LOG_DEBUG, "CPU%d %d%% - min=%d max=%d scale=%.2f (%s)\n", i, cpu_percent,
 						c->min, c->max, c->nice_scale, c->cpu == CPU_ANY ? "ANY" : "ALL");
 				/* if CPU_ANY and CPUi matches the return MATCH */
-				if (c->cpu == CPU_ANY && cpu_percent >= c->min && cpu_percent <= c->max) 
+				if (c->cpu == CPU_ANY && cpu_percent >= c->min && cpu_percent <= c->max)
 					return MATCH;
 				/* if CPU_ALL and CPUi doesn't match then break out the loop */
 				if (c->cpu == CPU_ALL && !(cpu_percent >= c->min && cpu_percent <= c->max))
@@ -243,7 +243,7 @@ static int cpu_evaluate(const void *s) {
 			}
 			return MATCH; /*if (c->cpu == ALL)*/
 		}
-		
+
 		/* cacluate weighted activity for the requested CPU */
 		clog(LOG_DEBUG, "CPU%d user=%d nice=%d sys=%d\n", c->cpu, cusage[c->cpu].c_user, cusage[c->cpu].c_nice, cusage[c->cpu].c_sys);
 		cpu_percent = calculate_cpu_usage(&cusage[c->cpu], &cusage_old[c->cpu], c->nice_scale);
@@ -252,7 +252,7 @@ static int cpu_evaluate(const void *s) {
 		/* return MATCH if any of the intervals match as multiple
 		 * entries for a cpu_interval are OR-ed
 		 */
-		if (cpu_percent >= c->min && cpu_percent <= c->max) 
+		if (cpu_percent >= c->min && cpu_percent <= c->max)
 			return MATCH;
 
 		c = c->next;

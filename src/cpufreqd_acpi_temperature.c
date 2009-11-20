@@ -51,7 +51,7 @@ static struct thermal_zone *get_thermal_zone(const char *name)
 {
 	int i;
 	struct thermal_zone *ret = NULL;
-	
+
 	for (i = 0; i < atz_dir_num; i++) {
 		if (strncmp(atz_list[i].cdev->name, name, 32) == 0) {
 			ret = &atz_list[i];
@@ -76,7 +76,7 @@ static int atz_callback(struct sysfs_class_device *cdev)
 
 /*  static int acpi_temperature_init(void)
  *
- *  test if ATZ dirs are present and read their 
+ *  test if ATZ dirs are present and read their
  *  path for usage when parsing rules
  */
 short int acpi_temperature_init(void)
@@ -94,7 +94,7 @@ short int acpi_temperature_init(void)
 	return 0;
 }
 
-short int acpi_temperature_exit(void) 
+short int acpi_temperature_exit(void)
 {
 	while (--atz_dir_num >= 0) {
 		put_attribute(atz_list[atz_dir_num].temp);
@@ -166,8 +166,8 @@ int acpi_temperature_evaluate(const void *s)
 
 	if (ti != NULL && ti->tz != NULL)
 		temp = ti->tz->temperature;
-		
-	clog(LOG_DEBUG, "called %d-%d [%s:%.1f]\n", ti->min, ti->max, 
+
+	clog(LOG_DEBUG, "called %d-%d [%s:%.1f]\n", ti->min, ti->max,
 			ti != NULL && ti->tz != NULL ? ti->tz->cdev->name : "Avg",
 			(float)temp / 1000);
 
@@ -175,7 +175,7 @@ int acpi_temperature_evaluate(const void *s)
 }
 
 /*  static int acpi_temperature_update(void)
- *  
+ *
  *  reads temperature valuse ant compute a medium value
  */
 int acpi_temperature_update(void)

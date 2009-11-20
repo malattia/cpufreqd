@@ -114,7 +114,7 @@ static int acpi_update(void) {
 
 	reset_event();
 	acpi_event_unlock();
-	
+
 	if (!acpi_temp_failed)
 		acpi_temperature_update();
 
@@ -142,12 +142,12 @@ struct cpufreqd_plugin *create_plugin (void) {
 	return &acpi;
 }
 
-/* 
+/*
  * exported functions used in all the acpi components
  *
  */
 
-/* read_value 
+/* read_value
  *
  * read the value and perform no conversion, requires an open sysfs attribute
  */
@@ -221,7 +221,7 @@ void put_class_device(struct sysfs_class_device *clsdev)
 /* find_class_device
  *
  * Read class devices for `clsname` looking for `devtype` in the `type` attribute.
- * If `devtype` matches the device type the callback is invoked with the 
+ * If `devtype` matches the device type the callback is invoked with the
  * struct sysfs_class_device pointer as argument.
  *
  * Returns the number of class devices of type devtype found.
@@ -270,7 +270,7 @@ int find_class_device(const char *clsname, const char *devtype,
 		sscanf(attr->value, "%255[a-zA-Z0-9 ]\n", type);
 		clog(LOG_DEBUG, "%s is of type %s\n", clsdev->name, type);
 		if (strncmp(type, devtype, 256) == 0) {
-			struct sysfs_class_device *cdev = 
+			struct sysfs_class_device *cdev =
 				sysfs_open_class_device(clsname, clsdev->name);
 			if (cdev) {
 				clscount++;

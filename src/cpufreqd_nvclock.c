@@ -39,7 +39,7 @@ struct nvclock_elem {
 };
 
 static void nvcore_change(struct nvclock_elem *nv) {
-	
+
 	if (nv->card < nvclock.num_cards) {
 		clog(LOG_INFO, "Setting nv_core for card %i to (%u)\n", nv->card, nv->value);
 		set_card(nv->card);
@@ -50,7 +50,7 @@ static void nvcore_change(struct nvclock_elem *nv) {
 }
 
 static void nvmem_change(struct nvclock_elem *nv) {
-	
+
 	if (nv->card < nvclock.num_cards) {
 		clog(LOG_INFO, "Setting nv_mem for card %i to (%u)\n", nv->card, nv->value);
 		set_card(nv->card);
@@ -88,7 +88,7 @@ static void nvcore_profile_post_change(void *obj,
 		const unsigned int __UNUSED__ cpu) {
 	nvcore_profile_calls--;
 	if (nvcore_profile_calls == 0)
-		nvcore_change(obj);	
+		nvcore_change(obj);
 }
 
 static void nvmem_rule_post_change(void *obj,

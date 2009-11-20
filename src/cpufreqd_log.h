@@ -21,7 +21,7 @@
 #define __CPUFREQD_LOG_H
 
 /* log levels, for use in the whole application */
-#define LOG_EMERG		0	
+#define LOG_EMERG		0
 #define LOG_ALERT		1
 #define LOG_CRIT		2
 #define LOG_ERR			3

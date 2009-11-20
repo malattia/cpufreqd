@@ -72,7 +72,7 @@ static struct battery_info *get_battery_info(const char *name)
 {
 	int i;
 	struct battery_info *ret = NULL;
-	
+
 	for (i = 0; i < bat_dir_num; i++) {
 		if (strncmp(info[i].cdev->name, name, SYSFS_NAME_LEN) == 0) {
 			ret = &info[i];
@@ -274,14 +274,14 @@ int acpi_battery_evaluate(const void *s) {
 		level = bi->bat->present->value ? bi->bat->level : -1;
 	}
 
-	clog(LOG_DEBUG, "called %d-%d [%s:%d]\n", bi->min, bi->max, 
+	clog(LOG_DEBUG, "called %d-%d [%s:%d]\n", bi->min, bi->max,
 			bi != NULL && bi->bat != NULL ? bi->bat->cdev->name : "Avg", level);
 
 	return (level >= bi->min && level <= bi->max) ? MATCH : DONT_MATCH;
 }
 
 /*  static int acpi_battery_update(void)
- *  
+ *
  *  reads temperature valuse ant compute a medium value
  */
 int acpi_battery_update(void) {
@@ -293,7 +293,7 @@ int acpi_battery_update(void) {
 	double remaining_secs = 0.0;
 #endif
 	struct cpufreqd_info * cinfo = get_cpufreqd_info();
-	
+
 	current_time = (double)cinfo->timestamp.tv_sec + (cinfo->timestamp.tv_usec/1000000.0);
 	elapsed_time = current_time - old_time;
 	old_time = current_time;
@@ -311,7 +311,7 @@ int acpi_battery_update(void) {
 
 	/* Read battery informations */
 	for (i = 0; i < bat_dir_num; i++) {
-		
+
 		if (read_int(info[i].present, &info[i].is_present) != 0) {
 			clog(LOG_INFO, "Skipping %s\n", info[i].cdev->name);
 			continue;

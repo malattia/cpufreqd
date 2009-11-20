@@ -55,7 +55,7 @@ int write_cpufreqd_pid(const char *pidfile)
 			fd = fopen(old_pidfile, "r");
 			/* if the file exists see if there's another cpufreqd process running */
 			if (fd) {
-				if (fscanf(fd, "%s", old_cmdline) == 1 
+				if (fscanf(fd, "%s", old_cmdline) == 1
 						&& strstr(old_cmdline,"cpufreqd") != NULL) {
 					clog(LOG_ERR, "the daemon is already running.\n");
 					fclose(fd);

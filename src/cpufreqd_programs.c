@@ -28,7 +28,7 @@
 
 #define PRG_LENGTH 64
 
-/* a tree structure, contains strings 
+/* a tree structure, contains strings
  * - a binary tree
  * - almost balanced
  * - no duplicates allowed
@@ -212,7 +212,7 @@ static void sweep_unused_node(TNODE **n) {
 	}
 }
 
-/* preorder visit 
+/* preorder visit
  */
 static void preorder_visit(TREE *t, void (*cb)(TNODE **n)) {
 	if (t != NULL && t->left != NULL) {
@@ -237,7 +237,7 @@ static TNODE * find_tnode(TREE *t, const char *c) {
 			return find_tnode(t->right, c);
 		} else if (t->used > 0) {
 			return t;
-		} 
+		}
 	}
 	return NULL;
 }
@@ -264,7 +264,7 @@ static void print_tree(TNODE *n) {
 }
 #endif
 
-/* int numeric_entry(const struct dirent *d) 
+/* int numeric_entry(const struct dirent *d)
  *
  * Select function for scandir()
  *
@@ -281,7 +281,7 @@ static int numeric_entry(const struct dirent *d) {
 
 /* int get_running_programs(void)
  *
- * looks for running programs and fills the 
+ * looks for running programs and fills the
  * global struct running_programs.
  *
  * Returns the length of the newly created list.

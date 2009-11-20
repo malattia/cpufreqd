@@ -59,7 +59,7 @@ static int apm_exit(void) {
 }
 
 /*  static int apm_ac_update(void)
- *  
+ *
  *  reads temperature valuse ant compute a medium value
  */
 static int apm_update(void) {
@@ -100,8 +100,8 @@ static int apm_update(void) {
 	fclose(fp);
 
 	clog(LOG_INFO, "battery %s - %d - ac: %s\n",
-			battery_present?"present":"absent", 
-			battery_percent, 
+			battery_present?"present":"absent",
+			battery_percent,
 			ac_state?"on-line":"off-line");
 	return 0;
 }

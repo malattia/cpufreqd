@@ -34,7 +34,7 @@ static void deconfigure_plugin(struct cpufreqd_conf *configuration, struct plugi
 	struct profile *tmp_profile = NULL;
 	struct directive *d = NULL;
 	struct NODE *node1 = NULL;
-	
+
 	/* discard plugin related rule directives */
 	LIST_FOREACH_NODE(node, &configuration->rules) {
 		tmp_rule = (struct rule *)node->content;
@@ -120,14 +120,14 @@ void discover_plugins(struct LIST *plugins) {
 void load_plugin_list(struct LIST *plugins) {
 	struct plugin_obj *o_plugin = NULL;
 	struct NODE *n = NULL;
-	
+
 	n = plugins->first;
 	while (n != NULL) {
 		o_plugin = (struct plugin_obj*)n->content;
 		/* take care!! if statement badly indented!! */
 		if (load_plugin(o_plugin) == 0 &&
 				get_cpufreqd_object(o_plugin) == 0 &&
-				initialize_plugin(o_plugin) == 0) { 
+				initialize_plugin(o_plugin) == 0) {
 			clog(LOG_INFO, "plugin loaded: %s\n", o_plugin->plugin->plugin_name);
 			n = n->next;
 
@@ -153,7 +153,7 @@ int validate_plugins(struct LIST *plugins) {
 	n = plugins->first;
 	while (n != NULL) {
 		o_plugin = (struct plugin_obj*)n->content;
-		if (o_plugin->used != 0 || 
+		if (o_plugin->used != 0 ||
 				o_plugin->plugin->plugin_update == NULL) {
 			used_plugins++;
 			n = n->next;
@@ -166,7 +166,7 @@ int validate_plugins(struct LIST *plugins) {
 	}
 	return used_plugins;
 }
-	
+
 /*  int load_plugin(struct plugin_obj *cp)
  *  Open shared libraries
  */
@@ -203,7 +203,7 @@ void close_plugin(struct plugin_obj *cp) {
 int get_cpufreqd_object(struct plugin_obj *cp) {
 
 	/* pointer to an error message, if any */
-	const char* error;    
+	const char* error;
 	/* plugin ptr */
 	struct cpufreqd_plugin *(*create)(void);
 
@@ -257,7 +257,7 @@ void update_plugin_states(struct LIST *plugins) {
 	/* update plugin states */
 	LIST_FOREACH_NODE(node, plugins) {
 		o_plugin = (struct plugin_obj*)node->content;
-		if (o_plugin != NULL && o_plugin->used > 0 && 
+		if (o_plugin != NULL && o_plugin->used > 0 &&
 				o_plugin->plugin->plugin_update != NULL) {
 			o_plugin->plugin->plugin_update();
 		}
@@ -293,7 +293,7 @@ void plugins_post_conf(struct LIST *plugins) {
 	}
 }
 
-/* 
+/*
  * Looks for a plugin named as the Section just found (and stored in name).
  * The search is case insensitive.
  * Returns the plugin_obj of the corresponding plugin or NULL if none found.
@@ -301,14 +301,14 @@ void plugins_post_conf(struct LIST *plugins) {
 struct plugin_obj *plugin_handle_section(const char *name, struct LIST *plugins) {
 	char starttag[MAX_STRING_LEN];
 	struct plugin_obj *o_plugin = NULL;
-	
+
 	/* foreach plugin */
 	LIST_FOREACH_NODE(node, plugins) {
 		o_plugin = (struct plugin_obj*)node->content;
 		if (o_plugin == NULL || o_plugin->plugin == NULL ||
 				o_plugin->plugin->plugin_conf == NULL)
 			continue;
-		
+
 		snprintf(starttag, MAX_STRING_LEN, "[%s]", o_plugin->plugin->plugin_name);
 		if (strncasecmp(name, starttag, MAX_STRING_LEN) == 0) {
 			clog(LOG_INFO, "Found Section for \"%s\".\n",
@@ -319,7 +319,7 @@ struct plugin_obj *plugin_handle_section(const char *name, struct LIST *plugins)
 	return NULL;
 }
 
-/* 
+/*
  * Looks for a plugin handling the key keyword, calls its parse function
  * and assigns the obj as returned by the plugin. Returns the struct
  * cpufreqd_keyword handling the keyword or NULL if no plugin handles the
@@ -332,11 +332,11 @@ struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
 		struct cpufreqd_plugin **plugin) {
 	struct cpufreqd_keyword *ckw = NULL;
 	struct plugin_obj *o_plug = NULL;
-	
+
 	/* foreach plugin */
 	LIST_FOREACH_NODE(node, plugins) {
 		o_plug = (struct plugin_obj*)node->content;
-		if (o_plug == NULL || o_plug->plugin == NULL || 
+		if (o_plug == NULL || o_plug->plugin == NULL ||
 				o_plug->plugin->keywords == NULL)
 			continue;
 
@@ -373,6 +373,6 @@ struct cpufreqd_keyword *plugin_handle_keyword(struct LIST *plugins,
 void free_keyword_object(struct cpufreqd_keyword *k, void *obj) {
 	if (k->free != NULL)
 		k->free(obj);
-	else 
+	else
 		free(obj);
 }

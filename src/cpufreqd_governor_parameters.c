@@ -92,7 +92,7 @@ static long int get_parameter(struct sysfs_device *govdev, const char *parameter
 
 /* Sets the value of 'parameter' of 'governor' to 'value'.
  */
-static void set_parameter(const unsigned int cpu, const char *governor, 
+static void set_parameter(const unsigned int cpu, const char *governor,
 		const char *parameter, long int value, int is_percentage)
 {
 	char value_str[BUFLEN_PARAMETER_VALUE];
@@ -142,7 +142,7 @@ static void set_parameter(const unsigned int cpu, const char *governor,
 	/* Get sysfs attribute for the parameter */
 	govattr = sysfs_get_device_attr(govdev, parameter);
 
-	/* Kernel compatibility issue: 
+	/* Kernel compatibility issue:
 	 * The parameter name "ignore_nice" changed to "ignore_nice_load" in kernel >= 2.6.16.
 	 * We are accepting both names silently, regardless the kernel version by trying to get
 	 * a sysfs device for the other name when the specified name doesn't exist in sysfs.
@@ -153,7 +153,7 @@ static void set_parameter(const unsigned int cpu, const char *governor,
 		} else if (strcmp(parameter, "ignore_nice_load") == 0) {
 			govattr = sysfs_get_device_attr(govdev, "ignore_nice");
 		}
-	}			
+	}
 	if (govattr == NULL) {
 		sysfs_close_device(govdev);
 		clog(LOG_WARNING, "warning: attribute %s not found in sysfs.\n", parameter);
@@ -175,7 +175,7 @@ static void set_parameter(const unsigned int cpu, const char *governor,
 
 /* Common keyword parse function.
  */
-static int parameter_parse(const char *keyword, const char *value, void **obj, 
+static int parameter_parse(const char *keyword, const char *value, void **obj,
 		int accept_percentage, int accept_suffix)
 {
 	int i, j;
@@ -245,7 +245,7 @@ static int parameter_parse(const char *keyword, const char *value, void **obj,
 				ret->is_percentage = TRUE;
 				suffix_parsed = TRUE;
 			}
-		} 
+		}
 		if (accept_suffix) {
 			switch (suffix) {
 				case 'u':
@@ -294,7 +294,7 @@ static int parameter_parse(const char *keyword, const char *value, void **obj,
 }
 
 
-/* Keyword parse functions. 
+/* Keyword parse functions.
  * They just call a common parse function with the parameter name as an extra argument.
  */
 static int ignore_nice_parse(const char *value, void **obj)
@@ -363,7 +363,7 @@ static void gov_parameter_post_change(void *obj, const struct cpufreq_policy *no
 		}
 		++i;
 	}
-	clog(LOG_INFO, "governor parameter %s specified, but %s is not supported by this plugin\n", 
+	clog(LOG_INFO, "governor parameter %s specified, but %s is not supported by this plugin\n",
 			parameter, new_policy->governor);
 }
 

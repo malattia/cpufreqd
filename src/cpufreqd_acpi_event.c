@@ -127,7 +127,7 @@ static void *event_wait (void __UNUSED__ *arg) {
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 	rfd.events = POLLIN | POLLPRI;
-	
+
 	while (1) {
 		while (!event_fd && open_acpi_event() != 0) {
 			struct timespec req = { .tv_sec = 5, .tv_nsec = 0 };
@@ -145,7 +145,7 @@ static void *event_wait (void __UNUSED__ *arg) {
 				close_acpi_event();
 			continue;
 		}
-		
+
 		/* barf and exit on any error condition */
 		/* close the FD and try too reopen it every 5 seconds */
 		if (rfd.revents & ~POLLIN) {
@@ -225,7 +225,7 @@ short int acpi_event_exit (void) {
 		if (ret != 0)
 			clog(LOG_ERR, "Couldn't cancel event thread (%s).\n",
 					strerror(ret));
-		
+
 		/* cleanup */
 		ret = pthread_join(event_thread, NULL);
 		if (ret != 0)
@@ -236,7 +236,7 @@ short int acpi_event_exit (void) {
 
 	/* just in case the event thread missed it */
 	close_acpi_event();
-	
+
 	clog(LOG_INFO, "acpi_event exited.\n");
 	return 0;
 }

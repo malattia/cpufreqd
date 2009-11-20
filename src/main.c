@@ -108,7 +108,7 @@ static int get_kversion(void) {
 	fclose(fp);
 	kver[255] = '\0';
 
-	clog(LOG_INFO, "read kernel version %s.\n", kver);
+	clog(LOG_INFO, "kernel version is %s.\n", kver);
 
 	if (strstr(kver, "2.6") == kver) {
 		clog(LOG_DEBUG, "kernel version is 2.6.\n");
@@ -131,7 +131,7 @@ static int get_kversion(void) {
 static unsigned int rule_score(struct rule *rule) {
 	unsigned int hits = 0, directives = 0;
 	struct directive *d = NULL;
-	
+
 	/* call plugin->evaluate for each rule */
 	LIST_FOREACH_NODE(node, &rule->directives) {
 		d = (struct directive *) node->content;
@@ -162,7 +162,7 @@ static struct rule *update_rule_scores(struct LIST *rule_list) {
 
 	LIST_FOREACH_NODE(node, rule_list) {
 		tmp_rule = (struct rule *)node->content;
-		
+
 		clog(LOG_DEBUG, "Considering Rule \"%s\"\n", tmp_rule->name);
 		tmp_rule->score = rule_score(tmp_rule);
 
@@ -175,7 +175,7 @@ static struct rule *update_rule_scores(struct LIST *rule_list) {
 	return ret;
 }
 
-/* 
+/*
  * sets the policy
  * new is never NULL
  *
@@ -210,7 +210,7 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 			clog(LOG_DEBUG, "Profile unchanged (\"%s\"-\"%s\"), for CPU%d doing nothing.\n",
 					old_profile->name, new_profile->name, i);
 		}
-		/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */ 
+		/* int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy) */
 		else if (cpufreq_set_policy(i, &(new_profile->policy)) == 0) {
 			clog(LOG_NOTICE, "Profile \"%s\" set for CPU%d\n", new_profile->name, i);
 			cpufreqd_info->current_profiles[i] = new_profile;
@@ -220,7 +220,7 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 				struct cpufreq_policy *check = NULL;
 				check = cpufreq_get_policy(i);
 				if (check->max != new_profile->policy.max
-						|| check->min != new_profile->policy.min 
+						|| check->min != new_profile->policy.min
 						|| strcmp(check->governor, new_profile->policy.governor) != 0) {
 					/* written policy and subsequent read disagree */
 					clog(LOG_ERR, "I haven't been able to set the chosen policy "
@@ -228,7 +228,7 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 							"I set %d-%d-%s\n"
 							"System says %d-%d-%s\n",
 							i, new_profile->policy.max, new_profile->policy.min,
-							new_profile->policy.governor, check->max, 
+							new_profile->policy.governor, check->max,
 							check->min, check->governor);
 					cpufreq_put_policy(check);
 					return -1;
@@ -243,7 +243,7 @@ static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 		}
 		else {
 			clog(LOG_WARNING, "Couldn't set profile \"%s\" set for cpu%d (%d-%d-%s)\n",
-					new_profile->name, i, new_profile->policy.max, 
+					new_profile->name, i, new_profile->policy.max,
 					new_profile->policy.min, new_profile->policy.governor);
 			return -1;
 		}
@@ -271,7 +271,7 @@ static int set_cpufreqd_runmode(int mode) {
 			return errno;
 		}
 		timer_expired = 1;
-	} 
+	}
 	else if (mode == MODE_MANUAL) {
 		/* reset alarm */
 		if (setitimer(ITIMER_REAL, NULL, 0) < 0) {
@@ -293,13 +293,13 @@ static int set_cpufreqd_runmode(int mode) {
 static int read_args (int argc, char *argv[]) {
 
 	static struct option long_options[] = {
-		{ "help",	0, 0, 'h' }, 
-		{ "version",	0, 0, 'v' }, 
+		{ "help",	0, 0, 'h' },
+		{ "version",	0, 0, 'v' },
 		{ "file",	1, 0, 'f' },
 		{ "no-daemon",	0, 0, 'D' },
 		{ "manual",	0, 0, 'm' },
 		{ "verbosity",	1, 0, 'V' },
-		{ 0, 0, 0, 0 }, 
+		{ 0, 0, 0, 0 },
 	};
 	int ch,option_index = 0;
 
@@ -399,7 +399,7 @@ static void cpufreqd_loop(struct cpufreqd_conf *conf) {
 	unsigned int i = 0;
 	struct rule *best_rule = NULL;
 	struct directive *d = NULL;
-	
+
 	/* update timestamp */
 	if (gettimeofday(&cpufreqd_info->timestamp, NULL) < 0) {
 		clog(LOG_ERR, "Couldn't read current time: %s\n", strerror(errno));
@@ -417,7 +417,7 @@ static void cpufreqd_loop(struct cpufreqd_conf *conf) {
 		clog(LOG_WARNING, "No Rule matches current system status.\n");
 
 	} else if (current_rule != best_rule) {
-		
+
 		/* rule changed */
 
 		/* try to be conservative, if the new rule has the same score
@@ -429,7 +429,7 @@ static void cpufreqd_loop(struct cpufreqd_conf *conf) {
 			rule_equivalent = 1;
 			for (i = 0; i < cpufreqd_info->cpus; i++) {
 				/*
-				 * if the new rule sets a profile for a cpu not 
+				 * if the new rule sets a profile for a cpu not
 				 * covered by the current rule then prefer the new rule
 				 */
 				 if (current_rule->prof[i] == NULL && best_rule->prof[i] != NULL) {
@@ -444,8 +444,8 @@ static void cpufreqd_loop(struct cpufreqd_conf *conf) {
 				return;
 			}
 		}
-		
-		clog(LOG_DEBUG, "New Rule (\"%s\"), applying.\n", 
+
+		clog(LOG_DEBUG, "New Rule (\"%s\"), applying.\n",
 				best_rule->name);
 		/* pre change event */
 		if (best_rule->directives.first != NULL) {
@@ -461,7 +461,7 @@ static void cpufreqd_loop(struct cpufreqd_conf *conf) {
 			ret = cpufreqd_set_profile(current_rule->prof, best_rule->prof);
 
 		if (ret < 0) {
-			clog(LOG_ERR, "Cannot set policy, Rule unchanged (\"%s\").\n", 
+			clog(LOG_ERR, "Cannot set policy, Rule unchanged (\"%s\").\n",
 					current_rule != NULL ? current_rule->name : "none");
 			return;
 		}
@@ -477,7 +477,7 @@ static void cpufreqd_loop(struct cpufreqd_conf *conf) {
 
 	} else {
 		/* nothing new happened */
-		clog(LOG_DEBUG, "Rule unchanged (\"%s\"), doing nothing.\n", 
+		clog(LOG_DEBUG, "Rule unchanged (\"%s\"), doing nothing.\n",
 				current_rule->name);
 	}
 }
@@ -530,7 +530,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 							cpus |= (1 << i);
 					}
 					/* format is:
-					 * 1 cpu applied bitmask 
+					 * 1 cpu applied bitmask
 					 * 2 profile name
 					 * 3 min freq
 					 * 4 max freq
@@ -649,7 +649,7 @@ int main (int argc, char *argv[]) {
 	int cpufreqd_sock = -1, peer_sock = -1; /* input pipe */
 	char dirname[MAX_PATH_LEN];
 	int ret = 0;
-	
+
 	configuration = malloc(sizeof(struct cpufreqd_conf));
 	if (configuration == NULL) {
 		ret = ENOMEM;
@@ -665,7 +665,7 @@ int main (int argc, char *argv[]) {
 	memset(cpufreqd_info, 0, sizeof(struct cpufreqd_info));
 	cpufreqd_info->cpufreqd_mode = MODE_DYNAMIC;
 
-	/* 
+	/*
 	 *  check perms
 	 */
 #if 1
@@ -719,7 +719,7 @@ int main (int argc, char *argv[]) {
 
 	/* read kernel version */
 	cpufreqd_info->kernel_version = get_kversion();
-	
+
 	/*
 	 *  read how many cpus are available here
 	 */
@@ -739,7 +739,7 @@ int main (int argc, char *argv[]) {
 		(cpufreqd_info->sys_info+i)->governors = cpufreq_get_available_governors(i);
 		(cpufreqd_info->sys_info+i)->frequencies = cpufreq_get_available_frequencies(i);
 	}
-	/* 
+	/*
 	 * per-cpu profiles
 	 */
 	cpufreqd_info->current_profiles = calloc(1, cpufreqd_info->cpus * sizeof(struct profile *));
@@ -769,7 +769,7 @@ int main (int argc, char *argv[]) {
 			cpufreqd_info->limits = NULL;
 			break;
 		} else {
-			clog(LOG_INFO, "Limits for cpu%d: MIN=%lu - MAX=%lu\n", i, 
+			clog(LOG_INFO, "Limits for cpu%d: MIN=%lu - MAX=%lu\n", i,
 					tmp_lim->min, tmp_lim->max);
 		}
 	}
@@ -844,7 +844,7 @@ cpufreqd_start:
 	 */
 	else
 		cpufreqd_info->cpufreqd_mode = MODE_DYNAMIC;
-	
+
 	set_cpufreqd_runmode(cpufreqd_info->cpufreqd_mode);
 	/*
 	 *  Looooooooop
@@ -865,7 +865,7 @@ cpufreqd_start:
 			/* wait for a command */
 			FD_ZERO(&rfds);
 			FD_SET(cpufreqd_sock, &rfds);
-			
+
 			if (!timer_expired || cpufreqd_info->cpufreqd_mode == MODE_MANUAL) {
 				switch (pselect(cpufreqd_sock+1, &rfds, NULL, NULL, NULL, &old_sigmask)) {
 					case 0:
@@ -903,7 +903,7 @@ cpufreqd_start:
 	}
 
 	/*
-	 * Clean pidfile
+	 * Clean up pidfile
 	 */
 	clear_cpufreqd_pid(configuration->pidfile);
 
@@ -950,7 +950,7 @@ out:
 	if (configuration != NULL)
 		free(configuration);
 	/*
-	 *  bye bye  
+	 *  bye bye
 	 */
 	return ret;
 }

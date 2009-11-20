@@ -66,7 +66,7 @@ void delete_temp_dir(const char *dirname) {
 
 	if (!dirname[0])
 		return;
-	
+
 	snprintf(filename, MAX_PATH_LEN, "%s%s", dirname, CPUFREQD_SOCKET);
 
 	/* check file and delete it */
@@ -79,7 +79,7 @@ void delete_temp_dir(const char *dirname) {
 	} else {
 		clog(LOG_INFO, "%s deleted.\n", filename);
 	}
-	
+
 	/* it's safe to try this anyway */
 	if (rmdir(dirname) != 0) {
 		clog(LOG_ERR, "Couldn't delete %s: %s\n", dirname, strerror(errno));
@@ -98,10 +98,10 @@ int open_unix_sock(const char *dirname, gid_t gid) {
 	mode_t oldmode = 0;
 	int fd = -1;
 	struct sockaddr_un sa;
-	
+
 	sa.sun_family = AF_UNIX;
 	snprintf(sa.sun_path, 108 , "%s%s", dirname, CPUFREQD_SOCKET);
-	
+
 	if (gid > 0) {
 		oldmode = umask(S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
 	}
@@ -122,7 +122,7 @@ int open_unix_sock(const char *dirname, gid_t gid) {
 		clog(LOG_ERR, "listen(): %s.\n", strerror(errno));
 		close(fd);
 		fd = -1;
-		
+
 	} else if (gid > 0 && chown(sa.sun_path, 0, gid) < 0) {
 		clog(LOG_ERR, "Couldn't chown %s (%s).\n",
 				sa.sun_path, strerror(errno));

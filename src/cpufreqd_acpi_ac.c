@@ -74,7 +74,7 @@ short int acpi_ac_exit(void) {
 }
 
 /*  static int acpi_ac_update(void)
- *  
+ *
  *  reads temperature valuse ant compute a medium value
  */
 int acpi_ac_update(void) {

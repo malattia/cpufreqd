@@ -22,8 +22,8 @@
 
 #define CPUINFO_PROC  "/proc/cpuinfo"
 
-unsigned long normalize_frequency (struct cpufreq_limits *limits,  
-                                   struct cpufreq_available_frequencies *freqs, 
+unsigned long normalize_frequency (struct cpufreq_limits *limits,
+                                   struct cpufreq_available_frequencies *freqs,
                                    unsigned long user_freq);
 unsigned long percent_to_absolute(unsigned long max_freq, unsigned long user_freq);
 unsigned long get_max_available_freq(struct cpufreq_available_frequencies *freqs);

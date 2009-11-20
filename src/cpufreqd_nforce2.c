@@ -40,7 +40,7 @@ static int limit_vcore(int read_vcore)
 		int limited_vcore = (read_vcore < min_vcore) ? min_vcore : max_vcore;
 		clog(LOG_WARNING, "Desired Vcore %i out of range, setting to %i\n",
 				read_vcore, limited_vcore);
-		
+
 		return limited_vcore;
 	}
 }
@@ -140,10 +140,10 @@ static void vcore_pre_change(void *obj,
 
 	if (vcore_profile_calls == 0) {
 		cur_freq = cpufreq_get(0);
-		
+
 		if (cur_freq <= new->max) {
 			int vcore = *(int *)obj;
-			
+
 			clog(LOG_INFO, "Setting Vcore to (%d)\n", vcore);
 			set_vcore(vcore);
 		}
@@ -160,7 +160,7 @@ static void vcore_post_change(void *obj,
 	if (vcore_profile_calls == 0) {
 		if (cur_freq > new->max) {
 			int vcore = *(int *)obj;
-			
+
 			clog(LOG_INFO, "Setting Vcore to (%d)\n", vcore);
 			set_vcore(vcore);
 		}

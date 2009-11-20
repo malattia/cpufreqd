@@ -18,7 +18,7 @@
  *  Based upon the pmu version:
  *  Copyright (C) 2003,2004  Rene Rebe <rene@rocklinux.org>
  *                2005       Mattia Dongili <malattia@linux.it>
- * 
+ *
  */
 
 #include <ctype.h>
@@ -124,8 +124,8 @@ static int tau_update(void) {
 
 	while (tokenize(fp, tag, val) != EOF) {
 		if (strcmp(tag, "temperature") == 0) {
-		  int readed; 
-		  if (((readed=sscanf(val, "%d-%d", &(tau_temperature.min), &(tau_temperature.max))) < 1) 
+		  int readed;
+		  if (((readed=sscanf(val, "%d-%d", &(tau_temperature.min), &(tau_temperature.max))) < 1)
 		      || (readed >2)) {
 		    clog(LOG_ERR, "wrong temperature value %s\n", val);
 		    fclose(fp);
@@ -170,7 +170,7 @@ static int tau_evaluate(const void *s) {
 
 	clog(LOG_DEBUG, "called %d-%d , actual temperature: %d-%d\n", ti->min, ti->max, tau_temperature.min, tau_temperature.max);
 
-	return ((tau_temperature.min<=ti->min && tau_temperature.max>=ti->min) 
+	return ((tau_temperature.min<=ti->min && tau_temperature.max>=ti->min)
 		|| (tau_temperature.min<=ti->max && tau_temperature.max>=ti->max)
 		|| (ti->max >= tau_temperature.max && ti->min<=tau_temperature.min))? MATCH : DONT_MATCH;
 }

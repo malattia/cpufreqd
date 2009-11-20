@@ -28,11 +28,11 @@ extern struct cpufreqd_conf *configuration; /* defined in cpufreqd.h and declare
 
 static unsigned int log_opened; /* syslog already opened */
 
-/* 
- * Logger infrastructure. It reuses the same priorities as 
+/*
+ * Logger infrastructure. It reuses the same priorities as
  * sys/syslog.h because it's easier to manage.
  *
- *	LOG_EMERG	0	
+ *	LOG_EMERG	0
  *	LOG_ALERT	1
  *	LOG_CRIT	2
  *	LOG_ERR		3

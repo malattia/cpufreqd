@@ -19,7 +19,7 @@
  *  Based upon the acpi version:
  *    Copyright (C) 2002-2005  Mattia Dongili<malattia@linux.it>
  *                             George Staikos <staikos@0wned.org>
- * 
+ *
  *  2005-09-11
  *  Ported to cpufreqd-2 new plugin interface by Mattia Dongili
  */
@@ -116,11 +116,11 @@ static int pmu_init(void) {
 	while (tokenize(fp, tag, val) != EOF) {
 		if (strcmp(tag, "PMU driver version") == 0) {
 			sprintf(version, "%s - ", val);
-		} 
+		}
 		else if (strcmp(tag, "PMU firmware version") == 0) {
 			strncat(version, val, 100-strlen(version));
 		}
-	} 
+	}
 	fclose(fp);
 
 	clog(LOG_NOTICE, "PMU driver/firmware version %s\n", version);
@@ -144,10 +144,10 @@ static int pmu_update(void) {
 
 	while (tokenize(fp, tag, val) != EOF) {
 		if (strcmp(tag, "AC Power") == 0) {
-			ac = atoi(val); 
+			ac = atoi(val);
 		}
 		else if (strcmp(tag, "Battery count") == 0) {
-			battery_present = atoi(val); 
+			battery_present = atoi(val);
 		}
 	}
 	fclose(fp);
@@ -161,7 +161,7 @@ static int pmu_update(void) {
 
 	while (tokenize(fp, tag, val) != EOF) {
 		if (strcmp(tag, "charge") == 0) {
-			bat_charge = atof(val); 
+			bat_charge = atof(val);
 		}
 		else if (strcmp(tag, "max_charge") == 0) {
 			bat_max_charge = atof(val);
@@ -172,8 +172,8 @@ static int pmu_update(void) {
 	battery_percent = 100 * (bat_charge / bat_max_charge);
 
 	clog(LOG_INFO, "battery %s - %d - %s\n",
-			battery_present ? "present" : "absent", 
-			battery_percent, 
+			battery_present ? "present" : "absent",
+			battery_percent,
 			ac ? "on-line" : "off-line");
 	return 0;
 }

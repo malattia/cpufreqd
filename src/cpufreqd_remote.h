@@ -23,11 +23,11 @@
 /*
  * Format:
  *	it is an uint32_t used as bitmask
- *	
- *	31-16     15-0 
+ *
+ *	31-16     15-0
  *	<command> <arguments>
- * 
- * The response may be longer than a single line and is 
+ *
+ * The response may be longer than a single line and is
  * terminated by the RESPONSE_END (see defines).
  */
 

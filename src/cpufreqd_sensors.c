@@ -60,10 +60,10 @@ static int sensors_post_conf(void) {
 				strerror(errno));
 		return -1;
 	}
-	
+
 	/* try opening default files */
 	for (i=0; config == NULL && default_file_path[i] != 0; i++) {
-		snprintf(sensors_conffile, MAX_PATH_LEN, "%s/sensors.conf", 
+		snprintf(sensors_conffile, MAX_PATH_LEN, "%s/sensors.conf",
 				default_file_path[i]);
 		config = fopen(sensors_conffile, "r");
 	}
@@ -85,7 +85,7 @@ static int sensors_post_conf(void) {
 	init_success = 1;
 
 	/* read all features name for later validation of directives */
-	
+
 	return 0;
 }
 
@@ -104,7 +104,7 @@ static int sensors_exit(void) {
 		monitor_list = monitor_list->next;
 		free(released);
 	}
-	
+
 	return 0;
 }
 
@@ -137,7 +137,7 @@ static int sensors_get(void) {
 		clog(LOG_INFO, "%s: %.3f\n", list->feat->name, list->value);
 		list = list->next;
 	}
-	
+
 	return 0;
 }
 

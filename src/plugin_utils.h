@@ -24,10 +24,10 @@ struct plugin_obj {
 	char name[256];
 	void *library;
 	struct cpufreqd_plugin *plugin;
-	unsigned int used;		/* track if the plugin is used 
-					eg. if a Rule/Profile contains 
+	unsigned int used;		/* track if the plugin is used
+					eg. if a Rule/Profile contains
 					any of its directives */
-	unsigned int configured;	/* track if the plugin has 
+	unsigned int configured;	/* track if the plugin has
 					already been configured */
 };
 

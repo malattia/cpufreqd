@@ -71,7 +71,7 @@ struct cpufreqd_plugin;
 
 struct rule;
 
-/* 
+/*
  *  A cpufreqd keyword consists of the proper word to match at the
  *  beginning of the Rule line. The struct consists of two other function
  *  pointers, one will provide the function to be called if the keyword
@@ -91,17 +91,17 @@ struct cpufreqd_keyword {
 	 */
 	const char *word;
 
-	/* function pointer to the keyword parser. line is a config file _value_ 
+	/* function pointer to the keyword parser. line is a config file _value_
 	 * (as in key=value) and obj must be assigned a structure that will be
-	 * used by the evaulate functioned 
+	 * used by the evaulate functioned
 	 *
 	 * Must be non-NULL.
 	 */
 	int (*parse) (const char *line, void **obj);
 
-	/* function pointer to the evaluator. obj is the structure provided by 
+	/* function pointer to the evaluator. obj is the structure provided by
 	 * the parse function and that represent the system state that must eventually
-	 * be matched. If the system state matches the function must return MATCH (1) 
+	 * be matched. If the system state matches the function must return MATCH (1)
 	 * otherwise DONT_MATCH (0).
 	 *
 	 * Can be NULL.
@@ -193,15 +193,15 @@ struct cpufreqd_plugin {
 	/* Plugin configuration */
 	int (*plugin_conf) (const char *key, const char *value);
 
-	/* Plugin post configuration 
-	 * This will be called after the configuration of the plugin 
+	/* Plugin post configuration
+	 * This will be called after the configuration of the plugin
 	 * is performed, that is IFF a section with the plugin name
 	 * as been found and parsed succesfully.
 	 */
 	int (*plugin_post_conf) (void);
 
 	/* Allow plugins to make some data available to others.
-	 * This data can be retrieved using 
+	 * This data can be retrieved using
 	 * void *get_plugin_data(const char *name)
 	 * exported by the core cpufreqd.
 	 */
@@ -215,9 +215,9 @@ struct cpufreqd_plugin {
 struct cpufreqd_plugin *create_plugin(void);
 
 #if 0
-/*  This is a hack to enable plugin cooperation. A plugin can read 
+/*  This is a hack to enable plugin cooperation. A plugin can read
  *  some status data from another one.
- *  Tha name "core" is reserved for cpufreqd core data (current 
+ *  Tha name "core" is reserved for cpufreqd core data (current
  *  policy, current cpu speed, ...)
  */
 extern void *get_plugin_data(const char *name);

@@ -58,7 +58,7 @@ struct NODE {
 extern int list_free_sublist(struct LIST *l, struct NODE *n);
 
 /*
- * Initializes a new string_list and 
+ * Initializes a new string_list and
  * returns a reference to it
  */
 extern struct LIST *list_new(void);
@@ -70,7 +70,7 @@ extern struct LIST *list_new(void);
 struct NODE *list_remove_node(struct LIST *l, struct NODE *nd);
 
 /*
- * Initializes a new string_node and 
+ * Initializes a new string_node and
  * returns a reference to it
  */
 extern struct NODE *node_new(void *c, size_t s);

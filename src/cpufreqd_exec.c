@@ -64,7 +64,7 @@ static void *queue_launcher (void __UNUSED__ *arg) {
 	pid_t child_pid = 0;
 	int child_ret = 0;
 	struct sigaction signal_action;
-	
+
 	while (1) {
 		pthread_mutex_lock(&exe_q_mtx);
 		while (exe_q == NULL) {
@@ -120,7 +120,7 @@ static void *queue_launcher (void __UNUSED__ *arg) {
 						clog(LOG_WARNING, "\"%s\" exited with status %d\n",
 								etemp->cmd, child_ret);
 					}
-						
+
 			}
 			free(etemp);
 		} else
@@ -134,7 +134,7 @@ static void *queue_launcher (void __UNUSED__ *arg) {
 static void exec_enqueue (const char *cmd) {
 	struct exec_cmd *etemp = NULL;
 	struct exec_cmd *loop = NULL;
-	
+
 	pthread_mutex_lock(&exe_q_mtx);
 
 	etemp = calloc(1, sizeof(struct exec_cmd));
@@ -212,12 +212,12 @@ static int exec_init (void) {
 static int exec_exit (void) {
 	int ret = 0;
 	struct exec_cmd *etemp = NULL;
-	
+
 	pthread_mutex_lock(&exe_q_mtx);
 	/* push exit into queue */
 	exe_exit_cmd.next = exe_q;
 	exe_q = &exe_exit_cmd;
-	
+
 	/* wake the thread */
 	pthread_cond_signal(&exe_q_cond);
 	pthread_mutex_unlock(&exe_q_mtx);
@@ -227,7 +227,7 @@ static int exec_exit (void) {
 	if (ret != 0) {
 		clog(LOG_ERR, "Couldn't join exec thread.\n");
 	}
-	
+
 	/* free command list if any no need to acquire the mutex */
 	while (exe_q != NULL) {
 		etemp = exe_q;

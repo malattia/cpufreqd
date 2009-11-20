@@ -67,12 +67,12 @@ struct NODE *list_remove_node(struct LIST *l, struct NODE *nd) {
 		if (nd->next != NULL) {
 			nd->next->prev = nd->prev;
 		}
-		/* fix the beginning of 
+		/* fix the beginning of
 		 * the list if necessary
 		 */
 		if (l->first == nd)
 			l->first = nd->next;
-		/* fix the end of 
+		/* fix the end of
 		 * the list if necessary
 		 */
 		if (l->last == nd)
