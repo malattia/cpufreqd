@@ -117,7 +117,7 @@ int acpi_temperature_parse(const char *ev, void **obj)
 	clog(LOG_DEBUG, "called with: %s\n", ev);
 
 	/* try to parse the %[a-zA-Z0-9]:%d-%d format first */
-	if (sscanf(ev, "%32[a-zA-Z0-9]:%d-%d", atz_name, &(ret->min), &(ret->max)) == 3) {
+	if (sscanf(ev, "%32[a-zA-Z0-9_]:%d-%d", atz_name, &(ret->min), &(ret->max)) == 3) {
 		/* validate zone name and assign pointer to struct thermal_zone */
 		if ((ret->tz = get_thermal_zone(atz_name)) == NULL) {
 			clog(LOG_ERR, "non existent thermal zone %s!\n", atz_name);
@@ -127,7 +127,7 @@ int acpi_temperature_parse(const char *ev, void **obj)
 		clog(LOG_INFO, "parsed %s %d-%d\n",
 				ret->tz->cdev->name, ret->min, ret->max);
 
-	} else if (sscanf(ev, "%32[a-zA-Z0-9]:%d", atz_name, &(ret->min)) == 2) {
+	} else if (sscanf(ev, "%32[a-zA-Z0-9_]:%d", atz_name, &(ret->min)) == 2) {
 		/* validate zone name and assign pointer to struct thermal_zone */
 		if ((ret->tz = get_thermal_zone(atz_name)) == NULL) {
 			clog(LOG_ERR, "non existent thermal zone %s!\n", atz_name);
