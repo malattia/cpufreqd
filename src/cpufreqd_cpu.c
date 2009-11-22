@@ -222,7 +222,7 @@ static int cpu_evaluate(const void *s) {
 		/* special handling for CPU_ALL and CPU_ANY */
 		if (c->cpu == CPU_ANY || c->cpu == CPU_ALL) {
 			for (i = 0; i < cinfo->cpus; i++) {
-				clog(LOG_DEBUG, "CPU%d user=%d nice=%d sys=%d\n", c->cpu,
+				clog(LOG_DEBUG, "CPU%d user=%d nice=%d sys=%d\n", i,
 						cusage[i].c_user, cusage[i].c_nice, cusage[i].c_sys);
 				cpu_percent = calculate_cpu_usage(&cusage[i], &cusage_old[i], c->nice_scale);
 				clog(LOG_DEBUG, "CPU%d %d%% - min=%d max=%d scale=%.2f (%s)\n", i, cpu_percent,
@@ -234,18 +234,21 @@ static int cpu_evaluate(const void *s) {
 				if (c->cpu == CPU_ALL && !(cpu_percent >= c->min && cpu_percent <= c->max))
 					break;
 			}
-			/* if this code is reached then either CPU_ANY and none matches
-			 * or CPU_ALL and all match
+			/* if this code is reached then
+			 * either CPU_ANY and none matches
+			 *     or CPU_ALL and all match, where i == cinfo->cpus
+			 *     or CPU_ALL and break was called
 			 */
-			if (c->cpu == CPU_ANY) {
-				c = c->next;
-				continue;
-			}
-			return MATCH; /*if (c->cpu == ALL)*/
+			if (c->cpu == CPU_ALL && i == cinfo->cpus)
+				return MATCH;
+
+			c = c->next;
+			continue;
 		}
 
 		/* cacluate weighted activity for the requested CPU */
-		clog(LOG_DEBUG, "CPU%d user=%d nice=%d sys=%d\n", c->cpu, cusage[c->cpu].c_user, cusage[c->cpu].c_nice, cusage[c->cpu].c_sys);
+		clog(LOG_DEBUG, "CPU%d user=%d nice=%d sys=%d\n", c->cpu, cusage[c->cpu].c_user,
+				cusage[c->cpu].c_nice, cusage[c->cpu].c_sys);
 		cpu_percent = calculate_cpu_usage(&cusage[c->cpu], &cusage_old[c->cpu], c->nice_scale);
 		clog(LOG_DEBUG, "CPU%d %d%% - min=%d max=%d scale=%.2f\n", c->cpu, cpu_percent,
 				c->min, c->max, c->nice_scale);
