@@ -203,6 +203,11 @@ struct sysfs_attribute *get_class_device_attribute(struct sysfs_class_device *cl
 				strerror(errno));
 		return NULL;
 	}
+	if (sysfs_read_attribute(attr)) {
+		clog(LOG_WARNING, "cannot read %s (%s)\n", path,
+				strerror(errno));
+		return NULL;
+	}
 	clog(LOG_INFO, "found %s - path %s\n", attr->name, attr->path);
 	return attr;
 
