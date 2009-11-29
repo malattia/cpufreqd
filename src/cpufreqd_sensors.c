@@ -291,7 +291,7 @@ static int sensor_parse(const char *ev, void **obj) {
 	clog(LOG_DEBUG, "called with %s\n", ev);
 
 	/* try to parse the %[a-zA-Z0-9]:%d-%d format first */
-	if (sscanf(ev, "%32[a-zA-Z0-9_-]:%lf-%lf", ret->name, &ret->min, &ret->max) == 3) {
+	if (sscanf(ev, "%32[a-zA-Z0-9_-% +]:%lf-%lf", ret->name, &ret->min, &ret->max) == 3) {
 		/* validate feature name */
 		if ((ret->monitor = validate_feature_name(ret->name)) != NULL) {
 			clog(LOG_INFO, "parsed %s %.3f-%.3f\n", ret->name, ret->min, ret->max);
