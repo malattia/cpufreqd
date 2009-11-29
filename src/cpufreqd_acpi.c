@@ -185,9 +185,9 @@ void put_attribute(struct sysfs_attribute *attr) {
 
 /* get_class_device_attribute
  *
- * Tried to get the attribute `attrname` from the class device `clsdev`.
- * If the attribute is returned on success, NULL on failure.
- * The attribute can be closes with put_attribute.
+ * Try to get the attribute `attrname` from the class device `clsdev`.
+ * The attribute is returned on success, NULL on failure.
+ * The attribute can be closed with put_attribute.
  */
 struct sysfs_attribute *get_class_device_attribute(struct sysfs_class_device *clsdev,
 		const char *attrname)
@@ -206,6 +206,7 @@ struct sysfs_attribute *get_class_device_attribute(struct sysfs_class_device *cl
 	if (sysfs_read_attribute(attr)) {
 		clog(LOG_WARNING, "cannot read %s (%s)\n", path,
 				strerror(errno));
+		sysfs_close_attribute(attr);
 		return NULL;
 	}
 	clog(LOG_INFO, "found %s - path %s\n", attr->name, attr->path);
