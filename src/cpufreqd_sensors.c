@@ -192,11 +192,11 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 	/* get all sensors from first chip */
 	const sensors_chip_name *chip;
 	const sensors_feature *feat;
-	int nr = 0;
+	int nr = 0, nr1 = 0;
 #if SENSORS_API_VERSION >= 0x400
 	const sensors_subfeature *sub_feat;
 #else
-	int nr1 = 0, nr2 = 0;
+	int nr2 = 0;
 #endif
 	struct sensors_monitor *list = monitor_list;
 	struct sensors_monitor *ret = NULL;
@@ -204,12 +204,18 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 	/* scan the full thing */
 #if SENSORS_API_VERSION >= 0x400
 	while ( (chip = sensors_get_detected_chips(NULL, &nr)) != NULL) {
-		while ((feat = sensors_get_features(chip, &nr)) != NULL) {
+		nr1 = 0;
+		char *label = NULL;
+		clog(LOG_DEBUG, "Examining chip %s(%d)\n", chip->prefix, nr);
+		while ((feat = sensors_get_features(chip, &nr1)) != NULL) {
 			/* sensor input? */
 			if((sub_feat = sensors_get_subfeature(chip, feat, feat->type << 8)) == NULL) {
 				clog(LOG_DEBUG, "Input subfeature not found for %s, skipping\n", feat->name);
 				continue;
 			}
+			if ((label = sensors_get_label(chip, feat)) == NULL)
+				clog(LOG_DEBUG, "Couldn't get label for %s (%s)\n",
+						feat->name, strerror(errno));
 #else
 	while ( (chip = sensors_get_detected_chips(&nr)) != NULL) {
 		nr1 = nr2 = 0;
@@ -219,10 +225,10 @@ static struct sensors_monitor * validate_feature_name(const char *name) {
 			/* sensor? */
 			if(feat->mapping != SENSORS_NO_MAPPING)
 				continue;
-#endif
 			if (sensors_get_label(*chip, feat->number, &label) != 0)
 				clog(LOG_DEBUG, "Couldn't get label for %s (%s)\n",
 						feat->name, strerror(errno));
+#endif
 
 			/* is it the one we are looking for? */
 			if (strncmp(feat->name, name, MAX_STRING_LEN) != 0 &&
