@@ -1,0 +1,40 @@
+What's new in cpufreqd-2
+------------------------
+
+Cpufreqd 2 aims to become the next generation power management
+daemon. It provides a common interface to enable system monitoring
+and to take useful actions upon that.
+Currently it is still centered on the CPUFreq kernel interface,
+that means that running a CPUFreq capable kernel is still needed but
+also that behaviour could be delegated to a plugin.
+
+Note that the configuration file format is slightly incompatible 
+with the previous cpufreqd 1 but it's really easy to migrate (a 
+simple Perl script could do it, I'll try to prepare one soon).
+
+
+Plugins status
+--------------
+
+* acpi_ac		OK
+* acpi_battery		OK
+* acpi_temperature	OK
+* programs		OK
+* cpu			OK
+* nforce2		OK
+* apm			Not tested, lacking HW (feedback is welcome)
+* nvclock		Planned
+* acpi_event		Planned
+* sensors		Planned
+* exec			Planned
+* pmu			Planned, but no HW, will try to simple
+			port the old plugin (any help is welcome)
+
+If you have a good idea about a new plugin you'd like to see, try 
+to talk with me, if I like it I could implement it (e.g: would you 
+like a plugin that makes a Rule match the current datetime? or 
+would like a plugin that switches your screen brightness when a
+Rule mathces? I have other ideas but since most of the actions are
+very specific to a single platform there might be many others and 
+different ways to implement the same thing).
+

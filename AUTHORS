@@ -1,0 +1,10 @@
+Mattia Dongili <malattia@linux.it>
+George Staikos <staikos@0wned.org>
+Rene Rebe <rene@rocklinux.org>
+Dietz Proepper <dietz@rotfl.franken.de>
+
+Other contributors:
+Hrvoje Zeba - cpufreqd remote first implementation
+Prakash Punnoor - nforce2 plugin
+Franz Pletz - sensors plugin first implementation
+Heiko Noordhof - governor_parameters plugin

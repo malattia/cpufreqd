@@ -1,0 +1,8 @@
+
+- cpufreqd_date
+
+- implement a delayed profile change or anyway smooth transitions by interpolation (possible?)
+
+- write an autocpu rule/plugin
+
+- acpi_temperature: allow monitoring separate TZ

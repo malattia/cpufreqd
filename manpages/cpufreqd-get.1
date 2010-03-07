@@ -1,0 +1,66 @@
+.\" Copyright 2005, Mattia Dongili (malattia@linux.it)
+.\"
+.\" This file may be used subject to the terms and conditions of the
+.\" GNU General Public License Version 2, or any later version
+.\" at your option, as published by the Free Software Foundation.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details."
+.TH "cpufreqd-get" "1" "2.2.0" "Mattia Dongili" ""
+
+.SH "NAME"
+.LP 
+cpufreqd\-get \- Issues "get" commands to cpufreqd.
+.SH "SYNTAX"
+.LP 
+.B "cpufreqd\-get [\-l]"
+
+.SH "PARAMETERS"
+.TP
+.B "\-l"
+list applied Profiles for all cpus.
+
+.SH "DESCRIPTION"
+.LP 
+cpufreqd\-get issues a command to cpufreqd and reads the returned output.
+When run without arguments it will issue a "LIST_PROFILES" command, useful
+for usage with cpufreqd\-set. See the PARAMETERS above for more.
+
+.SH "COMMANDS"
+.LP 
+.B "LIST_PROFILES"
+.LP 
+cpufreqd\-get
+.nf
+.ne 7
+Name (#1):	On Demand High
+Active on CPU#:	0, 1
+Governor:	ondemand
+Min freq:	1000000
+Max freq:	1833000
+
+Name (#2):	On Demand Low
+Governor:	ondemand
+Min freq:	1000000
+Max freq:	1333000
+
+.fi
+.LP 
+.B "LIST_APPLIED_PROFILES"
+.LP 
+cpufreqd\-get \-l
+.nf
+.ne 7
+CPU#0: "High Speed 1" ondemand 731500\-997500
+.fi
+
+Near the name (between the parenthesis) you can find the index number to use
+when setting a specific profile with cpufreqd\-set.
+
+.SH "AUTHORS"
+.LP 
+Mattia Dongili <malattia@linux.it>
+.SH "SEE ALSO"
+.LP 
+cpufreqd\-set(1), cpufreqd(8), cpufreqd.conf(5)

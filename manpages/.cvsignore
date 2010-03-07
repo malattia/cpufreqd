@@ -1,0 +1,10 @@
+.*
+Makefile.in
+aclocal.m4
+configure
+Makefile
+config.status
+config.sub
+config.guess
+config.log
+cpufreqd.8

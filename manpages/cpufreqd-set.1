@@ -1,0 +1,44 @@
+.\" Copyright 2005, Mattia Dongili (malattia@linux.it)
+.\"
+.\" This file may be used subject to the terms and conditions of the
+.\" GNU General Public License Version 2, or any later version
+.\" at your option, as published by the Free Software Foundation.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details."
+.TH "cpufreqd-set" "1" "2.2.0" "Mattia Dongili" ""
+.SH "NAME"
+.LP 
+cpufreqd\-set \- Issues "set" commands to cpufreqd.
+.SH "SYNTAX"
+.LP 
+cpufreqd\-set <command>
+.SH "DESCRIPTION"
+.LP 
+cpufreqd\-set issues a command to cpufreqd and reads all the available profiles
+for usage with cpufreqd\-set.  No arguments are allowed to this command.
+
+.SH "COMMANDS"
+.LP 
+.B "manual"
+make cpufreqd run in manual mode. This means the cpufreqd will stop polling the
+system status and will allow for specific profiles to be set.
+
+.B "dynamic"
+make cpufreqd run in dynamic mode (this is the default cpufreqd operation
+mode). This means that cpufreqd will poll system parameters and decide which
+profile better suits the current status.
+
+.B "number"
+by passing an integer to cpufreqd-set you can set a specific profile choosing
+one of the configured ones. You can use cpufreqd-get(1) to obtain available
+profiles and their number.
+
+.SH "AUTHORS"
+.LP 
+Mattia Dongili <malattia@linux.it>
+.SH "SEE ALSO"
+.LP 
+cpufreqd\-get(1), cpufreqd(8), cpufreqd.conf(5)
+

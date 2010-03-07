@@ -1,0 +1,17 @@
+.*
+stamp-h1
+*.lo
+*.la
+cpufreqd
+config.h
+Makefile
+.libs
+.deps
+libtool
+configure
+config.status
+config.guess
+config.ssu
+config.log
+aclocal.m4
+Makefile.in

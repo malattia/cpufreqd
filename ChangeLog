@@ -1,0 +1,222 @@
+version 2.4.0
+-------------
+Andrew Cleveland (1):
+	Rework to support libsensors4 and a few additional features
+
+Martin von Gagern (1):
+	Fix CPU_ALL rules evaluation
+
+Mattia Dongili (7):
+	Kill all the trailing spaces
+	Allow underscores in ACPI thermal zone names
+	Remove the old .cvsignore file
+	Fix sensors feature reading
+	Allow dashes and underscores in feature names
+	Also close the sysfs_attribute if reading fails
+	Allow even more characters in sensors names
+
+Wiz (1):
+	Read sysfs attribute immediately after opening it
+
+version 2.3.4
+-------------
+* Fix segfault when no battery directory present (i.e.: on desktops)
+* make the acpi thermal comaptible with kernels >2.6.25 when the type has
+changed from "ACPI Thermal Zone" to "acpitz"
+* squash some converison warnings (gcc 4.3 is very loud about it)
+* allow labels for sensor features
+
+version 2.3.3
+-------------
+* support reading the acpi battery status from charge_* attributes
+
+version 2.3.2
+-------------
+* Fix damn stupid bug that made cpufreq spin forever if there is
+no socket available and it is started with -m (manual mode)
+* Fix some logging as well in acpi_battery
+
+version 2.3.1
+-------------
+* even more silent about non fatal failures
+* acpi_event more resitant to acpid dying, it tries to reopen 
+the socket if it loses the connection
+
+version 2.3.0
+-------------
+* use sysfs acpi class devices to read system status (/proc is not supported
+anymore, if you don't want't to switch to /sys do not install this version of
+cpufreqd)
+* rescan batteries on acpi events
+* fix invalid profile checking
+
+version 2.2.1
+-------------
+* Fix CMD_CUR_PROFILES or better, fix current_profile traking
+* Fix temperature plugin log output
+* Add currently active cpu in CMD_LIST_PROFILES and modify cpufreqd-get
+  accordingly
+
+version 2.2.0
+-------------
+* SMP/SMT awareness in profiles/rules settings and cpu_plugin
+* added TAU plugin for G3 processors temperature monitoring
+* add "-l" switch to cpufreqd-get to list current profile for each CPU
+  NOTE: the current profile is not reported with simply `cpufreqd-get`
+* deal with unfair bioses which change frequency (and locks 
+  it for some time) behind our back
+* restore reading /proc/<pid>/cmdline instead of /p/<p>/exe and try to
+  normalize the process name
+* do not set a Rule as "current" if it fails to apply
+
+version 2.1.1
+-------------
+* fixed incorrect use of va_args in cpufreqd_log
+* fix acpi_ac to not rely on acpi_events to poll the ac status
+* acpi: do not depend (that much) on acpi_events
+
+version 2.1.0
+-------------
+* grouped some useful info in struct cpufreqd_info to let plugins peek important data
+* added -m switch to start cpufreqd in manual mode
+* reset timer when entering manual mode
+* forcing update when exiting manual mode
+* sanitized set/reset of SIGALRM
+* added cpufreqd_exec plugin
+* added cpufreqd_acpi_event plugin
+* added cpufreqd_governor_parameters plugin
+* merged all ACPI plugins into one to let them cohoperate (eg: wait for events)
+* acpi_battery now can read /proc/acpi files at longer intervals and estimates
+battery level in between them
+* acpi_ac waits for ACPI events instead of polling
+
+version 2.0.0
+-------------
+* 2.0.0 final
+* fix an incorrect printf format that caused to SIGSEGV on 64bit platforms
+* make cpufreqd al little more conservative when choosing a rule by 
+keeping an already applied rule in case of a tie
+
+version 2.0.0-pre2
+-------------------
+* fixed leak in nvclock plugin (note that you still need to patch
+nvclock as a problem was found there also)
+* code cleanup in config_parser.c
+* enabled subsecond poll_interval
+* fixed SIGSEGV when duplicate rules found
+* avoid configuring the same plugin twice
+
+version 2.0.0-pre1
+-------------------
+* implemented backward compatibility for the configuration file
+format (great!!)
+* automatically load plugins (if not configured) and rely on plugins
+initialization to probe the necessary stuff
+* the configure script now accepts --enable/disable options for 
+plugns that need some sort of special support
+* ported the PMU plugin
+* added sensors plugin (you'll need userspace libs from lm-sensors)
+* fixed socket creation permissions
+* added the ability to allow a certain group to read/write
+to the socket
+* fixed looots of bugs
+* beautified logs
+* the "cpu" directive was wrong, now named "cpu_interval"
+run 'sed -i -e 's/^cpu=/cpu_interval=/' /etc/cpufreqd.conf'
+to fix things. I'm sooooo sooorry...
+* reworked plugins post-configuration (might drop it actually), now
+plugins are correctly initialized even if their global section is missing
+
+version 2.0.0-beta4
+-------------------
+* more remote commands supported
+* nforce2-atxp1 supported bi nforce2 plugin
+* reworked main loop to use SIGALARM
+* moved a bunch of code into functions to improve readability
+* included 2 sample remote clients in utils/ with manpages
+* various corrections to manpages
+* complete event infrastructure, now plugins can hook into
+profiles as well as have their own configuration section
+* fixed a bunch of bugs and errors
+
+version 2.0.0-beta3
+-------------------
+* added basic remote commands support, currently only switch
+between manual and dynamic mode
+* added PRE/POST rule change events (I'll use it to implement
+cpufreqd_exec plugin). Might also be helpful with nforce2 chipsets
+
+version 2.0.0-beta2
+-------------------
+* fixed a simple bug with empty rules
+* Valgrind is really happy! #allocs==#frees!!
+
+version 2.0.0-beta1
+-------------------
+* fully refactored to support a better plugin infratructure. Now plugins can
+be atomic wrt features and one can select single resources to monitor. More
+plugins available, see docs for more.
+
+version 1.2.0
+-------------
+* fixed APM battery presence detection (Mark Stier).
+* prefer sysfs interface over proc (Dennis Nienhüser).
+* support for extended /proc/stat information provided by 2.6 kernels (Holger
+  Ruckdeschel).
+* fixes possible divide by 0 while getting cpu usage (thanks to Holger
+  Ruckdeschel).
+* report better logs when scanning acpi dirs (libsys_init in libsys_acpi.c).
+* add checks for empty config file.
+* provide useful defaults for the general section.
+* migrated to autotools 1.8.
+* added multiple processors support (all processors updated with the same
+  values).
+* fixed libsys_acpi bad behavior when no ac_adapter and battery found, now
+  cpufreqd is usable on desktops too, it considers always online a system with
+  a missing ac_adapater directory.
+* added translation between percentage/Hz-speed based on a patch from
+  <rv@eychenne.org> (see http://bugs.debian.org/254418).
+
+version 1.1.2
+-------------
+* added missing fclose in libsys_pmu
+* fixed old gentoo scripts (wrong deamon path)
+* fixed debian init script (missing arguments for cpufreqd start)
+
+version 1.1.1
+-------------
+* fixed a bug in /proc/cpufreq writes handling (wrote the wrong separator
+  thus failing to switch frequencies
+* enhanced program matching, it now considers the base name found in 
+  /proc/<pid>/cmdline (<plasmagunman@users.sourceforge.net>)
+
+version 1.1
+-----------
+* fixed potential buffer overflows in config file parser
+* fixed PPC bug (Dominik 'Aeneas' Schnitzer <dominik@schnitzer.at>)
+* added Mandrake init file (Michael Scherer <scherer.michael@free.fr>)
+* fixed pidfile permission on create (Michael Scherer
+  <scherer.michael@free.fr>)
+* fixed segfaults when some configuration options left blank
+* changed cpufreqd.1 in cpufreqd.8 (seems more appropriate)
+* changed default install dir to $sbindir as cpufreqd is a privileged
+  executable
+* fixed typos and missing information in manpages
+
+version 1.1-rc1
+---------------
+* added support for Power Management Unit of Apple NewWorld systems
+  (Rene Rebe <rene@rocklinux.org>)
+* added cpu monitoring (base code by Dietz Proepper <dietz@rotfl.franken.de>)
+* fixed HUP handler to reinitialize really _everything_
+* varoius smaller fixes
+
+version 1.0.1
+-------------
+* fixed support for sysfs interface for linux-2.6.0-test1 (I hope it won't
+  change anymore)
+* removed ISO C compile warnings
+
+version 1.0
+-----------
+* first stable release
