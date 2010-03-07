@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Mattia Dongili <malattia@debian.org>
 Build-Depends: debhelper (>= 4.1.16), quilt, libsensors4-dev, libcpufreq-dev, libsysfs-dev (>= 2.0.0)
-Standards-Version: 3.7.3
+Standards-Version: 3.8.3
 Homepage: http://sourceforge.net/projects/cpufreqd
 
 Package: cpufreqd
