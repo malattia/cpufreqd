@@ -24,6 +24,7 @@ endif
 
 config-stamp:
 	dh_testdir
+	autoreconf -vfi
 	# configure the package.
 	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc --localstatedir=/var/run --libdir=/usr/lib/cpufreqd
 	touch config-stamp
