@@ -48,7 +48,7 @@ clean:
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_clean
 	dh_installdirs
 
 	# install the package into debian/cpufreqd.

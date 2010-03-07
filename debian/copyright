@@ -23,7 +23,7 @@ Copyright: 2002-2008 Mattia Dongili <malattia@linux.it>
    Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 On Debian systems, the complete text of the GNU General
-Public License can be found in `/usr/share/common-licenses/GPL'.
+Public License can be found in `/usr/share/common-licenses/GPL-2'.
 
 The Debian packaging is (C) 2003-2008, Mattia Dongili <malattia@debian.org>
 and is licensed under the GPL, see above.

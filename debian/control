@@ -2,13 +2,13 @@ Source: cpufreqd
 Section: admin
 Priority: optional
 Maintainer: Mattia Dongili <malattia@debian.org>
-Build-Depends: debhelper (>= 4.1.16), quilt, libsensors4-dev, libcpufreq-dev, libsysfs-dev (>= 2.0.0)
-Standards-Version: 3.8.3
+Build-Depends: debhelper (>= 7), quilt, libsensors4-dev, libcpufreq-dev, libsysfs-dev (>= 2.0.0)
+Standards-Version: 3.8.4
 Homepage: http://sourceforge.net/projects/cpufreqd
 
 Package: cpufreqd
 Architecture: any
-Depends: ${shlibs:Depends}, lsb-base (>= 3.0)
+Depends: ${shlibs:Depends}, ${misc:Depends}, lsb-base (>= 3.0)
 Conflicts: cpudyn, powernowd
 Recommends: acpid [amd64 i386 ia64]
 Suggests: cpufrequtils
