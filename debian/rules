@@ -22,25 +22,20 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-config.status: configure
-configure:
+config-stamp:
 	dh_testdir
-	# onfigure the package.
+	# configure the package.
 	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc --localstatedir=/var/run --libdir=/usr/lib/cpufreqd
-
+	touch config-stamp
 
 build: build-stamp
-
-build-stamp:  config.status
+build-stamp:  config-stamp
 	dh_testdir
-
 	# compile the package.
 	$(MAKE)
-
 	touch build-stamp
 
-clean: clean-patched
-clean-patched:
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp 
