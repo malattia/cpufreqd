@@ -1,3 +1,1 @@
-01_acpitz_support.patch
-02_fix_segfault_reading_class_devices.patch
 03_two_batteries_segfault_fix.patch
