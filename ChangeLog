@@ -1,3 +1,23 @@
+version 2.4.0
+-------------
+Andrew Cleveland (1):
+	Rework to support libsensors4 and a few additional features
+
+Martin von Gagern (1):
+	Fix CPU_ALL rules evaluation
+
+Mattia Dongili (7):
+	Kill all the trailing spaces
+	Allow underscores in ACPI thermal zone names
+	Remove the old .cvsignore file
+	Fix sensors feature reading
+	Allow dashes and underscores in feature names
+	Also close the sysfs_attribute if reading fails
+	Allow even more characters in sensors names
+
+Wiz (1):
+	Read sysfs attribute immediately after opening it
+
 version 2.3.4
 -------------
 * Fix segfault when no battery directory present (i.e.: on desktops)
@@ -5,7 +25,6 @@ version 2.3.4
 changed from "ACPI Thermal Zone" to "acpitz"
 * squash some converison warnings (gcc 4.3 is very loud about it)
 * allow labels for sensor features
-
 
 version 2.3.3
 -------------
