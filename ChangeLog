@@ -1,3 +1,10 @@
+version 2.4.1
+-------------
+Sigh... I forgot this one patch
+
+Mattia Dongili (1):
+	Fix segfault on reading the second battery value
+
 version 2.4.0
 -------------
 Andrew Cleveland (1):
