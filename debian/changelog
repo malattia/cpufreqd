@@ -1,10 +1,11 @@
-cpufreqd (2.4.0-1) unstable; urgency=low
+cpufreqd (2.4.1-1) unstable; urgency=low
 
   * New upstream release (Closes: #547483), now supports libsensors4
     (Closes: #454617) and ignores ignored features (Closes: #538950).
   * Switch to dpkg-source 3.0 (quilt) format (Closes: #538546).
+  * Remove patch merged upstream
 
- -- Mattia Dongili <malattia@debian.org>  Sun, 07 Mar 2010 20:47:14 +0900
+ -- Mattia Dongili <malattia@debian.org>  Sun, 28 Mar 2010 20:29:31 +0900
 
 cpufreqd (2.3.3-4) unstable; urgency=low
 
