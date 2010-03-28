@@ -325,7 +325,6 @@ int acpi_battery_update(void) {
 
 		/* if check_timeout is expired */
 		if (check_timeout <= 0) {
-			check_timeout = acpi_config.battery_update_interval;
 			if (read_battery(&info[i]) == 0)
 				n_read++;
 			else
@@ -364,6 +363,11 @@ int acpi_battery_update(void) {
 		}
 #endif
 	} /* end info loop */
+
+	/* check_timeout is global for all batteries, so update it after all batteries got updated */
+	if (check_timeout <= 0) {
+		check_timeout = acpi_config.battery_update_interval;
+	}
 
 	/* calculates medium battery life between all batteries */
 	if (total_capacity > 0)
