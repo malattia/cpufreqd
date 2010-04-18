@@ -1,3 +1,8 @@
+version 2.4.2
+-------------
+Mattia Dongili (1):
+	libsensors4 doesn't need a configuration file on init
+
 version 2.4.1
 -------------
 Sigh... I forgot this one patch

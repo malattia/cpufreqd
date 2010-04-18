@@ -73,6 +73,10 @@ static int sensors_post_conf(void) {
 		return -1;
 	}
 
+	/* libsensors4 automatically tries to open the
+	 * default config files
+	 */
+#if SENSORS_API_VERSION < 0x400
 	/* try opening default files */
 	for (i=0; config == NULL && default_file_path[i] != 0; i++) {
 		snprintf(sensors_conffile, MAX_PATH_LEN, "%s/sensors.conf",
@@ -87,13 +91,14 @@ static int sensors_post_conf(void) {
 	}
 
 	clog(LOG_INFO, "using %s\n", sensors_conffile);
-
+#endif
 	if(sensors_init(config)) {
 		clog(LOG_ERR, "sensors_init() failed, sensors disabled!\n");
 		fclose(config);
 		return -1;
 	}
-	fclose(config);
+	if (config)
+		fclose(config);
 	init_success = 1;
 
 	/* read all features name for later validation of directives */
