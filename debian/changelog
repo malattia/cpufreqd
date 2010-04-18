@@ -1,3 +1,10 @@
+cpufreqd (2.4.2-1) unstable; urgency=low
+
+  * New upstream release: fixes configuration with libsensors4
+    (Closes: #577822).
+
+ -- Mattia Dongili <malattia@debian.org>  Sun, 18 Apr 2010 23:08:30 +0900
+
 cpufreqd (2.4.1-1) unstable; urgency=low
 
   * New upstream release (Closes: #547483), now supports libsensors4
