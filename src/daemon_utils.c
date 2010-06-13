@@ -38,6 +38,7 @@ int write_cpufreqd_pid(const char *pidfile)
 {
 	FILE *pid;
 	struct stat sb;
+	mode_t oldmask;
 	int rc = 0;
 
 	/* check if old pidfile is still there */
@@ -69,7 +70,7 @@ int write_cpufreqd_pid(const char *pidfile)
 	}
 
 	/* set permission mask 033 */
-	umask( S_IXGRP | S_IXOTH | S_IWOTH | S_IWGRP );
+	oldmask = umask( S_IXGRP | S_IXOTH | S_IWOTH | S_IWGRP );
 
 	/* write pidfile */
 	pid = fopen(pidfile, "w");
@@ -86,6 +87,7 @@ int write_cpufreqd_pid(const char *pidfile)
 	}
 
 	fclose(pid);
+	umask(oldmask);
 	return 0;
 }
 
