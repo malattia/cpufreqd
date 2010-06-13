@@ -70,22 +70,19 @@ int write_cpufreqd_pid(const char *pidfile)
 	}
 
 	/* set permission mask 033 */
-	oldmask = umask( S_IXGRP | S_IXOTH | S_IWOTH | S_IWGRP );
-
+	oldmask = umask(S_IXGRP | S_IXOTH | S_IWOTH | S_IWGRP);
 	/* write pidfile */
 	pid = fopen(pidfile, "w");
 	if (!pid) {
 		clog(LOG_ERR, "%s: %s.\n", pidfile, strerror(errno));
 		return -1;
 	}
-
 	if (!fprintf(pid, "%d", getpid())) {
 		clog(LOG_ERR, "cannot write pid %d.\n", getpid());
 		fclose(pid);
 		clear_cpufreqd_pid(pidfile);
 		return -1;
 	}
-
 	fclose(pid);
 	umask(oldmask);
 	return 0;
@@ -123,13 +120,13 @@ int daemonize (void) {
 			break;
 		default:
 			/* parent */
-			exit (0);
+			exit(0);
 	}
 
 	/* disconnect */
-	setsid ();
-	/* set a decent umask */
-	umask (S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
+	setsid();
+	/* set a decent umask: 177 */
+	umask(S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
 
 	/* set up stdout to log and stderr,stdin to /dev/null */
 	if (freopen("/dev/null", "r", stdin) == NULL) {
@@ -148,7 +145,6 @@ int daemonize (void) {
 	}
 
 	/* get outta the way */
-	chdir ("/");
+	chdir("/");
 	return 0;
 }
-
