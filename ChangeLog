@@ -1,3 +1,13 @@
+version 2.4.3
+-------------
+Mattia Dongili (3):
+	Restore old umask after writing the pid file
+	Fix a couple of style issues
+	Properly check for libsysfs to be available
+
+Perttu Luukko (1):
+	Fix cpufreqd segfault when calling realpath
+
 version 2.4.2
 -------------
 Mattia Dongili (1):
