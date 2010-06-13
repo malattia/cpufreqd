@@ -22,8 +22,11 @@ AC_PROG_INSTALL
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
-AC_CHECK_HEADERS([fcntl.h fnmatch.h limits.h syslog.h unistd.h getopt.h errno.h sys/types.h sys/stat.h signal.h ctype.h dlfcn.h libgen.h sys/socket.h sys/un.h cpufreq.h])
-
+AC_CHECK_HEADERS([fcntl.h fnmatch.h limits.h syslog.h unistd.h getopt.h errno.h \
+		  sys/types.h sys/stat.h signal.h ctype.h dlfcn.h libgen.h \
+		  sys/socket.h sys/un.h cpufreq.h], [],
+		 [ AC_MSG_ERROR([Cannot continue, see above which header is missing]) ],
+		 [])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
@@ -121,6 +124,7 @@ else
 fi
 if test x"${acpi_enable}" = xyes; then
 	ENABLED_PLUGINS="$ENABLED_PLUGINS acpi_battery acpi_ac acpi_temperature"
+	CHECK_SYSFS=yes
 else
 	DISABLED_PLUGINS="$DISABLED_PLUGINS acpi_battery acpi_ac acpi_temperature"
 fi
@@ -339,6 +343,7 @@ AC_ARG_ENABLE([governor-parameters],
 AM_CONDITIONAL(GOVERNOR_PARAMETERS_PLUGIN, test x"${governor_parameters_enable}" = xyes)
 if test x"${governor_parameters_enable}" = xyes; then
 	ENABLED_PLUGINS="$ENABLED_PLUGINS governor_parameters"
+	CHECK_SYSFS=yes
 else
 	DISABLED_PLUGINS="$DISABLED_PLUGINS governor_parameters"
 fi
@@ -369,6 +374,15 @@ fi
    
 if test "x$exec_prefix" = xNONE; then
   exec_prefix="${prefix}"
+fi
+
+# do we also need -lsysfs?
+if test x"${CHECK_SYSFS}" = xyes; then
+	AC_CHECK_HEADERS([ sysfs/libsysfs.h ], [],
+			 [ AC_MSG_ERROR([You need libsysfs development headers to build cpufreqd]) ])
+	AC_CHECK_LIB([sysfs], [sysfs_open_attribute],
+		     [ "" ], # leave this empty to avoid having -lsysfs on all objects
+		     [ AC_MSG_ERROR([You need libsysfs development libraries to build cpufreqd]) ])
 fi
 
 CPUFREQD_LIBDIR="$libdir/"

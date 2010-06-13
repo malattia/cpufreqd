@@ -102,6 +102,9 @@
 /* Define to 1 if you have the `strstr' function. */
 #undef HAVE_STRSTR
 
+/* Define to 1 if you have the <sysfs/libsysfs.h> header file. */
+#undef HAVE_SYSFS_LIBSYSFS_H
+
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
 

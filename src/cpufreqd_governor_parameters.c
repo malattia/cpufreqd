@@ -26,7 +26,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include <libsysfs.h>
+#include <sysfs/libsysfs.h>
 
 #include "cpufreqd_plugin.h"
 

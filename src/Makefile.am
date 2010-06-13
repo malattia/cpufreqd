@@ -104,7 +104,7 @@ cpufreqd_acpi_la_SOURCES = \
 		cpufreqd_acpi_temperature.c
 
 cpufreqd_acpi_la_CFLAGS = \
-		$(AM_CFLAGS) -I/@PTHREAD_SRCDIR@/include -I/usr/include/sysfs
+		$(AM_CFLAGS) -I/@PTHREAD_SRCDIR@/include
 
 cpufreqd_acpi_la_LDFLAGS = \
 		-module -avoid-version -L/@PTHREAD_SRCDIR@/lib -lpthread -lsysfs
@@ -176,7 +176,7 @@ cpufreqd_governor_parameters_la_SOURCES = \
 		cpufreqd_governor_parameters.c
 
 cpufreqd_governor_parameters_la_CFLAGS = \
-		$(AM_CFLAGS) -I/usr/include/sysfs
+		$(AM_CFLAGS)
 
 cpufreqd_governor_parameters_la_LDFLAGS = \
 		-module -avoid-version -lsysfs
