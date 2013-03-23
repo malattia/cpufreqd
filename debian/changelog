@@ -1,3 +1,10 @@
+cpufreqd (2.4.2-2) unstable; urgency=low
+
+  * Fix reading the correct battery attribute
+    (Closes: #619913 and Closes: #644567).
+
+ -- Mattia Dongili <malattia@debian.org>  Sat, 23 Mar 2013 21:42:31 +0900
+
 cpufreqd (2.4.2-1) unstable; urgency=low
 
   * New upstream release: fixes configuration with libsensors4
