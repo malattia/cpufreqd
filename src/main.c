@@ -90,41 +90,6 @@ static struct cpufreqd_conf default_configuration = {
 struct cpufreqd_conf *configuration;
 
 /*
- * Try to read current kernel version.
- */
-static int get_kversion(void) {
-	FILE *fp;
-	char kver[256];
-	int f = 0;
-
-	fp = fopen ("/proc/version", "r");
-	if (!fp) {
-		clog(LOG_ERR, "/proc/version: %s\n", strerror(errno));
-		return -1;
-	}
-	do {
-		f = fscanf (fp, "Linux version %s", kver);
-	} while (f != 1);
-	fclose(fp);
-	kver[255] = '\0';
-
-	clog(LOG_INFO, "kernel version is %s.\n", kver);
-
-	if (strstr(kver, "2.6") == kver) {
-		clog(LOG_DEBUG, "kernel version is 2.6.\n");
-		return KERNEL_VERSION_26;
-	} else if (strstr(kver, "2.4") == kver) {
-		clog(LOG_DEBUG, "kernel version is 2.4.\n");
-		return KERNEL_VERSION_24;
-	} else {
-		clog(LOG_WARNING, "Unknown kernel version, assuming a 2.6 kernel.\n");
-		return KERNEL_VERSION_26;
-	}
-
-}
-
-
-/*
  * Evaluates the full rule and returns the percentage score
  * for it.
  */
@@ -716,9 +681,6 @@ int main (int argc, char *argv[]) {
 
 	signal_action.sa_handler = pipe_handler;
 	sigaction(SIGPIPE, &signal_action, 0);
-
-	/* read kernel version */
-	cpufreqd_info->kernel_version = get_kversion();
 
 	/*
 	 *  read how many cpus are available here

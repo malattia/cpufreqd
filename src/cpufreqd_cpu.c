@@ -44,7 +44,6 @@ struct cpu_usage {
 	unsigned int delta_time;
 };
 
-static unsigned int kernel_version;
 static struct cpu_usage *cusage;
 static struct cpu_usage *cusage_old;
 
@@ -60,7 +59,6 @@ static void free_cpu_intervals(void *obj) {
 static int cpufreqd_cpu_init(void) {
 	struct cpufreqd_info *cinfo = get_cpufreqd_info();
 	clog(LOG_INFO, "called\n");
-	kernel_version = cinfo->kernel_version;
 
 	/* allocate cpu_usage structures:
 	 * two for each cpu available and 2 more to
@@ -292,8 +290,7 @@ static int get_cpu(void) {
 					"cpu %u %u %u %lu %lu %lu %lu%*s\n",
 					&c_user, &c_nice, &c_sys,
 					&c_idle, &c_iowait, &c_irq, &c_softirq);
-			if (!((f == 4 && kernel_version == KERNEL_VERSION_24)
-					|| (f == 7 && kernel_version == KERNEL_VERSION_26)))
+			if (f != 7)
 				continue;
 			/* set to all_cpus */
 			cpu_num = cinfo->cpus;
@@ -304,8 +301,7 @@ static int get_cpu(void) {
 					&cpu_num, &c_user, &c_nice, &c_sys,
 					&c_idle, &c_iowait, &c_irq, &c_softirq);
 
-			if (!((f == 5 && kernel_version == KERNEL_VERSION_24)
-					|| (f == 8 && kernel_version == KERNEL_VERSION_26)))
+			if (f != 8)
 				continue;
 			/* got a CPU stats */
 			i++;

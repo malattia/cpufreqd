@@ -35,9 +35,6 @@
 #define DONT_MATCH  0
 #define MATCH       1
 
-#define KERNEL_VERSION_26	1
-#define KERNEL_VERSION_24	2
-
 #define wake_cpufreqd()	kill(getpid(), SIGALRM)
 
 /*
@@ -56,7 +53,6 @@ struct cpufreq_sys_info {
 };
 
 struct cpufreqd_info {
-	unsigned int kernel_version;
 	unsigned int cpus;
 	int cpufreqd_mode; /* operation mode (manual / dynamic) */
 	struct cpufreq_limits *limits;
