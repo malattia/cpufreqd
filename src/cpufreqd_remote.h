@@ -20,6 +20,8 @@
 #ifndef __CPUFREQD_REMOTE_H
 #define __CPUFREQD_REMOTE_H
 
+#include <stdint.h>
+
 /*
  * Format:
  *	it is an uint32_t used as bitmask
@@ -46,7 +48,7 @@
 
 #define REMOTE_CMD(c)		(c >> CMD_SHIFT)
 #define REMOTE_ARG(c)		(c & ARG_MASK)
-#define MAKE_COMMAND(cmd, arg)	((cmd << CMD_SHIFT) | arg)
+#define MAKE_COMMAND(cmd, arg)	((uint32_t) ((cmd << CMD_SHIFT) | arg))
 #define INVALID_CMD		0xffffffff
 
 #endif
