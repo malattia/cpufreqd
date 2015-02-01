@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "No cpufreqd socket found\n");
 		return ENOENT;
 	}
-	if (!sck.sun_path) {
+	if (!sck.sun_path[0]) {
 		fprintf(stderr, "No cpufreqd socket found\n");
 		return ENOENT;
 	}
