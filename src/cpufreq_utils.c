@@ -61,7 +61,7 @@ unsigned long normalize_frequency (struct cpufreq_limits *limits,
 
 /* translate percent values to absolute values */
 unsigned long percent_to_absolute(unsigned long max_freq, unsigned long user_freq) {
-	return max_freq * ((float)user_freq / 100);
+	return max_freq * (unsigned long)((float)user_freq / 100);
 }
 
 /* goes through the list and returns the highest frequency */
@@ -88,16 +88,16 @@ unsigned long get_min_available_freq(struct cpufreq_available_frequencies *freqs
 	return min;
 }
 
-/* int get_cpu_num(void)
+/* unsigned int get_cpu_num(void)
  *
  * Gets the number of installed CPUs from procfs
  * and sets cpu_num appropriately.
  *
  * Returns always at least 1 (you can't run this function without any cpu!)
  */
-int get_cpu_num(void) {
+unsigned int get_cpu_num(void) {
 	FILE *fp;
-	int n;
+	unsigned int n;
 	char line[256];
 
 	fp = fopen(CPUINFO_PROC, "r");

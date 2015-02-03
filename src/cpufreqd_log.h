@@ -32,12 +32,11 @@
 
 extern void cpufreqd_log (const int prio, const char *fmt, ...);
 
-#ifdef __GNUC__
-#  define clog(__prio,__fmt,...) \
-	cpufreqd_log(__prio, "%-25s: "__fmt, __func__, ## __VA_ARGS__)
-
+#if defined(__GNUC__) || defined(__clang__)
+#  define clog(__prio, __fmt, ...) \
+	cpufreqd_log(__prio, "%-25s: " __fmt, __func__, ## __VA_ARGS__)
 #else
-#  define clog(__prio,__fmt,...) \
+#  define clog(__prio, __fmt, ...) \
 	cpufreqd_log(__prio, __fmt, __VA_ARGS__)
 #endif
 

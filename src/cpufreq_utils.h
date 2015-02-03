@@ -28,5 +28,5 @@ unsigned long normalize_frequency (struct cpufreq_limits *limits,
 unsigned long percent_to_absolute(unsigned long max_freq, unsigned long user_freq);
 unsigned long get_max_available_freq(struct cpufreq_available_frequencies *freqs);
 unsigned long get_min_available_freq(struct cpufreq_available_frequencies *freqs);
-int get_cpu_num(void);
+unsigned int get_cpu_num(void);
 

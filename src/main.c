@@ -150,7 +150,8 @@ static struct rule *update_rule_scores(struct LIST *rule_list) {
 static int cpufreqd_set_profile (struct profile **old, struct profile **new) {
 	unsigned int i;
 	struct directive *d;
-	struct profile *old_profile = NULL, *new_profile = NULL;
+	struct profile *old_profile = NULL;
+	struct profile *new_profile = NULL;
 
 	for (i = 0; i < cpufreqd_info->cpus; i++) {
 		new_profile = new[i];
@@ -311,8 +312,8 @@ static int read_args (int argc, char *argv[]) {
  * Prints program version
  */
 static void print_version(const char *me) {
-	printf("%s version "__CPUFREQD_VERSION__".\n", me);
-	printf("Copyright 2002-2009 Mattia Dongili <"__CPUFREQD_MAINTAINER__">\n"
+	printf("%s version " __CPUFREQD_VERSION__ ".\n", me);
+	printf("Copyright 2002-2009 Mattia Dongili <" __CPUFREQD_MAINTAINER__ ">\n"
 	       "                    George Staikos <staikos@0wned.org>\n");
 }
 
@@ -323,12 +324,12 @@ static void print_help(const char *me) {
 	printf("Usage: %s [OPTION]...\n\n"
 			"  -h, --help                   display this help and exit\n"
 			"  -v, --version                display version information and exit\n"
-			"  -f, --file                   config file (default: "CPUFREQD_CONFIG")\n"
+			"  -f, --file                   config file (default: " CPUFREQD_CONFIG ")\n"
 			"  -D, --no-daemon              stay in foreground and print log to stdout (used to debug)\n"
 			"  -m, --manual                 start in manual mode (ignored if the enable_remote is 0)\n"
 			"  -V, --verbosity              verbosity level from 0 (less verbose) to 7 (most verbose)\n"
 			"\n"
-			"Report bugs to Mattia Dongili <"__CPUFREQD_MAINTAINER__">.\n", me);
+			"Report bugs to Mattia Dongili <" __CPUFREQD_MAINTAINER__ ">.\n", me);
 }
 
 static void term_handler(int signo) {
@@ -453,7 +454,8 @@ static void cpufreqd_loop(struct cpufreqd_conf *conf) {
 static void execute_command(int sock, struct cpufreqd_conf *conf) {
 	struct pollfd fds;
 	char buf[MAX_STRING_LEN];
-	unsigned int buflen = 0, counter = 0, i = 0, cpus = 0;
+	int buflen = 0;
+	unsigned int counter = 0, i = 0, cpus = 0;
 	struct profile *p = NULL, **pp = NULL;
 	uint32_t command = INVALID_CMD;
 
@@ -465,11 +467,16 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 
 	if (poll(&fds, 1, 500) != 1) {
 		clog(LOG_ALERT, "Waited too long for data, aborting.\n");
+		return;
 
-	} else if (read(sock, &command, sizeof(uint32_t)) == -1) {
+	}
+	if (read(sock, &command, sizeof(uint32_t)) == -1) {
 		clog(LOG_ALERT, "process_packet - read(): %s\n", strerror(errno));
+		return;
 
-	} else if (command != INVALID_CMD) {
+	}
+
+	if (command != INVALID_CMD) {
 		clog(LOG_INFO, "command received: %0.4x %0.4x\n",
 				REMOTE_CMD(command), REMOTE_ARG(command));
 		switch (REMOTE_CMD(command)) {
@@ -506,7 +513,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 							p->name,
 							p->policy.min, p->policy.max,
 							p->policy.governor);
-					write(sock, buf, buflen);
+					write(sock, buf, (size_t)buflen);
 				}
 				break;
 			case CMD_CUR_PROFILES:
@@ -530,7 +537,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 							cpufreqd_info->current_profiles[i]->policy.min,
 							cpufreqd_info->current_profiles[i]->policy.max,
 							cpufreqd_info->current_profiles[i]->policy.governor);
-					write(sock, buf, buflen);
+					write(sock, buf, (size_t)buflen);
 				}
 				break;
 			case CMD_SET_RULE:
@@ -559,7 +566,7 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 					if (counter == REMOTE_ARG(command)) {
 
 						/* set this profile for every cpu */
-						pp = calloc(cpufreqd_info->cpus, sizeof(struct profile *));
+						pp = (struct profile**) calloc(cpufreqd_info->cpus, sizeof(struct profile *));
 						if (pp == NULL) {
 							clog(LOG_ERR, "Couldn't allocate enough memory "
 									" to set profile \"%s\"\n",
@@ -615,14 +622,14 @@ int main (int argc, char *argv[]) {
 	char dirname[MAX_PATH_LEN];
 	int ret = 0;
 
-	configuration = malloc(sizeof(struct cpufreqd_conf));
+	configuration = (struct cpufreqd_conf *) malloc(sizeof(struct cpufreqd_conf));
 	if (configuration == NULL) {
 		ret = ENOMEM;
 		goto out;
 	}
 	memcpy(configuration, &default_configuration, sizeof(struct cpufreqd_conf));
 
-	cpufreqd_info = malloc(sizeof(struct cpufreqd_info));
+	cpufreqd_info = (struct cpufreqd_info *) malloc(sizeof(struct cpufreqd_info));
 	if (cpufreqd_info == NULL) {
 		ret = ENOMEM;
 		goto out;
@@ -690,7 +697,7 @@ int main (int argc, char *argv[]) {
 	/*
 	 *  find cpufreq information about each cpu
 	 */
-	cpufreqd_info->sys_info = calloc(1, cpufreqd_info->cpus * sizeof(struct cpufreq_sys_info));
+	cpufreqd_info->sys_info = (struct cpufreq_sys_info *) calloc(1, cpufreqd_info->cpus * sizeof(struct cpufreq_sys_info));
 	if (cpufreqd_info->sys_info == NULL) {
 		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
 		ret = ENOMEM;
@@ -704,7 +711,7 @@ int main (int argc, char *argv[]) {
 	/*
 	 * per-cpu profiles
 	 */
-	cpufreqd_info->current_profiles = calloc(1, cpufreqd_info->cpus * sizeof(struct profile *));
+	cpufreqd_info->current_profiles = (struct profile **) calloc(1, cpufreqd_info->cpus * sizeof(struct profile *));
 	if (cpufreqd_info->current_profiles == NULL) {
 		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
 		ret = ENOMEM;
@@ -713,7 +720,7 @@ int main (int argc, char *argv[]) {
 
 
 	/* SMP: with different speed cpus */
-	cpufreqd_info->limits = calloc(1, cpufreqd_info->cpus * sizeof(struct cpufreq_limits));
+	cpufreqd_info->limits = (struct cpufreq_limits *) calloc(1, cpufreqd_info->cpus * sizeof(struct cpufreq_limits));
 	if (cpufreqd_info->limits == NULL) {
 		clog(LOG_CRIT, "Unable to allocate memory (%s), exiting.\n", strerror(errno));
 		ret = ENOMEM;
