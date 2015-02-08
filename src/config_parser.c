@@ -65,20 +65,21 @@ struct cpufreqd_conf *configuration = &default_configuration;
  * WARNING: it modifies the input string!
  */
 static char *clean_config_line (char *str) {
-	int i;
+	char *end_of_str = str;
+
+	while (*end_of_str) {
+		end_of_str++;
+	}
 
 	/* remove white spaces at the beginning */
-	while (isspace(*str)) {
+	while (*str && isspace(*str)) {
 		++str;
 	}
 
-	/* remove end line white space */
-	for (i = strlen(str) - 1; i>=0; --i) {
-		if (!isspace(str[i]))
-			break;
+	/* remove white spaces at the end */
+	while (--end_of_str != str && isspace(*end_of_str)) {
+		*end_of_str = 0;
 	}
-
-	str[i + 1] = '\0';
 
 	return str;
 }
