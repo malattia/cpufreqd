@@ -6,6 +6,9 @@ AM_INIT_AUTOMAKE(1.8 dist-bzip2 foreign)
 AC_CONFIG_SRCDIR([config.h.in])
 AM_CONFIG_HEADER(config.h)
 
+# test suite
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+
 # libtool
 AC_LIBTOOL_DLOPEN
 AC_ENABLE_SHARED
@@ -413,6 +416,7 @@ Makefile
 src/Makefile
 utils/Makefile
 manpages/Makefile
+tests/Makefile
 ])
 AC_OUTPUT([
 manpages/cpufreqd.8
