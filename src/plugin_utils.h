@@ -16,8 +16,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#ifndef __PLUGIN_UTILS_H__
+#define __PLUGIN_UTILS_H__ 1
 
-#include "cpufreqd_plugin.h"
 #include "list.h"
 
 struct plugin_obj {
@@ -51,3 +52,4 @@ struct cpufreqd_keyword *plugin_handle_keyword
 
 void	free_keyword_object	(struct cpufreqd_keyword *k, void *obj);
 
+#endif

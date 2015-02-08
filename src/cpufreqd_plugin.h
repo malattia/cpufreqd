@@ -61,7 +61,7 @@ struct cpufreqd_info {
 	/* last update, IOW las call to cpufreqd_loop (see main.h)*/
 	struct timeval timestamp;
 };
-struct cpufreqd_info * get_cpufreqd_info (void);
+extern struct cpufreqd_info *cpufreqd_info;
 
 struct cpufreqd_plugin;
 

@@ -24,8 +24,6 @@
 #include "config_parser.h"
 #include "cpufreqd_log.h"
 
-extern struct cpufreqd_conf *configuration; /* defined in cpufreqd.h and declared in main.c */
-
 static unsigned int log_opened; /* syslog already opened */
 
 /*

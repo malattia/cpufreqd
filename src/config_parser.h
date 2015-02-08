@@ -70,6 +70,7 @@ struct cpufreqd_conf {
 	struct LIST plugins; /* list of configured plugins struct o_plugin */
 
 };
+extern struct cpufreqd_conf *configuration;
 
 int	init_configuration	(struct cpufreqd_conf *config);
 void	free_configuration	(struct cpufreqd_conf *config);

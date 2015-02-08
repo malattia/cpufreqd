@@ -66,28 +66,10 @@ do { \
 	} \
 } while (0);
 
-static struct cpufreqd_info *cpufreqd_info;
 static struct rule *current_rule;
 static int force_reinit = 0;
 static int force_exit = 0;
 static int timer_expired = 1; /* expired in order to run on the first loop */
-
-/* default configuration */
-static struct cpufreqd_conf default_configuration = {
-	.config_file		= CPUFREQD_CONFDIR"cpufreqd.conf",
-	.pidfile		= CPUFREQD_STATEDIR"cpufreqd.pid",
-	.poll_intv		= { .tv_sec = DEFAULT_POLL, .tv_usec = 0 },
-	.has_sysfs		= 1,
-	.no_daemon		= 0,
-	.log_level_overridden	= 0,
-	.log_level		= DEFAULT_VERBOSITY,
-	.enable_remote		= 0,
-	.remote_gid		= 0,
-	.double_check		= 0,
-	.print_help		= 0,
-	.print_version		= 0,
-};
-struct cpufreqd_conf *configuration;
 
 /*
  * Evaluates the full rule and returns the percentage score
@@ -603,11 +585,6 @@ static void execute_command(int sock, struct cpufreqd_conf *conf) {
 	}
 }
 
-
-struct cpufreqd_info * get_cpufreqd_info (void) {
-	return cpufreqd_info;
-}
-
 /*
  *  main !
  *  Let's go
@@ -622,19 +599,6 @@ int main (int argc, char *argv[]) {
 	char dirname[MAX_PATH_LEN];
 	int ret = 0;
 
-	configuration = (struct cpufreqd_conf *) malloc(sizeof(struct cpufreqd_conf));
-	if (configuration == NULL) {
-		ret = ENOMEM;
-		goto out;
-	}
-	memcpy(configuration, &default_configuration, sizeof(struct cpufreqd_conf));
-
-	cpufreqd_info = (struct cpufreqd_info *) malloc(sizeof(struct cpufreqd_info));
-	if (cpufreqd_info == NULL) {
-		ret = ENOMEM;
-		goto out;
-	}
-	memset(cpufreqd_info, 0, sizeof(struct cpufreqd_info));
 	cpufreqd_info->cpufreqd_mode = MODE_DYNAMIC;
 
 	/*

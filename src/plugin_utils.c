@@ -25,7 +25,10 @@
 #include <string.h>
 #include "cpufreqd.h"
 #include "cpufreqd_log.h"
+#include "cpufreqd_plugin.h"
 #include "plugin_utils.h"
+
+struct cpufreqd_info *cpufreqd_info = { 0 };
 
 /* removes any reference to a given plugin from Ruls and Profile */
 #if 0

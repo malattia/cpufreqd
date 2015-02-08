@@ -35,9 +35,27 @@
 #include <sys/types.h>
 #include <string.h>
 #include "config_parser.h"
+#include "cpufreqd_plugin.h"
 #include "cpufreq_utils.h"
 #include "cpufreqd_log.h"
 #include "plugin_utils.h"
+
+static struct cpufreqd_conf default_configuration = {
+	.config_file		= CPUFREQD_CONFDIR "cpufreqd.conf",
+	.pidfile		= CPUFREQD_STATEDIR "cpufreqd.pid",
+	.poll_intv		= { .tv_sec = DEFAULT_POLL, .tv_usec = 0 },
+	.has_sysfs		= 1,
+	.no_daemon		= 0,
+	.log_level_overridden	= 0,
+	.log_level		= DEFAULT_VERBOSITY,
+	.enable_remote		= 0,
+	.remote_gid		= 0,
+	.double_check		= 0,
+	.print_help		= 0,
+	.print_version		= 0,
+};
+struct cpufreqd_conf *configuration = &default_configuration;
+
 
 /* char *clean_config_line (char *str)
  *
